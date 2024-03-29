@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ProductService} from '../../utility/service/product.service';
-import {AddMaterialRequest, AddProductRequest} from "../../utility/model/request/add-product-request";
+import {AddMaterialRequest, AddProductRequest, PrintTime} from "../../utility/model/request/add-product-request";
 import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
 import {ColorEvent} from "ngx-color";
 
@@ -33,7 +33,6 @@ export class AddProductComponent implements OnInit {
   }
 
   fetchData(): void {
-    console.log("fetching")
     this.productService.getMaterials()
       .subscribe(
         (response: any[]) => {
@@ -51,9 +50,6 @@ export class AddProductComponent implements OnInit {
   }
 
   materialsPrice: number = 0;
-  labourPrice: number = 0;
-  allegroTax: number = 0;
-  electricityPrice: number = 0;
 
   displayedColumns: string[] = ['name', 'type', 'price', 'q'];
   dataSource: PeriodicElement[] = [
@@ -91,40 +87,46 @@ export class AddProductComponent implements OnInit {
 
   files: File[] = [];
   preview: File[] = [];
-  UI_MASK_OPTIONS = {
-    definitions: {
-      W: {
-        validator: '[a-zA-Z0-9-]',
-      },
-      L: {
-        validator: '[a-z0-9]',
-      },
-    },
-  };
+  duration: any;
 
   onSelectFiles(event: any) {
-    console.log(event);
     this.files.push(...event.addedFiles);
   }
 
   onSelectPreview(event: any) {
-    console.log(event);
     this.preview = [];
     this.preview = [event.addedFiles[0]];
   }
 
   onRemoveFiles(event: any) {
-    console.log(event);
     this.files.splice(this.files.indexOf(event), 1);
   }
 
   onRemovePreview(event: any) {
-    console.log(event);
     this.preview = [];
   }
 
   onProductSubmit() {
-    this.productService.addProduct(this.addProductRequest).subscribe(
+    const formData: FormData = new FormData();
+    // @ts-ignore
+    formData.append("name", this.addProductRequest.name);
+    this.addProductRequest.accessoryIds = this.selectedListedMaterials.map(value => value.id);
+    // @ts-ignore
+    formData.append("accessories", this.addProductRequest.accessoryIds.join(','));
+    const [hoursStr, minutesStr] = this.duration.split(':');
+    this.addProductRequest.printTime = new PrintTime(parseInt(hoursStr), parseInt(minutesStr));
+    // @ts-ignore
+    formData.append("printTime.hours", this.addProductRequest.printTime.hours?.toString() ?? '');
+    formData.append("printTime.minutes", this.addProductRequest.printTime.minutes?.toString() ?? '');
+
+    formData.append('preview', this.preview[0], this.preview[0].name);
+    this.files.forEach((file) => {
+      formData.append('files', file);
+    });
+    formData.forEach((value, key) => {
+      console.log(key, formData.get(key)); // uzyskanie klucza za pomocą get()
+    });
+    this.productService.addProduct(formData).subscribe(
       response => console.log('Product added!', response),
       error => console.error('Error occurred:', error)
     );
@@ -135,7 +137,6 @@ export class AddProductComponent implements OnInit {
   }
 
   onMaterialSubmit() {
-    console.log("Saving material")
     this.productService.addMaterial(this.addMaterialRequest).subscribe(
       response => {
         console.log('Product added!', response);
@@ -156,11 +157,15 @@ export class AddProductComponent implements OnInit {
   }
 
   calculateMaterialsPrice() {
-    console.log("updating price");
+    console.log(this.duration);
+
     this.materialsPrice = this.selectedListedMaterials.map(material => {
-      console.log("q: " + material.q);
       if (material.q && !isNaN(Number(material.q))) {
-        return Number(material.price) * Number(material.q);
+        let q = Number(material.q);
+        if (material.type == 'FILAMENT') {
+          q = q / 1000;
+        }
+        return Number(material.price) * q;
       } else {
         return 0;
       }
@@ -168,6 +173,6 @@ export class AddProductComponent implements OnInit {
   }
 
   total() {
-    return Number(this.materialsPrice) + Number(this.labourPrice) + Number(this.allegroTax);
+    return Number(this.materialsPrice) + Number(this.addProductRequest.allegroTax);
   }
 }

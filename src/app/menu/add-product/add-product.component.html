@@ -6,12 +6,25 @@
         <h2>Stwórz nowy produkt</h2>
         <hr>
         <form #heroForm="ngForm">
-          <div class="form-group">
-            <h2><label for="name">Nazwa</label></h2>
-            <input type="text" class="form-control" id="name" name="name" required [(ngModel)]="addProductRequest.name"
-                   #name="ngModel">
-            <div [hidden]="name.valid || name.pristine" class="alert alert-danger">Nazwa jest wymagana</div>
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-4" style="padding: 0">
+                <h2><label for="name">Nazwa</label></h2>
+                <input type="text" class="form-control" id="name" name="name" required [(ngModel)]="addProductRequest.name" #name="ngModel">
+                <div [hidden]="name.valid || name.pristine" class="alert alert-danger">Nazwa jest wymagana</div>
+              </div>
+              <div class="col-md-4">
+                <h2><label for="name">EAN</label></h2>
+                <input type="text" class="form-control" id="ean" name="ean" required [(ngModel)]="addProductRequest.ean" #ean="ngModel">
+                <div [hidden]="ean.valid || ean.pristine" class="alert alert-danger">EAN jest wymagany</div>
+              </div>
+              <div class="col-md-4" >
+                <h2><label for="duration">Czas trwania druku</label></h2>
+                <input type="text" autocomplete="off" class="form-control" appTimeMask id="duration" name="duration" [(ngModel)]="duration">
+              </div>
+            </div>
           </div>
+
           <br>
 
           <div class="form-group">
@@ -101,6 +114,7 @@
                   type="text"
                   class="form-control"
                   aria-describedby="basic-addon2"
+                  [(ngModel)]="addProductRequest.allegroTax"
                   (change)="calculateMaterialsPrice()"
                   autocomplete="off"
                   name="q"
@@ -114,7 +128,7 @@
 
           <div style="display: flex; justify-content: space-between;">
             <h2><span style="margin-left: 16px">Podsumowanie</span></h2>
-            <h2><span style="margin-right: 16px">0 zł</span></h2>
+            <h2><span style="margin-right: 16px">{{ total() }} zł</span></h2>
           </div>
           <br>
 
@@ -154,7 +168,7 @@
 
 
           <br>
-          <button type="submit" class="btn btn-success">Submit</button>
+          <button type="submit" class="btn btn-success" (click)="onProductSubmit()">Submit</button>
 
         </form>
       </ng-template>

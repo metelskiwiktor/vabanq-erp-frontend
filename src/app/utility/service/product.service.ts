@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import {Observable, tap} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -13,10 +13,10 @@ export class ProductService {
   constructor(private http: HttpClient) {
   }
 
-  addProduct(data: any): Observable<any> {
-    //show json request
-    console.log(JSON.stringify(data));
-    return this.http.post<any>(this.apiProductUrl, data);
+  addProduct(data: FormData): Observable<any> {
+    return this.http.post<any>(this.apiProductUrl, data).pipe(
+      tap(() => console.log('Request sent:', data))
+    );
   }
 
   addMaterial(data: any): Observable<any> {

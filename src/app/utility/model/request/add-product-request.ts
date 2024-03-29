@@ -1,10 +1,10 @@
 export class AddProductRequest {
   public name?: string;
   public accessoryIds?: string[];
-  public grammage?: number;
   public printTime?: PrintTime;
-  public price?: string;
-  public allegroTax?: string;
+  public price: number = 0;
+  public allegroTax: number = 0;
+  public ean?: string;
 }
 
 export class AddMaterialRequest {
@@ -21,6 +21,11 @@ export class AddMaterialRequest {
 }
 
 export class PrintTime {
+  constructor(hours?: number, minutes?: number) {
+    this.hours = hours;
+    this.minutes = minutes;
+  }
+
   public hours?: number;
   public minutes?: number;
 }
