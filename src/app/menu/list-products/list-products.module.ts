@@ -1,7 +1,8 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {ListProductsComponent} from "./list-products.component";
-
+import {MatButtonModule} from "@angular/material/button";
+import {MatTableModule} from "@angular/material/table";
 
 
 @NgModule({
@@ -9,7 +10,10 @@ import {ListProductsComponent} from "./list-products.component";
     ListProductsComponent
   ],
   imports: [
-    CommonModule
+    CommonModule,
+    MatButtonModule,
+    MatTableModule
   ]
 })
-export class ListProductsModule { }
+export class ListProductsModule {
+}

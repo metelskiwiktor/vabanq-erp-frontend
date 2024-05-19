@@ -1,50 +1,74 @@
-import { Component } from '@angular/core';
-interface UserInfo {
-  title: string;
-  value: string;
-}
+import {Component, OnInit} from '@angular/core';
+import {ProductService} from "../../utility/service/product.service";
+import {MatDialog} from "@angular/material/dialog";
+import {EditProductComponent} from "./edit-product/edit-product.component";
 
-interface UserStat {
-  title: string;
-  icon: string;
-  value: number | string;
-}
-
-interface User {
-  level: number;
-  points: number;
+export interface PrintItem {
+  allegroTax: number;
+  id: string;
   name: string;
-  image?: string;
-  info: UserInfo[];
-  stats: UserStat[];
-  description: string;
-  isGreen?: boolean;
+  ean: string;
+  accessoriesQ: AccessoryQ[];
+  printTime: PrintTime;
+  preview?: Media;
+  files?: Media[];
+  price: number;
+  hasPreview: boolean
 }
+
+export interface AccessoryQ {
+  accessory: Accessory;
+  quantity: number;
+}
+
+export interface Accessory {
+  id: string;
+  name: string;
+  price: string;
+  type: string;
+}
+
+export interface PrintTime {
+  hours: number;
+  minutes: number;
+}
+
+export interface Media {
+  data: string;
+  filename: string;
+}
+
 
 @Component({
   selector: 'app-list-products',
   templateUrl: './list-products.component.html',
   styleUrl: './list-products.component.css'
 })
-export class ListProductsComponent {
-  users: User[] = [
-    {
-      level: 14,
-      points: 5312,
-      name: 'Jane Doe',
-      info: [
-        { title: 'Group Name', value: 'Joined January 2019' },
-        { title: 'Position/Role', value: 'City, Country' }
-      ],
-      stats: [
-        { title: 'Awards', icon: 'fa fa-trophy', value: 2 },
-        { title: 'Matches', icon: 'fa fa-gamepad', value: 27 },
-        { title: 'Pals', icon: 'fa fa-group', value: 123 },
-        { title: 'Coffee', icon: 'fa fa-coffee', value: '∞' }
-      ],
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce a volutpat mauris, at molestie lacus. Nam vestibulum sodales odio ut pulvinar.',
-      isGreen: false
-    },
-    // Add more user objects as needed
-  ];
+export class ListProductsComponent implements OnInit {
+  printItems: PrintItem[] = [];
+
+  constructor(private productService: ProductService, public dialog: MatDialog) {
+  }
+
+  ngOnInit(): void {
+    this.productService.getProducts().subscribe(products => {
+      console.log(products);
+      this.printItems = products;
+    })
+  }
+
+  edit(printItem: PrintItem) {
+    const dialogRef = this.dialog.open(EditProductComponent, {
+      data: printItem,
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed');
+      printItem = result;
+    });
+  }
+
+  hasPreview(printItem: PrintItem) {
+    return printItem.preview != null;
+  }
 }

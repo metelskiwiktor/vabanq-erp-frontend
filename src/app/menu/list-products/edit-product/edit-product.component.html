@@ -1,0 +1,170 @@
+<div class="container-fluid" style="width: 100%;">
+    <br>
+    <h2>Edytuj {{printItem.name}}</h2>
+    <hr>
+    <form #heroForm="ngForm">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-4" style="padding: 0">
+            <h2><label for="name">Nazwa</label></h2>
+            <input type="text" class="form-control" id="name" name="name" required [(ngModel)]="printItem.name" #name="ngModel">
+            <div [hidden]="name.valid || name.pristine" class="alert alert-danger">Nazwa jest wymagana</div>
+          </div>
+          <div class="col-md-4">
+            <h2><label for="name">EAN</label></h2>
+            <input type="text" class="form-control" id="ean" name="ean" required [(ngModel)]="printItem.ean" #ean="ngModel">
+            <div [hidden]="ean.valid || ean.pristine" class="alert alert-danger">EAN jest wymagany</div>
+          </div>
+          <div class="col-md-4" >
+            <h2><label for="duration">Czas trwania druku</label></h2>
+            <input type="text" autocomplete="off" class="form-control" appTimeMask id="duration" name="duration" [(ngModel)]="duration">
+          </div>
+        </div>
+      </div>
+
+      <br>
+
+      <div class="form-group">
+        <h2><label>Materiały</label></h2>
+        <ng-select [items]="dataSource"
+                   bindLabel="name"
+                   [groupBy]="groupMaterialsByFn"
+                   [groupValue]="groupMaterialsValueFn"
+                   [multiple]="true"
+                   [closeOnSelect]="false"
+                   (change)="onMaterialsChangeTable($event)"
+                   [compareWith]="compareFn"
+                   [ngModelOptions]="{standalone: true}"
+                   [(ngModel)]="selectedListedMaterials">
+          <ng-template ng-optgroup-tmp let-item="item">
+            <span style="vertical-align: middle;">{{ item.name }}</span>
+            <span class="ml-1 badge badge-secondary">{{ item.total }}</span>
+          </ng-template>
+        </ng-select>
+      </div>
+
+      <table mat-table [dataSource]="selectedListedMaterials">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+          <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Typ</th>
+          <td mat-cell *matCellDef="let element"> {{ element.type }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef>Cena netto</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.price }}zł{{ element.type === 'FILAMENT' ? '/kg' : '/szt' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="q">
+          <th mat-header-cell *matHeaderCellDef>Ilość</th>
+          <td mat-cell *matCellDef="let element" style="text-align: center">
+            <ng-container [ngSwitch]="element.type">
+              <ng-container *ngSwitchCase="'FILAMENT'">
+                <div class="input-group mb-3">
+                  <input
+                    type="text"
+                    class="form-control"
+                    aria-describedby="basic-addon2"
+                    [(ngModel)]="element.q"
+                    (change)="calculateMaterialsPrice()"
+                    autocomplete="off"
+                    name="q"
+                  />
+                  <span class="input-group-text" id="basic-addon2">g</span>
+                </div>
+              </ng-container>
+              <ng-container *ngSwitchDefault>
+                <div class="input-group mb-3">
+                  <input
+                    type="text"
+                    class="form-control"
+                    aria-describedby="basic-addon2"
+                    [(ngModel)]="element.q"
+                    (change)="calculateMaterialsPrice()"
+                    autocomplete="off"
+                    name="q"
+                  />
+                  <span class="input-group-text">szt</span>
+                </div>
+              </ng-container>
+            </ng-container>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+
+      <hr style="margin-top: 0; margin-bottom: 0.15em; border-color: rgba(0, 0, 0, 0.7);" *ngIf="selectedListedMaterials.length > 0">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="margin-left: 16px;">Prowizja allegro</span>
+        <span>
+              <div class="input-group mb-3">
+                <input
+                  type="text"
+                  class="form-control"
+                  aria-describedby="basic-addon2"
+                  [(ngModel)]="printItem.allegroTax"
+                  (change)="calculateMaterialsPrice()"
+                  autocomplete="off"
+                  name="allegroTax"
+                />
+                <span class="input-group-text" style="margin-right: 16px">zł</span>
+              </div>
+            </span>
+      </div>
+      <hr style="margin-top: 0.15em; margin-bottom: 0; border-color: rgba(0, 0, 0, 0.7);">
+
+
+      <div style="display: flex; justify-content: space-between;">
+        <h2><span style="margin-left: 16px">Podsumowanie</span></h2>
+        <h2><span style="margin-right: 16px">{{ total() }} zł</span></h2>
+      </div>
+      <br>
+
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-4" style="padding-left: 0;">
+            <div class="form-group">
+              <label>Główny widok</label>
+              <ngx-dropzone ngx-dropzone [accept]="'image/*'" (change)="onSelectPreview($event)"
+                            [expandable]="true">
+                <ngx-dropzone-label>Widok produktu</ngx-dropzone-label>
+                <ngx-dropzone-image-preview ngProjectAs="ngx-dropzone-preview" *ngFor="let f of preview" [file]="f"
+                                            [removable]="true" (removed)="onRemovePreview(f)">
+                  <ngx-dropzone-label>{{ (f.name.length > 10 ? (f.name | slice:0:10) + '...' : f.name) }}
+                    ({{ f.type }})
+                  </ngx-dropzone-label>
+                </ngx-dropzone-image-preview>
+              </ngx-dropzone>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div class="form-group">
+              <label>Wszystkie pliki</label>
+              <ngx-dropzone (change)="onSelectFiles($event)" [expandable]="true">
+                <ngx-dropzone-label>Wszystkie pliki</ngx-dropzone-label>
+                <ngx-dropzone-preview *ngFor="let f of files" [removable]="true" (removed)="onRemoveFiles(f)">
+                  <ngx-dropzone-label>{{ (f.name.length > 10 ? (f.name | slice:0:10) + '...' : f.name) }}
+                    ({{ f.type }})
+                  </ngx-dropzone-label>
+                </ngx-dropzone-preview>
+              </ngx-dropzone>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <br>
+      <button type="submit" class="btn btn-success" (click)="onProductSubmit()">Submit</button>
+
+    </form>
+</div>

@@ -1,0 +1,39 @@
+<div class="container-fluid" style="width: 100%;">
+
+  <div class="text-right">
+    <button type="button" class="btn btn-warning btn-md" (click)="startSynchronize()">Zsynchronizuj stany magazynowe</button>
+  </div>
+
+  <mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.name }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="alertStock">
+      <mat-header-cell *matHeaderCellDef>Krytyczny stan</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.alertStock }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="currentStock">
+      <mat-header-cell *matHeaderCellDef>Obecny stan</mat-header-cell>
+      <mat-cell *matCellDef="let element">{{ element.currentStock }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="action">
+      <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
+      <mat-cell *matCellDef="let row;">
+        <button mat-icon-button (click)="edit(row)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="delete(row)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="displayedColumns">
+    </mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+  </mat-table>
+</div>

@@ -1,0 +1,8 @@
+<div class="container-fluid" style="width: 100%;">
+  <h1>Ustawienia</h1>
+  <button type="button" class="btn btn-warning btn-lg" (click)="connectAllegro()" *ngIf="!connectingAllegro">Połącz się z allegro</button>
+  <button class="btn btn-warning btn-lg" type="button" disabled *ngIf="connectingAllegro">
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Łączenie z allegro
+  </button>
+</div>

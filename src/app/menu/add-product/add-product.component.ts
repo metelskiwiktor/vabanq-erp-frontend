@@ -1,15 +1,19 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit, TemplateRef} from '@angular/core';
 import {ProductService} from '../../utility/service/product.service';
 import {AddMaterialRequest, AddProductRequest, PrintTime} from "../../utility/model/request/add-product-request";
 import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
 import {ColorEvent} from "ngx-color";
+import {Router} from "@angular/router";
+import {AccessoriesQ, SaveProductRequest} from "../../utility/model/request/save-product-request";
+import {CreateWmsRequest} from "../../utility/model/request/create-wms-request";
+import {ToastService} from "../../utility/service/toast-service";
 
 export interface PeriodicElement {
   id: string,
   name: string;
   type: string;
   price: string;
-  q?: string;
+  q?: number;
 }
 
 
@@ -20,8 +24,9 @@ export interface PeriodicElement {
 })
 export class AddProductComponent implements OnInit {
   public form: FormGroup;
+  toastService = inject(ToastService);
 
-  constructor(private productService: ProductService, fb: FormBuilder) {
+  constructor(private productService: ProductService, fb: FormBuilder, private router: Router) {
     this.form = fb.group({
       phone: [''],
       tuut: ['']
@@ -52,11 +57,7 @@ export class AddProductComponent implements OnInit {
   materialsPrice: number = 0;
 
   displayedColumns: string[] = ['name', 'type', 'price', 'q'];
-  dataSource: PeriodicElement[] = [
-    {id: '123', name: 'Hydrogen', type: 'Fil', price: 'H'},
-    {id: '124', name: 'Helium', type: 'Pack', price: 'He'},
-    {id: '125', name: 'Lithium', type: 'El.zł', price: 'Li'},
-  ];
+  dataSource: PeriodicElement[] = [];
   addProductRequest = new AddProductRequest();
   addMaterialRequest = new AddMaterialRequest();
   selectedListedMaterials: PeriodicElement[] = [];
@@ -88,6 +89,10 @@ export class AddProductComponent implements OnInit {
   files: File[] = [];
   preview: File[] = [];
   duration: any;
+  wmsMin: any;
+  wmsMatMin: any;
+  wmsMatCurrent: any;
+  wmsCur: any;
 
   onSelectFiles(event: any) {
     this.files.push(...event.addedFiles);
@@ -106,28 +111,55 @@ export class AddProductComponent implements OnInit {
     this.preview = [];
   }
 
-  onProductSubmit() {
-    const formData: FormData = new FormData();
-    // @ts-ignore
-    formData.append("name", this.addProductRequest.name);
-    this.addProductRequest.accessoryIds = this.selectedListedMaterials.map(value => value.id);
-    // @ts-ignore
-    formData.append("accessories", this.addProductRequest.accessoryIds.join(','));
+  onProductSubmit(template: TemplateRef<any>) {
     const [hoursStr, minutesStr] = this.duration.split(':');
-    this.addProductRequest.printTime = new PrintTime(parseInt(hoursStr), parseInt(minutesStr));
-    // @ts-ignore
-    formData.append("printTime.hours", this.addProductRequest.printTime.hours?.toString() ?? '');
-    formData.append("printTime.minutes", this.addProductRequest.printTime.minutes?.toString() ?? '');
+    //
+    // formData.append('preview', this.preview[0], this.preview[0].name);
+    // this.files.forEach((file) => {
+    //   formData.append('files', file);
+    // });
+    // formData.forEach((value, key) => {
+    //   console.log(key, formData.get(key)); // uzyskanie klucza za pomocą get()
+    // });
+    const accessoriesQ: AccessoriesQ[] = this.selectedListedMaterials
+      .map(value => ({id: value.id, quantity: Number(value.q)}));
 
-    formData.append('preview', this.preview[0], this.preview[0].name);
-    this.files.forEach((file) => {
-      formData.append('files', file);
-    });
-    formData.forEach((value, key) => {
-      console.log(key, formData.get(key)); // uzyskanie klucza za pomocą get()
-    });
-    this.productService.addProduct(formData).subscribe(
-      response => console.log('Product added!', response),
+    const saveProduct: SaveProductRequest = {
+      name: this.addProductRequest.name!,
+      ean: this.addProductRequest.ean!,
+      accessoriesQ: accessoriesQ,
+      printHours: hoursStr,
+      printMinutes: minutesStr,
+      price: this.total().toString(),
+      allegroTax: this.addProductRequest.allegroTax.toString()
+    }
+    this.productService.addProduct(saveProduct).subscribe(
+      response => {
+        const createWmsRequest: CreateWmsRequest = {
+          id: {
+            id: response.id,
+            name: response.name,
+          },
+          currentStock: this.wmsCur,
+          criticalStock: this.wmsMin,
+          children: response.accessoriesQ.map((accessoriesQ: any) => {
+            return {
+              id: accessoriesQ.accessory.id,
+              quantity: accessoriesQ.quantity,
+            }
+          })
+        }
+        this.addProductRequest = new AddProductRequest();
+        this.duration = undefined;
+        this.wmsCur = undefined;
+        this.wmsMin = undefined;
+        this.selectedListedMaterials = [];
+        this.showSuccess(template);
+        this.materialsPrice = 0;
+        this.productService.createWms(createWmsRequest).subscribe(
+          response => console.log(response)
+        )
+      },
       error => console.error('Error occurred:', error)
     );
   }
@@ -136,11 +168,30 @@ export class AddProductComponent implements OnInit {
     this.addMaterialRequest.color = $event.color.hex;
   }
 
-  onMaterialSubmit() {
+  showSuccess(template: TemplateRef<any>) {
+    this.toastService.show({ template, classname: 'bg-success text-light', delay: 2000 });
+  }
+
+  onMaterialSubmit(template: TemplateRef<any>) {
     this.productService.addMaterial(this.addMaterialRequest).subscribe(
       response => {
+        const createWmsRequest: CreateWmsRequest = {
+          id: {
+            id: response.id,
+            name: response.name,
+          },
+          currentStock: this.wmsMatCurrent,
+          criticalStock: this.wmsMatMin,
+          children: []
+        }
+        this.showSuccess(template);
         console.log('Product added!', response);
         this.addMaterialRequest = new AddMaterialRequest();
+        this.wmsMatCurrent = undefined;
+        this.wmsMatMin = undefined;
+        this.productService.createWms(createWmsRequest).subscribe(
+          // response => show
+        )
         this.fetchData();
       },
       error => console.error('Error occurred:', error)
@@ -174,5 +225,9 @@ export class AddProductComponent implements OnInit {
 
   total() {
     return Number(this.materialsPrice) + Number(this.addProductRequest.allegroTax);
+  }
+
+  reloadPage() {
+    this.router.navigateByUrl(this.router.url);
   }
 }

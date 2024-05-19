@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  web:
+    image: wmetelski/erp-frontend:0.0.2
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production

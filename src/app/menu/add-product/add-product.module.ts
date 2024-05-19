@@ -18,9 +18,11 @@ import {DegreeMaskDirective} from "../../utility/directive/degree-mask.directive
 import {PackageDimensionsDirective} from "../../utility/directive/package-dimensions.directive";
 import {UiMaskDirective} from "../../utility/directive/ui-mask.directive";
 import {MatInput} from "@angular/material/input";
+import {ToastsContainer} from "../../utility/service/toasts-container.component";
 
 @NgModule({
   imports: [
+    ToastsContainer,
     ReactiveFormsModule,
     CommonModule,
     FormsModule,
@@ -43,6 +45,9 @@ import {MatInput} from "@angular/material/input";
     DegreeMaskDirective,
     PackageDimensionsDirective,
     UiMaskDirective
+  ],
+  exports: [
+    TimeMaskDirective
   ],
   providers: [CurrencyPipe]
 })

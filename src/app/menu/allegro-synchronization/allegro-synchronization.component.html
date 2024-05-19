@@ -1,0 +1,107 @@
+<p *ngIf="offers.length == 0">Wszystkie oferty są zsynchronizowane</p>
+<mat-stepper orientation="vertical" [linear]="true" #stepper>
+  <mat-step *ngFor="let offer of offers" [stepControl]="createForm()">
+    <ng-template matStepLabel>{{ offer.name }}</ng-template>
+    <form [formGroup]="createForm()">
+      <div class="card green">
+        <div class="additional">
+          <div class="user-card">
+            <div class="points center">
+              {{ offer.sellingMode.price.amount }} {{ offer.sellingMode.price.currency }}
+            </div>
+          </div>
+          <div class="more-info">
+            <h3 style="margin-left: 15px">{{ offer.name }}</h3>
+            <!--            <div class="coords">-->
+            <!--              <span>Group Name</span>-->
+            <!--              <span>Joined January 2019</span>-->
+            <!--            </div>-->
+            <!--            <div class="coords">-->
+            <!--              <span>Position/Role</span>-->
+            <!--              <span>City, Country</span>-->
+            <!--            </div>-->
+            <div class="stats">
+              <div>
+                <div class="title">W magazynie</div>
+                <i class="fa fa-trophy"></i>
+                <div class="value">{{ offer.stock.available }}</div>
+              </div>
+              <div>
+                <div class="title">Sprzedano</div>
+                <i class="fa fa-gamepad"></i>
+                <div class="value">{{ offer.stock.sold }}</div>
+              </div>
+              <div>
+                <div class="title">Wyświetlenia</div>
+                <i class="fa fa-group"></i>
+                <div class="value">{{ offer.stats.visitsCount }}</div>
+              </div>
+              <!--              <div>-->
+              <!--                <div class="title">Coffee</div>-->
+              <!--                <i class="fa fa-coffee"></i>-->
+              <!--                <div class="value infinity">∞</div>-->
+              <!--              </div>-->
+            </div>
+          </div>
+        </div>
+        <div class="general">
+          <h3>{{ offer.name }}</h3>
+          <!--          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce a volutpat mauris, at molestie lacus. Nam-->
+          <!--            vestibulum sodales odio ut pulvinar.</p>-->
+          <span class="more">Najedź kursorem po więcej informacji</span>
+        </div>
+      </div>
+
+      <div style="margin-left: 5px">
+        <h2><label>Wybierz produkt</label></h2>
+        <ng-select [items]="printItems"
+                   bindLabel="name"
+                   [multiple]="true"
+                   [closeOnSelect]="true"
+                   [ngModelOptions]="{standalone: true}"
+                   [(ngModel)]="offer.items">
+        </ng-select>
+      </div>
+      <mat-table [dataSource]="offer.items">
+
+        <ng-container matColumnDef="name">
+          <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
+          <mat-cell *matCellDef="let row;">{{ row.name }}</mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="quantity">
+          <mat-header-cell *matHeaderCellDef>Ilość</mat-header-cell>
+          <mat-cell *matCellDef="let row;">{{ row.quantity }}</mat-cell>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
+          <mat-cell *matCellDef="let row;">
+            <button mat-icon-button (click)="addQuantity(row)">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-icon-button (click)="subtractQuantity(row)">
+              <mat-icon>remove</mat-icon>
+            </button>
+          </mat-cell>
+        </ng-container>
+
+        <mat-header-row *matHeaderRowDef="displayedColumns">
+        </mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+
+      </mat-table>
+      <br>
+      <div>
+        <button mat-button matStepperNext *ngIf="!isLastStep(stepper); else updateButton">Następne</button>
+        <ng-template #updateButton>
+          <button mat-button (click)="update()">Zaktualizuj</button>
+        </ng-template>
+      </div>
+    </form>
+  </mat-step>
+</mat-stepper>
+
+<div *ngIf="updated">
+  Zaktualizowano {{ updatedCount }} elementów.
+</div>
