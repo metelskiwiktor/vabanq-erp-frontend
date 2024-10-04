@@ -48,12 +48,12 @@ function initializeKeycloak(keycloak: KeycloakService) {
   bootstrap: [AppComponent],
   providers: [
     provideAnimationsAsync(),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeKeycloak,
-      multi: true,
-      deps: [KeycloakService]
-    }
+    // {
+    //   provide: APP_INITIALIZER,
+    //   useFactory: initializeKeycloak,
+    //   multi: true,
+    //   deps: [KeycloakService]
+    // }
   ],
   exports: []
 })

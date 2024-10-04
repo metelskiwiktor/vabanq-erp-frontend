@@ -9,19 +9,19 @@ import {environment} from "../../environments/environment";
   styleUrl: './menu.component.css'
 })
 export class MenuComponent implements OnInit {
-  public userProfile: KeycloakProfile | null = null;
+  // public userProfile: KeycloakProfile | null = null;
 
-  constructor(private readonly keycloak: KeycloakService) {
-  }
+  // constructor(private readonly keycloak: KeycloakService) {
+  // }
 
   public async ngOnInit() {
-    console.log(environment.backendUrl);
-    console.log(environment.keycloakUrl);
-    this.userProfile = await this.keycloak.loadUserProfile();
-    console.log(await this.keycloak.getToken());
+    // console.log(environment.backendUrl);
+    // console.log(environment.keycloakUrl);
+    // this.userProfile = await this.keycloak.loadUserProfile();
+    // console.log(await this.keycloak.getToken());
   }
-
-  logout() {
-    this.keycloak.logout();
-  }
+  //
+  // logout() {
+  //   this.keycloak.logout();
+  // }
 }
