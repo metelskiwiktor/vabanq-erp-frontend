@@ -1,0 +1,38 @@
+.container {
+  padding: 20px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.filter-input {
+  margin: 20px 0;
+  width: 100%;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  max-width: 300px;
+}
+
+.product-image {
+  background-color: #eee;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+mat-card-header {
+  align-items: center;
+}
+
+mat-card-image {
+  max-height: 150px;
+  object-fit: cover;
+}

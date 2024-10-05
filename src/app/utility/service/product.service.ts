@@ -2,9 +2,10 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable, of, tap} from 'rxjs';
 import {environment} from "../../../environments/environment";
-import {SaveProductRequest} from '../model/request/save-product-request';
 import {CreateWmsRequest} from "../model/request/create-wms-request";
 import {KeycloakService} from "keycloak-angular";
+import {GroupedAccessoriesResponse} from "../model/request/add-product-request";
+import {ProductResponse} from "../model/response/product-response.model";
 
 @Injectable({
   providedIn: 'root'
@@ -17,43 +18,67 @@ export class ProductService {
   private apiAllegroUrl: string;
 
   constructor(private http: HttpClient, private readonly keycloak: KeycloakService) {
-    this.apiProductUrl = environment.backendUrl + '/product';
-    this.apiMaterialUrl = environment.backendUrl + '/accessory';
+    this.apiProductUrl = environment.backendUrl + '/api/products';
+    this.apiMaterialUrl = environment.backendUrl + '/api/accessories';
     this.apiWmsUrl = environment.backendUrl + '/wms';
     this.apiAllegroUrl = environment.backendUrl + '/allegro';
     console.log(this.apiProductUrl);
   }
 
-  addProduct(data: SaveProductRequest): Observable<any> {
+  addProduct(data: any): Observable<any> {
+    console.log(data);
     return this.http.post<any>(this.apiProductUrl, data).pipe(
       tap(() => console.log('Request sent:', data))
     );
   }
 
-  addMaterial(data: any): Observable<any> {
-    return this.http.post<any>(this.apiMaterialUrl, data);
+  // Metoda do przesyłania głównego widoku
+  addPreview(productId: string, file: File): Observable<any> {
+    const formData: FormData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.http.post<any>(`${this.apiProductUrl}/${productId}/preview`, formData).pipe(
+      tap(() => console.log('Preview sent:', file.name))
+    );
+  }
+
+  // Metoda pobierająca listę produktów
+  getProducts(): Observable<ProductResponse[]> {
+    // Wykonanie żądania GET do endpointa produktów
+    return this.http.get<ProductResponse[]>(this.apiProductUrl).pipe(
+      tap((products) => console.log('Fetched products:', products))
+    );
+  }
+
+  // Metoda do przesyłania dodatkowych plików
+  addFile(productId: string, file: File): Observable<any> {
+    const formData: FormData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.http.post<any>(`${this.apiProductUrl}/${productId}/file`, formData).pipe(
+      tap(() => console.log('File sent:', file.name))
+    );
+  }
+  addFilament(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiMaterialUrl}/filament`, data);
+  }
+
+  addPackaging(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiMaterialUrl}/packaging`, data);
+  }
+
+  addFasteners(data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiMaterialUrl}/fasteners`, data);
   }
 
   createWms(data: CreateWmsRequest): Observable<any> {
     return this.http.post<any>(this.apiWmsUrl, data);
   }
 
-  getMaterials() {
-    return this.http.get<any[]>(this.apiMaterialUrl);
+  getMaterials(): Observable<GroupedAccessoriesResponse> {
+    return this.http.get<GroupedAccessoriesResponse>(`${this.apiMaterialUrl}/all`);
   }
 
-  getProducts() {
-    // Utwórz nagłówek z tokenem JWT
-    let jwtToken = this.keycloak.getToken();
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${jwtToken}`
-    });
-
-    // Dodaj nagłówki do żądania HTTP
-    const options = { headers: headers };
-    return this.http.get<any[]>(this.apiProductUrl, options);
-  }
 
   getOffers(token: string): Observable<any> {
     return this.http.get<any>(this.apiAllegroUrl + "/synchronization/my-offers", {headers: new HttpHeaders().set('allegro-api', token)});

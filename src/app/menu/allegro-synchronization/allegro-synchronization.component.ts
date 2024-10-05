@@ -86,14 +86,14 @@ export class AllegroSynchronizationComponent implements OnInit {
         console.log(error)
       }
     );
-    this.productService.getProducts().subscribe(
-      (response: any[]) => {
-        response.forEach(offer => {
-          offer.quantity = 1;
-        })
-        this.printItems = response;
-      }
-    )
+    // this.productService.getProducts().subscribe(
+    //   (response: any[]) => {
+    //     response.forEach(offer => {
+    //       offer.quantity = 1;
+    //     })
+    //     this.printItems = response;
+    //   }
+    // )
   }
 
   addQuantity(row: any) {

@@ -5,7 +5,7 @@ import {MatTableModule} from "@angular/material/table";
 import {MatIcon} from "@angular/material/icon";
 import {MatButton, MatButtonModule} from "@angular/material/button";
 import {FormsModule} from "@angular/forms";
-import {AddProductModule} from "../../add-product/add-product.module";
+import {AddProductModule} from "../../add-item/add-product/add-product.module";
 
 
 @NgModule({
@@ -19,7 +19,6 @@ import {AddProductModule} from "../../add-product/add-product.module";
     MatButton,
     MatIcon,
     FormsModule,
-    AddProductModule
   ],
   providers: [
     DataSharingService

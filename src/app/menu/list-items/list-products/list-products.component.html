@@ -1,0 +1,29 @@
+<div class="container">
+  <mat-toolbar color="primary">
+    <span>Produkty</span>
+    <span class="spacer"></span>
+    <button mat-raised-button color="accent" (click)="createNewProduct()">Create a project</button>
+  </mat-toolbar>
+
+  <mat-form-field class="filter-input">
+    <mat-label>Filter by product name</mat-label>
+    <input matInput [(ngModel)]="filter" placeholder="Search products">
+  </mat-form-field>
+
+  <div class="card-grid">
+    <mat-card class="card" *ngFor="let product of filteredProducts()">
+      <mat-card-header>
+        <div mat-card-avatar class="product-image"></div>
+        <mat-card-title>{{ product.name }}</mat-card-title>
+        <mat-card-subtitle>{{ product.ean }}</mat-card-subtitle>
+      </mat-card-header>
+      <img mat-card-image [src]="getProductImage(product)" alt="{{ product.name }}">
+      <mat-card-content>
+        <p>{{ product.description }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="viewProduct(product.id)">Edytuj</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>
