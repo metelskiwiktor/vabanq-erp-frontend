@@ -6,6 +6,7 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatTab, MatTabContent} from "@angular/material/tabs";
 import {NgSelectModule} from "@ng-select/ng-select";
 import {ToastsContainer} from "../../../utility/service/toasts-container.component";
+import {NgxMaskDirective} from "ngx-mask";
 
 
 
@@ -16,15 +17,16 @@ import {ToastsContainer} from "../../../utility/service/toasts-container.compone
   exports: [
     AddMaterialComponent
   ],
-  imports: [
-    CommonModule,
-    ColorSketchModule,
-    FormsModule,
-    MatTab,
-    MatTabContent,
-    NgSelectModule,
-    ReactiveFormsModule,
-    ToastsContainer
-  ]
+    imports: [
+        CommonModule,
+        ColorSketchModule,
+        FormsModule,
+        MatTab,
+        MatTabContent,
+        NgSelectModule,
+        ReactiveFormsModule,
+        ToastsContainer,
+        NgxMaskDirective
+    ]
 })
 export class AddMaterialModule { }

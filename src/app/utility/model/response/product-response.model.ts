@@ -6,7 +6,7 @@ export interface ProductResponse {
   printTime: PrintTime;
   price: number;
   allegroTax: number;
-  description: string;
+  description?: string;
   preview: ProductFile;
   files: ProductFile[];
 }

@@ -21,6 +21,8 @@ import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatInputModule} from "@angular/material/input";
 import {MatCardModule} from "@angular/material/card";
 import {FormsModule} from "@angular/forms";
+import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
+
 
 function initializeKeycloak(keycloak: KeycloakService) {
   return () =>
@@ -62,6 +64,7 @@ function initializeKeycloak(keycloak: KeycloakService) {
   bootstrap: [AppComponent],
   providers: [
     provideAnimationsAsync(),
+    provideNgxMask()
     // {
     //   provide: APP_INITIALIZER,
     //   useFactory: initializeKeycloak,

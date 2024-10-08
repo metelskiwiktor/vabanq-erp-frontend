@@ -33,7 +33,6 @@ import {FormsModule} from "@angular/forms";
     AppRoutingModule,
     MatSidenavModule,
     AddItemModule,
-    ListItemsModule,
     MatTabsModule,
     MatToolbarModule,
     MatFormFieldModule,

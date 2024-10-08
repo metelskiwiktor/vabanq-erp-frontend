@@ -13,17 +13,17 @@
         <div class="form-group col-md-3" style="padding: 0">
           <h2><label for="name">Nazwa</label></h2>
           <input type="text" class="form-control" id="name" name="name" required
-                 [(ngModel)]="addProductRequest.name" #name="ngModel">
+                 [(ngModel)]="addProductRequest.name" #name="ngModel" placeholder="Nazwa produktu">
         </div>
         <div class="form-group col-md-3">
           <h2><label for="ean">EAN</label></h2>
           <input type="text" class="form-control" id="ean" name="ean" required [(ngModel)]="addProductRequest.ean"
-                 #ean="ngModel">
+                 #ean="ngModel" mask="0000000000000" placeholder="Wpisz 13 cyfr">
         </div>
         <div class="form-group col-md-2">
           <h2><label for="duration">Czas trwania druku</label></h2>
           <input type="text" autocomplete="off" class="form-control" id="duration" name="duration"
-                 [(ngModel)]="duration">
+                 mask="00:00" [(ngModel)]="duration" placeholder="HH:MM">
         </div>
         <div class="form-group col-md-4">
           <h2><label for="description">Opis</label></h2>
@@ -38,7 +38,6 @@
       <h2><label>Materiały</label></h2>
       <ng-select [items]="dataSource"
                  bindLabel="name"
-                 bindValue="name"
                  [groupBy]="groupMaterialsByFn"
                  [groupValue]="groupMaterialsValueFn"
                  [multiple]="true"
@@ -68,7 +67,7 @@
       <ng-container matColumnDef="price">
         <th mat-header-cell *matHeaderCellDef>Cena netto</th>
         <td mat-cell *matCellDef="let element">
-          {{ element.price }}zł{{ element.type === 'FILAMENT' ? '/kg' : '/szt' }}
+          {{ element.price }}zł{{ element.type === 'Filament' ? '/kg' : '/szt' }}
         </td>
       </ng-container>
 
@@ -76,7 +75,7 @@
         <th mat-header-cell *matHeaderCellDef>Ilość</th>
         <td mat-cell *matCellDef="let element" style="text-align: center">
           <ng-container [ngSwitch]="element.type">
-            <ng-container *ngSwitchCase="'FILAMENT'">
+            <ng-container *ngSwitchCase="'Filament'">
               <div class="input-group mb-3">
                 <input
                   type="text"
@@ -85,7 +84,7 @@
                   [(ngModel)]="element.q"
                   (change)="calculateMaterialsPrice()"
                   autocomplete="off"
-                  name="q"
+                  name="{{element.id}}"
                 />
                 <span class="input-group-text" id="basic-addon2">g</span>
               </div>
@@ -99,7 +98,7 @@
                   [(ngModel)]="element.q"
                   (change)="calculateMaterialsPrice()"
                   autocomplete="off"
-                  name="q"
+                  name="{{element.id}}"
                 />
                 <span class="input-group-text">szt</span>
               </div>
@@ -107,6 +106,7 @@
           </ng-container>
         </td>
       </ng-container>
+
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
@@ -125,7 +125,9 @@
                   [(ngModel)]="addProductRequest.allegroTax"
                   (change)="calculateMaterialsPrice()"
                   autocomplete="off"
-                  name="q"
+                  name="allegroTax"
+                  mask="separator.2"
+                  thousandSeparator=""
                 />
                 <span class="input-group-text" style="margin-right: 16px">zł</span>
               </div>

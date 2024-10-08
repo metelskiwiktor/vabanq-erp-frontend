@@ -1,7 +1,7 @@
 <ng-template #successTpl></ng-template>
 <ng-template #errorTpl></ng-template>
 
-<h2>Stwórz nowy materiał</h2>
+<h2>{{ dialogTitle }}</h2>
 <hr>
 
 <form>
@@ -10,7 +10,7 @@
       <div class="form-group col-md-6" style="padding: 0">
         <h2><label for="materials">Nazwa</label></h2>
         <input type="text" class="form-control" id="materials" name="materials-name"
-               [(ngModel)]="addMaterialRequest.name" autocomplete="off">
+               [(ngModel)]="addMaterialRequest.name" autocomplete="off" placeholder="Nazwa materiału">
       </div>
     </div>
   </div>
@@ -27,6 +27,7 @@
                [closeOnSelect]="true"
                [ngModelOptions]="{standalone: true}"
                (change)="onMaterialsChange($event)"
+               [disabled]="isEditMode"
                [(ngModel)]="addMaterialRequest.accessoryType">
     </ng-select>
   </div>
@@ -65,10 +66,13 @@
 
           <!-- Temperatura druku -->
           <div class="form-group">
-            <h2><label for="temp1">Temperatura druku</label></h2>
-            <input class="form-control" [(ngModel)]="addMaterialRequest.temperaturePrint"
-                   [ngModelOptions]="{standalone: true}" autocomplete="off"
-                   type="text" appDegreeMask id="temp1">
+            <h2><label for="temp2">Temperatura stołu</label></h2>
+            <div class="input-group mb-3">
+              <input class="form-control" [(ngModel)]="addMaterialRequest.temperaturePrint"
+                     [ngModelOptions]="{standalone: true}" autocomplete="off"
+                     type="text" id="temp1" mask="separator.2" thousandSeparator="">
+              <span class="input-group-text" style="margin-right: 16px">&deg;C</span>
+            </div>
           </div>
 
           <br>
@@ -76,32 +80,48 @@
           <!-- Temperatura stołu -->
           <div class="form-group">
             <h2><label for="temp2">Temperatura stołu</label></h2>
-            <input class="form-control" [(ngModel)]="addMaterialRequest.temperatureDesk"
-                   [ngModelOptions]="{standalone: true}" autocomplete="off"
-                   type="text" appDegreeMask id="temp2">
+            <div class="input-group mb-3">
+              <input class="form-control" [(ngModel)]="addMaterialRequest.temperatureDesk"
+                     [ngModelOptions]="{standalone: true}" autocomplete="off"
+                     type="text" id="temp2" mask="separator.2" thousandSeparator="">
+              <span class="input-group-text" style="margin-right: 16px">&deg;C</span>
+            </div>
           </div>
 
           <br>
 
           <!-- Cena -->
           <div>
-            <h2><label *ngIf="showFilamentOptions; else elseBlock" for="price">Cena netto za kilogram</label></h2>
-            <ng-template #elseBlock><h2><label for="price">Cena netto za sztukę</label></h2></ng-template>
-            <div class="input-group">
-              <input type="text" id="price" [ngModelOptions]="{standalone: true}"
-                     [(ngModel)]="addMaterialRequest.price" class="form-control"
-                     autocomplete="off" currencyInput maxDigits="9">
+            <h2><label *ngIf="showFilamentOptions; else elseBlock" for="price">Cena</label></h2>
+            <ng-template #elseBlock><h2><label for="price">Cena</label></h2></ng-template>
+            <div class="input-group mb-3">
+              <input
+                type="text"
+                id="price"
+                [ngModelOptions]="{standalone: true}"
+                [(ngModel)]="addMaterialRequest.price"
+                class="form-control"
+                autocomplete="off"
+                aria-describedby="basic-addon2"
+                mask="separator.2"
+                thousandSeparator=""
+              />
+              <span class="input-group-text" style="margin-right: 16px">zł za kilogram</span>
             </div>
           </div>
+
         </form>
       </div>
 
       <div class="col-md-6">
         <div class="form-group" style="margin-left: 100px">
           <h2><label>Kolor</label></h2>
-          <color-sketch (onChange)="handleChange($event)"></color-sketch>
+          <!-- Ustawiamy domyślny kolor, jeśli jest undefined -->
+          <color-sketch [color]="addMaterialRequest.color || '#ffffff'"
+                        (onChange)="handleChange($event)"></color-sketch>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -123,19 +143,49 @@
     <!-- Wymiary -->
     <div class="form-group">
       <h2><label>Wymiary (długość x szerokość x wysokość)</label></h2>
-      <input type="text" [(ngModel)]="addMaterialRequest.dimensions" appPackageDimensions class="form-control"
-             placeholder="00.00x00.00x00.00" name="dimensions" autocomplete="off">
+      <input type="text" [(ngModel)]="addMaterialRequest.dimensions"
+             class="form-control"
+             placeholder="00.00x00.00x00.00"
+             name="dimensions"
+             autocomplete="off"
+             (input)="onDimensionsInput($event)">>
     </div>
+
   </div>
 
   <!-- Cena netto za sztukę -->
   <div *ngIf='!showFilamentOptions'>
-    <h2><label>Cena netto za sztukę</label></h2>
-    <div class="input-group">
-      <input type="text" id="price2" name="price" [(ngModel)]="addMaterialRequest.price" class="form-control"
-             autocomplete="off" currencyInput maxDigits="9">
+    <h2><label>Cena</label></h2>
+    <div class="input-group mb-3">
+      <input
+        type="text"
+        id="price2"
+        name="price"
+        [(ngModel)]="addMaterialRequest.price"
+        class="form-control"
+        autocomplete="off"
+        aria-describedby="basic-addon2"
+        mask="separator.2"
+        thousandSeparator=""
+      />
+      <span class="input-group-text" style="margin-right: 16px">zł za sztukę</span>
     </div>
   </div>
+
+  <!--  <div class="input-group mb-3">-->
+  <!--    <input-->
+  <!--      type="text"-->
+  <!--      class="form-control"-->
+  <!--      aria-describedby="basic-addon2"-->
+  <!--      [(ngModel)]="addProductRequest.allegroTax"-->
+  <!--      (change)="calculateMaterialsPrice()"-->
+  <!--      autocomplete="off"-->
+  <!--      name="allegroTax"-->
+  <!--      mask="separator.2"-->
+  <!--      thousandSeparator=""-->
+  <!--    />-->
+  <!--    <span class="input-group-text" style="margin-right: 16px">zł</span>-->
+  <!--  </div>-->
 
   <br>
 
@@ -150,6 +200,7 @@
   <br>
 
   <div class="text-right">
-    <button type="submit" (click)="onMaterialSubmit(successTpl, errorTpl)" class="btn btn-primary">Utwórz</button>
+    <button type="submit" (click)="onMaterialSubmit(successTpl, errorTpl)" class="btn btn-primary">{{ buttonText }}
+    </button>
   </div>
 </form>

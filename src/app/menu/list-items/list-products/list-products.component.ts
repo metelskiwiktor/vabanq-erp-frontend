@@ -3,6 +3,7 @@ import {ProductService} from "../../../utility/service/product.service";
 import {ProductResponse} from "../../../utility/model/response/product-response.model";
 import {MatDialog} from "@angular/material/dialog";
 import {AddProductComponent} from "../../add-item/add-product/add-product.component";
+import {AddProductRequest} from "../../../utility/model/request/add-product-request";
 
 @Component({
   selector: 'app-list-products',
@@ -16,6 +17,10 @@ export class ListProductsComponent implements OnInit {
   constructor(private productService: ProductService, public dialog: MatDialog) {}
 
   ngOnInit(): void {
+    this.fetchData();
+  }
+
+  fetchData() {
     this.productService.getProducts().subscribe((data: ProductResponse[]) => {
       this.products = data;
     });
@@ -35,22 +40,24 @@ export class ListProductsComponent implements OnInit {
     );
   }
 
-  // Otwieranie dialogu z ProductComponent
   viewProduct(productId: string): void {
-    const selectedProduct = this.products.find(p => p.id === productId);  // Znajdź produkt na podstawie ID
-
+    const selectedProduct = this.products.find(p => p.id === productId);
+    console.log(JSON.stringify(selectedProduct));
     if (selectedProduct) {
       const dialogRef = this.dialog.open(AddProductComponent, {
-        // width: '600px',  // Rozmiar okna dialogowego
-        data: { product: selectedProduct }  // Przekazanie danych do komponentu ProductComponent
+        data: selectedProduct,
+        maxHeight: '100vh',
+        width: '80%',
+        hasBackdrop: true,
+        autoFocus: false
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        console.log('Dialog was closed');
-        // Możesz obsłużyć zamknięcie dialogu tutaj, jeśli to potrzebne
+        this.fetchData();
       });
     }
   }
+
   createNewProduct(): void {
     // Implement create new product logic
     console.log('Creating new product...');
