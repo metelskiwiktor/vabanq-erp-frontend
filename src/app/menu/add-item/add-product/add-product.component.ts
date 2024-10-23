@@ -9,14 +9,6 @@ import {ToastService} from "../../../utility/service/toast-service";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {ProductFile, ProductResponse} from "../../../utility/model/response/product-response.model";
 
-export interface PeriodicElement {
-  id: string,
-  name: string;
-  type: string;
-  price: string;
-  q?: number;
-}
-
 @Component({
   selector: 'app-add-product',
   templateUrl: './add-product.component.html',
@@ -55,11 +47,6 @@ export class AddProductComponent implements OnInit {
     this.fetchData();  // Fetch materials
   }
 
-  convertUint8ArrayToFile(fileData: ProductFile, fileName: string): File {
-    const blob = new Blob([fileData.data], {type: 'image/png'}); // Użyj odpowiedniego typu MIME
-    return new File([blob], fileName);
-  }
-
   populateFormWithData(product: ProductResponse) {
     // Set product data in form
     this.addProductRequest.name = product.name;
@@ -67,14 +54,83 @@ export class AddProductComponent implements OnInit {
     this.addProductRequest.description = product.description || '';
     this.addProductRequest.allegroTax = product.allegroTax.toString();
     this.duration = `${product.printTime.hours}:${product.printTime.minutes}`;
+    this.addProductRequest.tags = product.tags;
 
-    if(product.preview) {
-      const previewFile = this.convertUint8ArrayToFile(product.preview, product.preview.filename);
-      this.preview.push(previewFile);
+    this.preview = [];
+    this.files = [];
+
+// Convert Uint8Array to Blob and create a File object for preview
+    if (product.preview) {
+      console.log("Preview data format:", typeof product.preview.data);
+
+      if (product.preview.data instanceof Uint8Array) {
+        console.log("Preview data is a Uint8Array");
+
+        // Convert Uint8Array to Blob
+        const blob = new Blob([product.preview.data], { type: 'image/png' });
+        const previewFile = new File([blob], product.preview.filename, { type: 'image/png' });
+
+        // Use FileReader to read data as Base64
+        const reader = new FileReader();
+        reader.onload = (loadEvent: any) => {
+          const base64Data = loadEvent.target.result;
+          console.log("Base64 data of recreated previewFile:", base64Data);
+        };
+        reader.readAsDataURL(previewFile);
+
+        this.preview.push(previewFile);
+
+      } else if (typeof product.preview.data === 'string') {
+        console.log("Preview data is a string");
+
+        // Convert Base64 string back to binary data (Blob)
+        const byteCharacters = atob(product.preview.data); // Decode base64 to binary
+        const byteNumbers = new Array(byteCharacters.length);
+
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/png' });
+        const previewFile = new File([blob], product.preview.filename, { type: 'image/png' });
+
+        // Use FileReader to read data as Base64 again (optional)
+        const reader = new FileReader();
+        reader.onload = (loadEvent: any) => {
+          const base64Data = loadEvent.target.result;
+          console.log("Base64 data of recreated previewFile from Base64 string:", base64Data);
+        };
+        reader.readAsDataURL(previewFile);
+
+        // Add the File object to preview array
+        this.preview.push(previewFile);
+
+      } else {
+        console.error("Invalid data format for product preview.");
+      }
     }
 
+    this.originalFiles = []; // Kopiowanie oryginalnych plików
+
+    if (product.files && product.files.length > 0) {
+      product.files.forEach(file => {
+        const fileExtension = file.filename.split('.').pop()?.toLowerCase();
+        let mimeType = 'application/octet-stream';
+        if (fileExtension === 'txt') mimeType = 'text/plain';
+        else if (fileExtension === 'jpg' || fileExtension === 'jpeg') mimeType = 'image/jpeg';
+        else if (fileExtension === 'png') mimeType = 'image/png';
+        else if (fileExtension === 'pdf') mimeType = 'application/pdf';
+
+        const blob = new Blob([file.data], { type: mimeType });
+        const productFile = new File([blob], file.filename, { type: mimeType });
+
+        this.files.push(productFile);
+        this.originalFiles.push(productFile);  // Przechowujemy oryginalne pliki
+      });
+    }
     // Map product accessories to selected materials using dataSource
-    this.selectedListedMaterials = [
+    const selectedMaterials  = [
       ...product.productAccessories.fasteners.map(item => {
         const material = this.dataSource.find(m => m.id === item.second.id);
         if (material) {
@@ -88,15 +144,12 @@ export class AddProductComponent implements OnInit {
           material.q = item.first.toString(); // Set quantity
           return material;
         }
-      }).filter(Boolean),
-      ...product.productAccessories.packagings.map(item => {
-        const material = this.dataSource.find(m => m.id === item.second.id);
-        if (material) {
-          material.q = item.first.toString(); // Set quantity
-          return material;
-        }
       }).filter(Boolean)
     ];
+    this.selectedListedMaterials = selectedMaterials;
+    this.filamentMaterials = selectedMaterials.filter(material => material.type === 'Filament');
+    this.fastenerMaterials = selectedMaterials.filter(material => material.type === 'Elementy złączne');
+
 
     this.calculateMaterialsPrice();
   }
@@ -105,7 +158,6 @@ export class AddProductComponent implements OnInit {
   fetchData(): void {
     this.productService.getMaterials().subscribe(
       (response: GroupedAccessoriesResponse) => {
-        // Process fasteners, filaments, and packages into a uniform structure
         const fasteners = response.fasteners.map(item => ({
           id: item.id,
           name: item.name,
@@ -120,16 +172,9 @@ export class AddProductComponent implements OnInit {
           price: item.pricePerKg,
           q: item.quantity.toString()
         }));
-        const packages = response.packages.map(item => ({
-          id: item.id,
-          name: item.name,
-          type: 'Kartony',
-          price: item.netPricePerQuantity,
-          q: item.quantity.toString()
-        }));
 
         // Combine all accessory types into a single array
-        this.dataSource = [...fasteners, ...filaments, ...packages];
+        this.dataSource = [...fasteners, ...filaments];
 
         // After dataSource is populated, populate the form if in edit mode
         if (this.isEditMode) {
@@ -140,14 +185,26 @@ export class AddProductComponent implements OnInit {
         console.error('Błąd podczas pobierania danych:', error);
       }
     );
+    this.productService.getTags().subscribe(
+      (response: string[]) => {
+        this.tags = response;
+      },
+      (error: any) => {
+        console.log('Błąd podczas pobierania tagów:', error)
+      }
+    )
   }
 
   materialsPrice: number = 0;
 
-  displayedColumns: string[] = ['name', 'type', 'price', 'q'];
+  displayedColumns: string[] = ['name', 'price', 'q'];
   dataSource: any[] = [];
   addProductRequest = new AddProductRequest();
   selectedListedMaterials: any[] = [];
+  filamentMaterials: any[] = [];
+  fastenerMaterials: any[] = [];
+  originalFiles: File[] = [];
+  tags: string[] = [];
 
   groupMaterialsByFn = (item: { type: any }) => item.type;
 
@@ -157,15 +214,37 @@ export class AddProductComponent implements OnInit {
   preview: File[] = [];
   duration: string = '';
 
+  addNewTag(tagName: string) {
+    if(!this.addProductRequest.tags.includes(tagName)) {
+      this.tags.push(tagName); // Add to available tags
+      this.addProductRequest.tags = [...this.addProductRequest.tags, tagName]; // Add to selected tag
+    }
+  }
+
   onSelectFiles(event: any) {
     this.files.push(...event.addedFiles);
   }
 
   onSelectPreview(event: any) {
     this.preview = [];
-    this.preview = [event.addedFiles[0]];
-    console.log(this.preview);
+    const file = event.addedFiles[0];
+    this.preview = [file];
+
+    // Log the File object
+    console.log("File selected for preview:", file);
+
+    // Użyj FileReader do odczytu danych pliku w formacie Base64
+    const reader = new FileReader();
+    reader.onload = (loadEvent: any) => {
+      // Zapisz dane jako Base64
+      const base64Data = loadEvent.target.result;
+      console.log("Base64 data of selected preview file:", base64Data);
+    };
+
+    // Czytaj plik jako Base64
+    reader.readAsDataURL(file);
   }
+
 
   onRemoveFiles(event: any) {
     this.files.splice(this.files.indexOf(event), 1);
@@ -195,8 +274,9 @@ export class AddProductComponent implements OnInit {
       printHours: printHours,
       printMinutes: printMinutes,
       price: this.total(),
-      allegroTax: this.addProductRequest.allegroTax,
-      description: this.addProductRequest.description
+      allegroTax: 0,
+      description: this.addProductRequest.description,
+      tags: this.addProductRequest.tags
     };
 
     if (this.isEditMode && this.data) {
@@ -204,8 +284,44 @@ export class AddProductComponent implements OnInit {
       this.productService.updateProduct(this.data.id, productRequest).subscribe(
         response => {
           this.showSuccess(successTpl, `Produkt ${productRequest.name} został zaktualizowany`);
+          // Pliki do usunięcia (obecne w originalFiles, ale nie w files)
+          const filesToDelete = this.originalFiles.filter(originalFile =>
+            !this.files.some(newFile => newFile.name === originalFile.name)
+          );
 
-          this.resetForm();
+          // Pliki do dodania (obecne w files, ale nie w originalFiles)
+          const filesToAdd = this.files.filter(newFile =>
+            !this.originalFiles.some(originalFile => originalFile.name === newFile.name)
+          );
+
+          // Usuwanie plików
+          filesToDelete.forEach(file => {
+            const fileId = file.name;
+            this.productService.deleteFile(this.data!.id, fileId).subscribe(
+              () => {
+                this.showSuccess(successTpl, `Plik ${file.name} został usunięty`);
+                console.log(`File ${file.name} deleted successfully`);
+              },
+              error => {
+                this.showError(errorTpl, error.error.message || 'Nieznany błąd');
+                console.error(`Error deleting file ${file.name}:`, error);
+              }
+            );
+          });
+
+          // Dodawanie nowych plików
+          filesToAdd.forEach(file => {
+            this.productService.addFile(this.data!.id, file).subscribe(
+              () => {
+                this.showSuccess(successTpl, `Plik ${file.name} został przesłany`);
+                console.log(`File ${file.name} uploaded successfully`);
+              },
+              error => {
+                this.showError(errorTpl, error.error.message || 'Nieznany błąd');
+                console.error(`Error uploading file ${file.name}:`, error);
+              }
+            );
+          });
         },
         error => {
           console.error('Error occurred:', error);
@@ -266,8 +382,10 @@ export class AddProductComponent implements OnInit {
     this.toastService.show({template, classname: 'bg-danger text-light', delay: 4000, text: errorMessage});
   }
 
-  onMaterialsChangeTable($event: any) {
-    this.selectedListedMaterials = $event;
+  onMaterialsChangeTable(event: any): void {
+    this.selectedListedMaterials = event;
+    this.filamentMaterials = this.selectedListedMaterials.filter(item => item.type === 'Filament');
+    this.fastenerMaterials = this.selectedListedMaterials.filter(item => item.type === 'Elementy złączne');
     this.calculateMaterialsPrice();
   }
 
@@ -299,5 +417,6 @@ export class AddProductComponent implements OnInit {
     this.duration = "";
     this.selectedListedMaterials = [];
     this.files = [];
+    this.materialsPrice = 0;
   }
 }

@@ -66,6 +66,13 @@ export class ProductService {
       tap(() => console.log('File sent:', file.name))
     );
   }
+
+  deleteFile(productId: string, fileId: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiProductUrl}/${productId}/file/${fileId}`, ).pipe(
+      tap(() => console.log('File removed:', fileId))
+    );
+  }
+
   addFilament(data: any): Observable<any> {
     return this.http.post<any>(`${this.apiMaterialUrl}/filament`, data).pipe(
       tap(() => console.log('Filament dodany:', data))
@@ -114,6 +121,9 @@ export class ProductService {
     return this.http.get<GroupedAccessoriesResponse>(`${this.apiMaterialUrl}/all`);
   }
 
+  getTags(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiProductUrl}/tags`);
+  }
 
   getOffers(token: string): Observable<any> {
     return this.http.get<any>(this.apiAllegroUrl + "/synchronization/my-offers", {headers: new HttpHeaders().set('allegro-api', token)});

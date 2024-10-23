@@ -5,7 +5,7 @@
 <div class="container-fluid" style="width: 80%;">
 
   <br>
-  <h2>Stwórz nowy produkt</h2>
+  <h2>{{dialogTitle}}</h2>
   <hr>
   <form #heroForm="ngForm">
     <div class="container-fluid">
@@ -33,7 +33,6 @@
       </div>
     </div>
     <br>
-
     <div class="form-group">
       <h2><label>Materiały</label></h2>
       <ng-select [items]="dataSource"
@@ -53,86 +52,68 @@
       </ng-select>
     </div>
 
-    <table mat-table [dataSource]="selectedListedMaterials">
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Nazwa</th>
-        <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
-      </ng-container>
+    <div class="tables-container">
+      <!-- Table for Filament materials -->
+      <div class="table-wrapper">
+        <h3>Filamenty</h3>
+        <table mat-table [dataSource]="filamentMaterials">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+            <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
+          </ng-container>
 
-      <ng-container matColumnDef="type">
-        <th mat-header-cell *matHeaderCellDef>Typ</th>
-        <td mat-cell *matCellDef="let element"> {{ element.type }}</td>
-      </ng-container>
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef>Cena brutto</th>
+            <td mat-cell *matCellDef="let element"> {{ element.price }}zł/kg</td>
+          </ng-container>
 
-      <ng-container matColumnDef="price">
-        <th mat-header-cell *matHeaderCellDef>Cena netto</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element.price }}zł{{ element.type === 'Filament' ? '/kg' : '/szt' }}
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="q">
-        <th mat-header-cell *matHeaderCellDef>Ilość</th>
-        <td mat-cell *matCellDef="let element" style="text-align: center">
-          <ng-container [ngSwitch]="element.type">
-            <ng-container *ngSwitchCase="'Filament'">
+          <ng-container matColumnDef="q">
+            <th mat-header-cell *matHeaderCellDef>Ilość</th>
+            <td mat-cell *matCellDef="let element" style="text-align: center">
               <div class="input-group mb-3">
-                <input
-                  type="text"
-                  class="form-control"
-                  aria-describedby="basic-addon2"
-                  [(ngModel)]="element.q"
-                  (change)="calculateMaterialsPrice()"
-                  autocomplete="off"
-                  name="{{element.id}}"
-                />
-                <span class="input-group-text" id="basic-addon2">g</span>
+                <input type="text" class="form-control" [(ngModel)]="element.q" (change)="calculateMaterialsPrice()"
+                       autocomplete="off" name="{{element.id}}" />
+                <span class="input-group-text">g</span>
               </div>
-            </ng-container>
-            <ng-container *ngSwitchDefault>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Table for Elementy złączne (Fasteners) -->
+      <div class="table-wrapper">
+        <h3>Elementy złączne</h3>
+        <table mat-table [dataSource]="fastenerMaterials">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+            <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef>Cena brutto</th>
+            <td mat-cell *matCellDef="let element"> {{ element.price }}zł/szt</td>
+          </ng-container>
+
+          <ng-container matColumnDef="q">
+            <th mat-header-cell *matHeaderCellDef>Ilość</th>
+            <td mat-cell *matCellDef="let element" style="text-align: center">
               <div class="input-group mb-3">
-                <input
-                  type="text"
-                  class="form-control"
-                  aria-describedby="basic-addon2"
-                  [(ngModel)]="element.q"
-                  (change)="calculateMaterialsPrice()"
-                  autocomplete="off"
-                  name="{{element.id}}"
-                />
+                <input type="text" class="form-control" [(ngModel)]="element.q" (change)="calculateMaterialsPrice()"
+                       autocomplete="off" name="{{element.id}}" />
                 <span class="input-group-text">szt</span>
               </div>
-            </ng-container>
+            </td>
           </ng-container>
-        </td>
-      </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    </table>
-
-
-    <hr style="margin-top: 0; margin-bottom: 0.15em; border-color: rgba(0, 0, 0, 0.7);"
-        *ngIf="selectedListedMaterials.length > 0">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="margin-left: 16px;">Prowizja allegro</span>
-      <span>
-              <div class="input-group mb-3">
-                <input
-                  type="text"
-                  class="form-control"
-                  aria-describedby="basic-addon2"
-                  [(ngModel)]="addProductRequest.allegroTax"
-                  (change)="calculateMaterialsPrice()"
-                  autocomplete="off"
-                  name="allegroTax"
-                  mask="separator.2"
-                  thousandSeparator=""
-                />
-                <span class="input-group-text" style="margin-right: 16px">zł</span>
-              </div>
-            </span>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
     </div>
+
     <hr style="margin-top: 0.15em; margin-bottom: 0; border-color: rgba(0, 0, 0, 0.7);">
 
 
@@ -142,19 +123,36 @@
     </div>
     <br>
 
+    <div class="form-group">
+      <h2><label>Tagi</label></h2>
+      <ng-select
+        [items]="tags"
+        bindLabel="name"
+        [multiple]="true"
+        [addTag]="true"
+        [hideSelected]="true"
+        placeholder="Wybierz lub dodaj tag"
+        [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="addProductRequest.tags"
+        (add)="addNewTag($event)">
+        <ng-template ng-tag-tmp let-search="searchTerm">
+          <div>
+            <strong>Dodaj nowy tag: "{{ search }}"</strong>
+          </div>
+        </ng-template>
+      </ng-select>
+    </div>
+
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-4" style="padding-left: 0;">
           <div class="form-group">
             <label>Główny widok</label>
-            <ngx-dropzone ngx-dropzone [accept]="'image/*'" (change)="onSelectPreview($event)"
-                          [expandable]="true">
+            <ngx-dropzone ngx-dropzone [accept]="'image/*'" (change)="onSelectPreview($event)" [expandable]="true">
               <ngx-dropzone-label>Widok produktu</ngx-dropzone-label>
-              <ngx-dropzone-image-preview ngProjectAs="ngx-dropzone-preview" *ngFor="let f of preview" [file]="f"
-                                          [removable]="true" (removed)="onRemovePreview(f)">
-                <ngx-dropzone-label>{{ (f.name.length > 10 ? (f.name | slice:0:10) + '...' : f.name) }}
-                  ({{ f.type }})
-                </ngx-dropzone-label>
+
+              <ngx-dropzone-image-preview *ngFor="let f of preview" [file]="f" [removable]="true" (removed)="onRemovePreview(f)">
+                <ngx-dropzone-label>{{ (f.name.length > 40 ? (f.name | slice:0:40) + '...' : f.name) }} ({{ f.type }})</ngx-dropzone-label>
               </ngx-dropzone-image-preview>
             </ngx-dropzone>
           </div>
@@ -176,10 +174,9 @@
       </div>
     </div>
 
-
     <br>
     <div class="text-right">
-      <button type="submit" (click)="onProductSubmit(successTpl, errorTpl)" class="btn btn-primary">Utwórz</button>
+      <button type="submit" (click)="onProductSubmit(successTpl, errorTpl)" class="btn btn-primary">{{buttonText}}</button>
     </div>
     <br>
   </form>

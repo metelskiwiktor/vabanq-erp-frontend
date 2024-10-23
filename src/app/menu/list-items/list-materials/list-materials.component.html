@@ -5,23 +5,23 @@
   </mat-form-field>
 </div>
 
-<h2>Fasteners</h2>
-<table mat-table [dataSource]="fastenersDataSource" class="mat-elevation-z8">
+<h2>El. złączne</h2>
+<table mat-table [dataSource]="fastenersDataSource" matSort #sortFasteners="matSort" matSortActive="name" matSortDirection="asc"  class="mat-elevation-z8">
   <!-- Nazwa -->
   <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef> Nazwa </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Nazwa </th>
     <td mat-cell *matCellDef="let element"> {{element.name}} </td>
   </ng-container>
 
   <!-- Cena za ilość -->
   <ng-container matColumnDef="netPricePerQuantity">
-    <th mat-header-cell *matHeaderCellDef> Cena za ilość </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cena za ilość </th>
     <td mat-cell *matCellDef="let element"> {{element.netPricePerQuantity}} </td>
   </ng-container>
 
   <!-- Opis -->
   <ng-container matColumnDef="description">
-    <th mat-header-cell *matHeaderCellDef> Opis </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Opis </th>
     <td mat-cell *matCellDef="let element"> {{element.description}} </td>
   </ng-container>
 
@@ -42,57 +42,62 @@
   <tr mat-row *matRowDef="let row; columns: displayedColumnsFasteners;"></tr>
 </table>
 <br><br>
-<h2>Filaments</h2>
-<table mat-table [dataSource]="filamentsDataSource" class="mat-elevation-z8">
-  <!-- Nazwa -->
+
+<h2>Filamenty</h2>
+<!-- Table for Filaments with sorting -->
+<table mat-table [dataSource]="filamentsDataSource" matSort #sortFilaments="matSort" matSortActive="name" matSortDirection="asc" class="mat-elevation-z8">
+  <!-- Nazwa (Name) -->
   <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef> Nazwa </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Nazwa </th>
     <td mat-cell *matCellDef="let element"> {{element.name}} </td>
   </ng-container>
 
-  <!-- Producent -->
+  <!-- Producent (Producer) -->
   <ng-container matColumnDef="producer">
-    <th mat-header-cell *matHeaderCellDef> Producent </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Producent </th>
     <td mat-cell *matCellDef="let element"> {{element.producer}} </td>
   </ng-container>
 
-  <!-- Typ filamentu -->
+  <!-- Typ filamentu (Filament Type) -->
   <ng-container matColumnDef="filamentType">
-    <th mat-header-cell *matHeaderCellDef> Typ filamentu </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Typ filamentu </th>
     <td mat-cell *matCellDef="let element"> {{element.filamentType}} </td>
   </ng-container>
 
-  <!-- Temperatura druku -->
+  <!-- Temperatura druku (Print Temperature) -->
   <ng-container matColumnDef="printTemperature">
-    <th mat-header-cell *matHeaderCellDef> Temp. druku </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Temp. druku </th>
     <td mat-cell *matCellDef="let element"> {{element.printTemperature}} </td>
   </ng-container>
 
-  <!-- Temperatura stołu -->
+  <!-- Temperatura stołu (Desk Temperature) -->
   <ng-container matColumnDef="deskTemperature">
-    <th mat-header-cell *matHeaderCellDef> Temp. stołu </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Temp. stołu </th>
     <td mat-cell *matCellDef="let element"> {{element.deskTemperature}} </td>
   </ng-container>
 
-  <!-- Cena za kg -->
+  <!-- Cena za kg (Price per kg) -->
   <ng-container matColumnDef="pricePerKg">
-    <th mat-header-cell *matHeaderCellDef> Cena za kg </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cena za kg </th>
     <td mat-cell *matCellDef="let element"> {{element.pricePerKg}} </td>
   </ng-container>
 
-  <!-- Kolor -->
+  <!-- Kolor (Color) -->
   <ng-container matColumnDef="color">
-    <th mat-header-cell *matHeaderCellDef> Kolor </th>
-    <td mat-cell *matCellDef="let element"> {{element.color}} </td>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Kolor </th>
+    <td mat-cell *matCellDef="let element">
+      <div class="color-box" [ngStyle]="{'background-color': element.color}"></div>
+      {{element.color}}
+    </td>
   </ng-container>
 
-  <!-- Opis -->
+  <!-- Opis (Description) -->
   <ng-container matColumnDef="description">
-    <th mat-header-cell *matHeaderCellDef> Opis </th>
+    <th mat-header-cell *matHeaderCellDef mat-sort-header> Opis </th>
     <td mat-cell *matCellDef="let element"> {{element.description}} </td>
   </ng-container>
 
-  <!-- Dodaj kolumnę akcji -->
+  <!-- Akcje (Actions) -->
   <ng-container matColumnDef="actions">
     <th mat-header-cell *matHeaderCellDef> Akcje </th>
     <td mat-cell *matCellDef="let element">
@@ -109,52 +114,4 @@
   <tr mat-row *matRowDef="let row; columns: displayedColumnsFilaments;"></tr>
 </table>
 
-<br><br>
-<h2>Packages</h2>
-<table mat-table [dataSource]="packagesDataSource" class="mat-elevation-z8">
-  <!-- Nazwa -->
-  <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef> Nazwa </th>
-    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-  </ng-container>
-
-  <!-- Rozmiar opakowania -->
-  <ng-container matColumnDef="packagingSize">
-    <th mat-header-cell *matHeaderCellDef> Rozmiar opakowania </th>
-    <td mat-cell *matCellDef="let element"> {{element.packagingSize}} </td>
-  </ng-container>
-
-  <!-- Wymiary -->
-  <ng-container matColumnDef="dimensions">
-    <th mat-header-cell *matHeaderCellDef> Wymiary </th>
-    <td mat-cell *matCellDef="let element"> {{element.dimensions}} </td>
-  </ng-container>
-
-  <!-- Cena za ilość -->
-  <ng-container matColumnDef="netPricePerQuantity">
-    <th mat-header-cell *matHeaderCellDef> Cena za ilość </th>
-    <td mat-cell *matCellDef="let element"> {{element.netPricePerQuantity}} </td>
-  </ng-container>
-
-  <!-- Opis -->
-  <ng-container matColumnDef="description">
-    <th mat-header-cell *matHeaderCellDef> Opis </th>
-    <td mat-cell *matCellDef="let element"> {{element.description}} </td>
-  </ng-container>
-
-  <!-- Dodaj kolumnę akcji -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef> Akcje </th>
-    <td mat-cell *matCellDef="let element">
-      <button mat-icon-button (click)="editPackageDialog(element)">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button (click)="deleteElement(element)">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumnsPackages"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumnsPackages;"></tr>
-</table>
+<br>

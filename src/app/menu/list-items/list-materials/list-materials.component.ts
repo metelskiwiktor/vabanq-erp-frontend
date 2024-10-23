@@ -1,32 +1,37 @@
-import {Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, inject, OnInit, ViewChild} from '@angular/core';
 import {MatTableDataSource} from '@angular/material/table';
 import {ProductService} from "../../../utility/service/product.service";
 import {
   GroupedAccessoriesResponse, FastenersAccessoryResponse,
   FilamentAccessoryResponse,
-  PackagingAccessoryResponse
 } from "../../../utility/model/request/add-product-request";
 import {AddMaterialComponent} from "../../add-item/add-material/add-material.component";
 import {MatDialog} from "@angular/material/dialog";
+import {MatSort} from "@angular/material/sort";
 
 @Component({
   selector: 'app-list-materials',
   templateUrl: './list-materials.component.html',
   styleUrls: ['./list-materials.component.css']
 })
-export class ListMaterialsComponent implements OnInit {
-
+export class ListMaterialsComponent implements OnInit, AfterViewInit {
   fastenersDataSource = new MatTableDataSource<FastenersAccessoryResponse>();
   filamentsDataSource = new MatTableDataSource<FilamentAccessoryResponse>();
-  packagesDataSource = new MatTableDataSource<PackagingAccessoryResponse>();
 
   displayedColumnsFasteners: string[] = ['name', 'netPricePerQuantity', 'description', 'actions'];
   displayedColumnsFilaments: string[] = ['name', 'producer', 'filamentType', 'printTemperature', 'deskTemperature', 'pricePerKg', 'color', 'description', 'actions'];
-  displayedColumnsPackages: string[] = ['name', 'packagingSize', 'dimensions', 'netPricePerQuantity', 'description', 'actions'];
 
   filterValue: string = '';
 
+  @ViewChild('sortFasteners') sortFasteners!: MatSort;
+  @ViewChild('sortFilaments') sortFilaments!: MatSort;
+
   constructor(private productService: ProductService, private dialog: MatDialog) {
+  }
+
+  ngAfterViewInit(): void {
+    this.fastenersDataSource.sort = this.sortFasteners;
+    this.filamentsDataSource.sort = this.sortFilaments;
   }
 
   ngOnInit(): void {
@@ -37,15 +42,16 @@ export class ListMaterialsComponent implements OnInit {
     this.productService.getMaterials().subscribe((response: GroupedAccessoriesResponse) => {
       this.fastenersDataSource.data = response.fasteners;
       this.filamentsDataSource.data = response.filaments;
-      this.packagesDataSource.data = response.packages;
     });
+
+    this.fastenersDataSource.sort = this.sortFasteners;
+    this.filamentsDataSource.sort = this.sortFilaments;
   }
 
   applyFilter() {
     const filterValue = this.filterValue.trim().toLowerCase();
     this.fastenersDataSource.filter = filterValue;
     this.filamentsDataSource.filter = filterValue;
-    this.packagesDataSource.filter = filterValue;
   }
 
   editFastenerDialog(element: FastenersAccessoryResponse): void {
@@ -56,14 +62,9 @@ export class ListMaterialsComponent implements OnInit {
     this.openEditDialog(element, 'filament');
   }
 
-  editPackageDialog(element: PackagingAccessoryResponse): void {
-    this.openEditDialog(element, 'package');
-  }
-
-
   openEditDialog(element: any, type: string): void {
     const dialogRef = this.dialog.open(AddMaterialComponent, {
-      data: { material: element, type: type },
+      data: {material: element, type: type},
       maxHeight: '80vh',
       width: '80%',
       hasBackdrop: true,

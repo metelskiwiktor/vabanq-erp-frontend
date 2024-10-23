@@ -1,0 +1,18 @@
+.tables-container {
+  display: flex;
+  gap: 20px; /* Add some space between the tables */
+  justify-content: space-between; /* Ensure space is distributed evenly */
+}
+
+.table-wrapper {
+  flex: 1; /* Each table will take up equal space */
+  min-width: 0; /* Prevent the table from growing too large */
+}
+
+table {
+  width: 100%; /* Ensure that the tables take up the full width of their containers */
+}
+
+h3 {
+  margin-bottom: 10px; /* Add some space between the heading and the table */
+}

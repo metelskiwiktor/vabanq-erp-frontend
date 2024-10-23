@@ -16,9 +16,6 @@ import {ToastService} from "./utility/service/toast-service";
     }
 
     .toast-container ngb-toast {
-      /*max-width: 100px;*/
-      /*min-width: 200px;*/
-      /*max-width: 200px;*/
       max-height: 100px;
     }
   `]

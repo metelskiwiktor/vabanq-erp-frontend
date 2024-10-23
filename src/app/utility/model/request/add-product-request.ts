@@ -6,15 +6,14 @@ export class AddProductRequest {
   printMinutes: number = 0;
   price: string = '';
   allegroTax: string = '';
-  description: string = '';  // Dodajemy pole opisu
+  description: string = '';  // Dodajemy pole opisu,
+  tags: string[] = [];
 }
 
 export class AddMaterialRequest {
   public name?: string;
   public price?: string;
   public accessoryType?: string;
-  public packagingSize?: string;
-  public dimensions?: string;
   public color?: string;
   public temperaturePrint?: string;
   public temperatureDesk?: string;

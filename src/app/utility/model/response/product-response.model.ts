@@ -1,4 +1,5 @@
 export interface ProductResponse {
+  imageUrl?: string;
   id: string;
   name: string;
   ean: string;
@@ -7,6 +8,7 @@ export interface ProductResponse {
   price: number;
   allegroTax: number;
   description?: string;
+  tags: string[];
   preview: ProductFile;
   files: ProductFile[];
 }

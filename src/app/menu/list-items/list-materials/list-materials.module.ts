@@ -6,7 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { FormsModule } from '@angular/forms';
 import {MatIcon} from "@angular/material/icon";
-import {MatIconButton} from "@angular/material/button";  // Dla ngModel
+import {MatIconButton} from "@angular/material/button";
+import {MatSort, MatSortHeader} from "@angular/material/sort";  // Dla ngModel
 
 @NgModule({
   declarations: [
@@ -23,6 +24,8 @@ import {MatIconButton} from "@angular/material/button";  // Dla ngModel
     FormsModule,
     MatIcon,
     MatIconButton,
+    MatSort,
+    MatSortHeader,
   ]
 })
 export class ListMaterialsModule { }

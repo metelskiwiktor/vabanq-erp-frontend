@@ -5,7 +5,6 @@ import {ProductService} from "../../../utility/service/product.service";
 import {
   AddMaterialRequest,
   FastenersAccessoryResponse, FilamentAccessoryResponse,
-  PackagingAccessoryResponse
 } from "../../../utility/model/request/add-product-request";
 import {ColorEvent} from "ngx-color";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
@@ -28,7 +27,6 @@ export class AddMaterialComponent implements OnInit {
       name: [''],
       price: [''],
       description: [''],
-      packagingSize: [''],
       dimensions: [''],
       filamentType: [''],
       producer: [''],
@@ -51,9 +49,6 @@ export class AddMaterialComponent implements OnInit {
         case 'filament':
           this.setFilamentData(this.data.material as FilamentAccessoryResponse);
           break;
-        case 'package':
-          this.setPackageData(this.data.material as PackagingAccessoryResponse);
-          break;
         default:
           console.error('Nieznany typ materiału:', this.data.type);
       }
@@ -65,17 +60,6 @@ export class AddMaterialComponent implements OnInit {
     this.addMaterialRequest.price = fastener.netPricePerQuantity;
     this.addMaterialRequest.description = fastener.description;
     this.addMaterialRequest.accessoryType = "FASTENERS";
-  }
-
-  // Ustaw dane dla package
-  setPackageData(packageData: PackagingAccessoryResponse): void {
-    this.addMaterialRequest.name = packageData.name;
-    this.addMaterialRequest.packagingSize = packageData.packagingSize;
-    this.addMaterialRequest.dimensions = packageData.dimensions;
-    this.addMaterialRequest.price = packageData.netPricePerQuantity;
-    this.addMaterialRequest.description = packageData.description;
-    this.addMaterialRequest.accessoryType = "PACKAGING";
-    this.showPackageOptions = true;
   }
 
   // Ustaw dane dla filament
@@ -97,7 +81,6 @@ export class AddMaterialComponent implements OnInit {
 
   accessoryTypes = [
     { translation: 'Filament', name: 'FILAMENT' },
-    { translation: 'Kartony', name: 'PACKAGING' },
     { translation: 'Elementy złączne', name: 'FASTENERS' },
   ];
   filamentTypes = [
@@ -107,11 +90,9 @@ export class AddMaterialComponent implements OnInit {
     "A", "B", "C"
   ]
   showFilamentOptions: boolean = false;
-  showPackageOptions: boolean = false;
 
   onMaterialsChange($event: any) {
     this.showFilamentOptions = $event.name === 'FILAMENT';
-    this.showPackageOptions = $event.name === 'PACKAGING';
     this.addMaterialRequest.accessoryType = $event.name;
   }
 
@@ -172,43 +153,6 @@ export class AddMaterialComponent implements OnInit {
         }
         break;
 
-      case 'PACKAGING':
-        requestPayload = {
-          name: this.addMaterialRequest.name,
-          packagingSize: this.addMaterialRequest.packagingSize,
-          dimensions: this.addMaterialRequest.dimensions,
-          netPricePerQuantity: this.addMaterialRequest.price,
-          quantity: this.addMaterialRequest.quantity,
-          description: this.addMaterialRequest.description
-        };
-
-        if (this.isEditMode && materialId) {
-          this.productService.updatePackaging(materialId, requestPayload).subscribe(
-            response => {
-              this.showSuccess(successTpl);
-              console.log('Packaging updated!', response);
-              this.dialogRef.close(response);
-            },
-            error => {
-              this.showError(errorTpl, error.error.message || 'Nieznany błąd');
-              console.error('Error occurred:', error);
-            }
-          );
-        } else {
-          this.productService.addPackaging(requestPayload).subscribe(
-            response => {
-              this.showSuccess(successTpl);
-              console.log('Packaging added!', response);
-              this.resetForm();
-            },
-            error => {
-              this.showError(errorTpl, error.error.message || 'Nieznany błąd');
-              console.error('Error occurred:', error);
-            }
-          );
-        }
-        break;
-
       case 'FASTENERS':
         requestPayload = {
           name: this.addMaterialRequest.name,
@@ -253,26 +197,5 @@ export class AddMaterialComponent implements OnInit {
   resetForm() {
     this.addMaterialRequest = new AddMaterialRequest();  // Reset the request object
     this.form.reset();  // Reset the form
-  }
-
-  onDimensionsInput(event: any): void {
-    let input = event.target.value.replace(/[^0-9x.]/g, ''); // Usuń niepożądane znaki
-
-    // Dodajemy "x" po dwóch wymiarach
-    if (input.length > 2 && input[2] !== 'x') {
-      input = input.slice(0, 5) + 'x' + input.slice(5);
-    }
-    if (input.length > 9 && input[9] !== 'x') {
-      input = input.slice(0, 10) + 'x' + input.slice(10);
-    }
-
-    // Jeśli wpisane są 4 cyfry dla każdej sekcji, ograniczamy długość
-    if (input.length > 15) {
-      input = input.slice(0, 15);
-    }
-
-    // Aktualizujemy wartość pola tekstowego
-    event.target.value = input;
-    this.addMaterialRequest.dimensions = input;
   }
 }
