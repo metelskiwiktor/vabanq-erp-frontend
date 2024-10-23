@@ -252,3 +252,21 @@ body {
     display: none;
   }
 }
+/* ... Twoje istniejące style ... */
+
+/* Stylizacja podkategorii */
+.subcategories {
+  padding-left: 20px;
+}
+.subcategories li {
+  list-style: none;
+  margin: 5px 0;
+}
+.subcategories li a {
+  display: flex;
+  align-items: center;
+  color: #b1b1b1;
+}
+.subcategories li a:hover {
+  color: #ffffff;
+}

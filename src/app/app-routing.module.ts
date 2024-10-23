@@ -10,12 +10,16 @@ import {AuthGuard} from "./utility/service/auth.guard";
 import {AddMaterialComponent} from "./menu/add-item/add-material/add-material.component";
 import {AddItemComponent} from "./menu/add-item/add-item.component";
 import {ListItemsComponent} from "./menu/list-items/list-items.component";
+import {GenerateEansComponent} from "./menu/items/generate-eans/generate-eans.component";
+import {TestComponent} from "./menu/test/test.component";
 
 
 const routes: Routes = [
   { path: '', component: MenuComponent, canActivate: [AuthGuard] }, // Zabezpieczamy komponent MenuComponent
   { path: 'add-item', component: AddItemComponent, canActivate: [AuthGuard] },
   { path: 'items', component: ListItemsComponent, canActivate: [AuthGuard] },
+  { path: 'generate-eans', component: GenerateEansComponent, canActivate: [AuthGuard] },
+  { path: 'test', component: TestComponent, canActivate: [AuthGuard] },
   { path: 'allegro-synchronization', component: AllegroSynchronizationComponent, canActivate: [AuthGuard] },
   { path: 'allegro-synchronized', component: AllegroSynchronizedComponent, canActivate: [AuthGuard] },
   { path: 'wms', component: WmsComponent, canActivate: [AuthGuard] },

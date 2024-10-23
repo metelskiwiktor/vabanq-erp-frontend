@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {Observable, of, tap} from 'rxjs';
+import {Observable, of, Subject, tap} from 'rxjs';
 import {environment} from "../../../environments/environment";
 import {CreateWmsRequest} from "../model/request/create-wms-request";
 import {KeycloakService} from "keycloak-angular";
@@ -11,7 +11,8 @@ import {ProductResponse} from "../model/response/product-response.model";
   providedIn: 'root'
 })
 export class ProductService {
-
+  private materialsUpdated = new Subject<void>();
+  public materialsUpdated$ = this.materialsUpdated.asObservable();
   private readonly apiProductUrl: string;
   private readonly apiMaterialUrl: string;
   private readonly apiWmsUrl: string;
@@ -49,6 +50,10 @@ export class ProductService {
     );
   }
 
+  deletePreview(productId: any): Observable<any> {
+    return this.http.delete(`${this.apiProductUrl}/${productId}/preview`);
+  }
+
   // Metoda pobierająca listę produktów
   getProducts(): Observable<ProductResponse[]> {
     // Wykonanie żądania GET do endpointa produktów
@@ -75,14 +80,20 @@ export class ProductService {
 
   addFilament(data: any): Observable<any> {
     return this.http.post<any>(`${this.apiMaterialUrl}/filament`, data).pipe(
-      tap(() => console.log('Filament dodany:', data))
+      tap(() => {
+        console.log('Filament dodany:', data);
+        this.materialsUpdated.next();
+      })
     );
   }
 
   // Aktualizacja istniejącego filamentu
   updateFilament(id: string, data: any): Observable<any> {
     return this.http.put<any>(`${this.apiMaterialUrl}/filament/${id}`, data).pipe(
-      tap(() => console.log(`Filament ${id} zaktualizowany:`, data))
+      tap(() => {
+        console.log(`Filament ${id} zaktualizowany:`, data);
+        this.materialsUpdated.next();
+      })
     );
   }
 
@@ -103,14 +114,20 @@ export class ProductService {
   // Dodanie nowego elementu złącznego
   addFasteners(data: any): Observable<any> {
     return this.http.post<any>(`${this.apiMaterialUrl}/fasteners`, data).pipe(
-      tap(() => console.log('Element złączny dodany:', data))
+      tap(() => {
+        console.log('Element złączny dodany:', data);
+        this.materialsUpdated.next();
+      })
     );
   }
 
   // Aktualizacja istniejącego elementu złącznego
   updateFasteners(id: string, data: any): Observable<any> {
     return this.http.put<any>(`${this.apiMaterialUrl}/fasteners/${id}`, data).pipe(
-      tap(() => console.log(`Element złączny ${id} zaktualizowany:`, data))
+      tap(() => {
+        console.log(`Element złączny ${id} zaktualizowany:`, data);
+        this.materialsUpdated.next();
+      })
     );
   }
   createWms(data: CreateWmsRequest): Observable<any> {

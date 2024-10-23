@@ -8,6 +8,7 @@ export class AddProductRequest {
   allegroTax: string = '';
   description: string = '';  // Dodajemy pole opisu,
   tags: string[] = [];
+  eanName: string = '';
 }
 
 export class AddMaterialRequest {

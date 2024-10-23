@@ -20,6 +20,8 @@ import {MatInputModule} from "@angular/material/input";
 import {MatCardModule} from "@angular/material/card";
 import {MatButtonModule} from "@angular/material/button";
 import {FormsModule} from "@angular/forms";
+import {GenerateEansModule} from "./items/generate-eans/generate-eans.module";
+import {TestModule} from "./test/test.module";
 @NgModule({
   imports: [
     AllegroSynchronizationModule,
@@ -33,6 +35,8 @@ import {FormsModule} from "@angular/forms";
     AppRoutingModule,
     MatSidenavModule,
     AddItemModule,
+    GenerateEansModule,
+    TestModule,
     MatTabsModule,
     MatToolbarModule,
     MatFormFieldModule,

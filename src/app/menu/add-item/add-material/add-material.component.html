@@ -46,9 +46,6 @@
               <input type="text" class="form-control" id="producer" [ngModelOptions]="{standalone: true}" required
                      [(ngModel)]="addMaterialRequest.producer" autocomplete="off"
                      #name="ngModel">
-              <div [hidden]="name.valid || name.pristine" class="alert alert-danger">
-                Nazwa jest wymagana
-              </div>
             </div>
 
             <br>

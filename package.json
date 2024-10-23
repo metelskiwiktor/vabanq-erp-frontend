@@ -29,6 +29,8 @@
     "component": "^1.1.0",
     "inputmask": "5.0.5",
     "jquery": "^3.7.1",
+    "jsbarcode": "^3.11.6",
+    "jspdf": "^2.5.2",
     "keycloak-angular": "^15.2.1",
     "keycloak-js": "^24.0.2",
     "ng-multiselect-dropdown": "^1.0.0",

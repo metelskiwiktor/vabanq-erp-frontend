@@ -91,11 +91,14 @@ export class ListProductsComponent implements OnInit {
     return filtered;
   }
 
-  viewProduct(productId: string): void {
+  editProduct(productId: string): void {
     const selectedProduct = this.products.find(p => p.id === productId);
     if (selectedProduct) {
       const dialogRef = this.dialog.open(AddProductComponent, {
-        data: selectedProduct,
+        data: {
+          "product": selectedProduct,
+          "viewMode": false
+        },
         maxHeight: '100vh',
         width: '80%',
         hasBackdrop: true,
@@ -107,6 +110,27 @@ export class ListProductsComponent implements OnInit {
       });
     }
   }
+
+  previewProduct(productId: string): void {
+    const selectedProduct = this.products.find(p => p.id === productId);
+    if (selectedProduct) {
+      const dialogRef = this.dialog.open(AddProductComponent, {
+        data: {
+          "product": selectedProduct,
+          "viewMode": true
+        },
+        maxHeight: '100vh',
+        width: '80%',
+        hasBackdrop: true,
+        autoFocus: false
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        this.fetchData();
+      });
+    }
+  }
+
 
   createNewProduct(): void {
     console.log('Creating new product...');

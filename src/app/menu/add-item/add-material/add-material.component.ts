@@ -52,6 +52,8 @@ export class AddMaterialComponent implements OnInit {
         default:
           console.error('Nieznany typ materiału:', this.data.type);
       }
+    } else {
+      this.addMaterialRequest.accessoryType = 'FASTENERS';
     }
   }
 

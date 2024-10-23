@@ -24,4 +24,12 @@ export class MenuComponent implements OnInit {
   // logout() {
   //   this.keycloak.logout();
   // }
+
+  subcategories: { [key: string]: boolean } = {
+    items: true
+  };
+
+  toggleSubcategories(category: string): void {
+    // this.subcategories[category] = !this.subcategories[category];
+  }
 }

@@ -18,6 +18,7 @@ import {ToastService} from "./utility/service/toast-service";
     .toast-container ngb-toast {
       max-height: 100px;
     }
+
   `]
 })
 export class AppComponent {

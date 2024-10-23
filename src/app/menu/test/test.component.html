@@ -1,0 +1,36 @@
+<div class="container">
+  <h2>Test EAN Generation</h2>
+  <div class="form-group">
+    <label for="ean">EAN</label>
+    <input
+      type="text"
+      id="ean"
+      class="form-control"
+      [(ngModel)]="ean"
+      (input)="onEanInputChange()"
+      placeholder="Enter 13-digit EAN"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="eanName">Nazwa EAN</label>
+    <input
+      type="text"
+      id="eanName"
+      class="form-control"
+      [(ngModel)]="eanName"
+      (input)="onEanInputChange()"
+      placeholder="Enter EAN Name"
+    />
+  </div>
+
+  <button class="btn btn-primary" (click)="generateEANImage()">Generate EAN Image</button>
+
+  <div *ngIf="eanImageUrl; else errorTemplate" class="ean-image">
+    <img [src]="eanImageUrl" alt="Generated EAN Image" />
+  </div>
+
+  <ng-template #errorTemplate>
+    <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+  </ng-template>
+</div>

@@ -1,0 +1,53 @@
+<div class="container">
+  <h2>Generowanie kodów EAN</h2>
+  <ng-select
+    [items]="products"
+    bindLabel="name"
+    [multiple]="true"
+    placeholder="Wybierz produkty"
+    [(ngModel)]="selectedProductIds"
+    (change)="onProductsChange($event)"
+    [closeOnSelect]="false"
+    [searchFn]="customSearchFn"
+  >
+    <ng-template ng-option-tmp let-item="item">
+      {{ item.ean }} | {{ item.name }}<span *ngIf="item.eanName"> ({{ item.eanName }})</span>
+    </ng-template>
+  </ng-select>
+
+  <div class="product-ean-cards">
+    <div class="ean-card" *ngFor="let product of selectedProducts">
+      <h3 class="product-title">
+        <button type="submit" class="btn btn-info product-btn" (click)="viewProduct(product)">
+          {{ product.name }}
+        </button>
+      </h3>
+
+      <div class="form-group">
+        <label for="ean-{{product.id}}">EAN</label>
+        <input type="text" class="form-control" [disabled]="true" id="ean-{{product.id}}" [(ngModel)]="product.ean"
+               (input)="onEanChange(product)" />
+      </div>
+
+      <div class="form-group">
+        <label for="eanName-{{product.id}}">Nazwa EAN</label>
+        <input type="text" class="form-control" id="eanName-{{product.id}}" [(ngModel)]="product.eanName"
+               (input)="onEanNameChange(product)" />
+      </div>
+
+      <div class="ean-image" *ngIf="product.eanImageUrl; else errorTemplate">
+        <img [src]="product.eanImageUrl" alt="Obraz EAN" class="ean-img" />
+      </div>
+
+      <ng-template #errorTemplate>
+        <div class="error-message" *ngIf="product.errorMessage">{{ product.errorMessage }}</div>
+      </ng-template>
+    </div>
+  </div>
+
+
+  <div class="text-right">
+    <button type="submit" (click)="downloadPDF()" class="btn btn-primary">Pobierz jako PDF</button>
+  </div>
+  <br>
+</div>

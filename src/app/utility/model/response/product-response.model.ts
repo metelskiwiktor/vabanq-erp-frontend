@@ -3,6 +3,7 @@ export interface ProductResponse {
   id: string;
   name: string;
   ean: string;
+  eanName: string;
   productAccessories: ProductAccessoriesResponse;
   printTime: PrintTime;
   price: number;
