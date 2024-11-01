@@ -270,3 +270,17 @@ body {
 .subcategories li a:hover {
   color: #ffffff;
 }
+/* Styl dla aktywnego linku */
+.sidebar li a.active {
+  background-color: #3a3977; /* Kolor tła dla aktywnego elementu */
+  color: white; /* Kolor tekstu dla aktywnego elementu */
+}
+
+.sidebar li a.active .links_name {
+  color: white; /* Upewnij się, że tekst jest widoczny */
+}
+
+/* Opcjonalnie, zmiana koloru ikony */
+.sidebar li a.active i {
+  color: white; /* Kolor ikony dla aktywnego elementu */
+}

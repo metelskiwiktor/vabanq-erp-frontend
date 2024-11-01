@@ -124,6 +124,33 @@
       </div>
     </div>
 
+    <div *ngIf='showPackageOptions'>
+      <!-- Gabaryt InPost -->
+      <div class="form-group">
+        <h2><label>Gabaryt InPost</label></h2>
+        <ng-select [items]="packageSize"
+                   [multiple]="false"
+                   [closeOnSelect]="true"
+                   [ngModelOptions]="{standalone: true}"
+                   [(ngModel)]="addMaterialRequest.packagingSize">
+        </ng-select>
+      </div>
+
+      <br>
+
+      <!-- Wymiary -->
+      <div class="form-group">
+        <h2><label>Wymiary (długość x szerokość x wysokość)</label></h2>
+        <input type="text" [(ngModel)]="addMaterialRequest.dimensions"
+               class="form-control"
+               placeholder="00.00x00.00x00.00"
+               name="dimensions"
+               autocomplete="off"
+               >
+      </div>
+
+    </div>
+
     <!-- Cena netto za sztukę -->
     <div *ngIf='!showFilamentOptions'>
       <h2><label>Cena</label></h2>

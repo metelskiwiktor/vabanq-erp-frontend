@@ -22,6 +22,8 @@ export class AddMaterialRequest {
   public filamentType?: string;
   public description?: string;
   public quantity?: number = 0;
+  packagingSize?: string;
+  dimensions?: string;
 }
 
 export class PrintTime {

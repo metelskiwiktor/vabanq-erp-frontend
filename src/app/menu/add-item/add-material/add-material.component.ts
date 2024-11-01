@@ -4,7 +4,7 @@ import {ToastService} from "../../../utility/service/toast-service";
 import {ProductService} from "../../../utility/service/product.service";
 import {
   AddMaterialRequest,
-  FastenersAccessoryResponse, FilamentAccessoryResponse,
+  FastenersAccessoryResponse, FilamentAccessoryResponse, PackagingAccessoryResponse,
 } from "../../../utility/model/request/add-product-request";
 import {ColorEvent} from "ngx-color";
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
@@ -22,7 +22,10 @@ export class AddMaterialComponent implements OnInit {
   buttonText: string = "Utwórz";
   toastSuccessMessage: string = "Pomyślnie utworzono";
 
-  constructor(private productService: ProductService, fb: FormBuilder, @Optional() @Inject(MAT_DIALOG_DATA) public data: {material: any, type: string }, @Optional() public dialogRef: MatDialogRef<AddMaterialComponent>) {
+  constructor(private productService: ProductService, fb: FormBuilder, @Optional() @Inject(MAT_DIALOG_DATA) public data: {
+    material: any,
+    type: string
+  }, @Optional() public dialogRef: MatDialogRef<AddMaterialComponent>) {
     this.form = fb.group({
       name: [''],
       price: [''],
@@ -35,6 +38,7 @@ export class AddMaterialComponent implements OnInit {
       color: ['']
     });
   }
+
   ngOnInit(): void {
     // Zainicjuj formularz na podstawie przekazanych danych i typu materiału
     if (this.data && this.data.type) {
@@ -49,6 +53,9 @@ export class AddMaterialComponent implements OnInit {
         case 'filament':
           this.setFilamentData(this.data.material as FilamentAccessoryResponse);
           break;
+        case 'package':
+          this.setPackageData(this.data.material as PackagingAccessoryResponse);
+          break;
         default:
           console.error('Nieznany typ materiału:', this.data.type);
       }
@@ -62,6 +69,16 @@ export class AddMaterialComponent implements OnInit {
     this.addMaterialRequest.price = fastener.netPricePerQuantity;
     this.addMaterialRequest.description = fastener.description;
     this.addMaterialRequest.accessoryType = "FASTENERS";
+  }
+
+  setPackageData(packageData: PackagingAccessoryResponse): void {
+    this.addMaterialRequest.name = packageData.name;
+    this.addMaterialRequest.packagingSize = packageData.packagingSize;
+    this.addMaterialRequest.dimensions = packageData.dimensions;
+    this.addMaterialRequest.price = packageData.netPricePerQuantity;
+    this.addMaterialRequest.description = packageData.description;
+    this.addMaterialRequest.accessoryType = "PACKAGING";
+    this.showPackageOptions = true;
   }
 
   // Ustaw dane dla filament
@@ -82,8 +99,9 @@ export class AddMaterialComponent implements OnInit {
   addMaterialRequest = new AddMaterialRequest();
 
   accessoryTypes = [
-    { translation: 'Filament', name: 'FILAMENT' },
-    { translation: 'Elementy złączne', name: 'FASTENERS' },
+    {translation: 'Elementy złączne', name: 'FASTENERS'},
+    {translation: 'Filament', name: 'FILAMENT'},
+    {translation: 'Kartony', name: 'PACKAGING'},
   ];
   filamentTypes = [
     "PLA", "PETG", "ASA", "ABS", "PLA+", "Nylon", "TPU"
@@ -92,9 +110,11 @@ export class AddMaterialComponent implements OnInit {
     "A", "B", "C"
   ]
   showFilamentOptions: boolean = false;
+  showPackageOptions: boolean = false;
 
   onMaterialsChange($event: any) {
     this.showFilamentOptions = $event.name === 'FILAMENT';
+    this.showPackageOptions = $event.name === 'PACKAGING';
     this.addMaterialRequest.accessoryType = $event.name;
   }
 
@@ -103,11 +123,11 @@ export class AddMaterialComponent implements OnInit {
   }
 
   showSuccess(template: TemplateRef<any>) {
-    this.toastService.show({ template, classname: 'bg-success text-light', delay: 2000, text: this.toastSuccessMessage });
+    this.toastService.show({template, classname: 'bg-success text-light', delay: 2000, text: this.toastSuccessMessage});
   }
 
   showError(template: TemplateRef<any>, errorMessage: string) {
-    this.toastService.show({ template, classname: 'bg-danger text-light', delay: 4000, text: errorMessage });
+    this.toastService.show({template, classname: 'bg-danger text-light', delay: 4000, text: errorMessage});
   }
 
   onMaterialSubmit(successTpl: TemplateRef<any>, errorTpl: TemplateRef<any>) {
@@ -189,11 +209,67 @@ export class AddMaterialComponent implements OnInit {
           );
         }
         break;
+      case 'PACKAGING':
+        requestPayload = {
+          name: this.addMaterialRequest.name,
+          packagingSize: this.addMaterialRequest.packagingSize,
+          dimensions: this.addMaterialRequest.dimensions,
+          netPricePerQuantity: this.addMaterialRequest.price,
+          quantity: this.addMaterialRequest.quantity,
+          description: this.addMaterialRequest.description
+        };
 
+        if (this.isEditMode && materialId) {
+          this.productService.updatePackaging(materialId, requestPayload).subscribe(
+            response => {
+              this.showSuccess(successTpl);
+              console.log('Packaging updated!', response);
+              this.dialogRef.close(response);
+            },
+            error => {
+              this.showError(errorTpl, error.error.message || 'Nieznany błąd');
+              console.error('Error occurred:', error);
+            }
+          );
+        } else {
+          this.productService.addPackaging(requestPayload).subscribe(
+            response => {
+              this.showSuccess(successTpl);
+              console.log('Packaging added!', response);
+              this.resetForm();
+            },
+            error => {
+              this.showError(errorTpl, error.error.message || 'Nieznany błąd');
+              console.error('Error occurred:', error);
+            }
+          );
+        }
+        break;
       default:
         this.showError(errorTpl, "Nieprawidłowe dane" || 'Nieznany błąd');
         console.error('Unknown accessory type');
     }
+  }
+
+  onDimensionsInput(event: any): void {
+    let input = event.target.value.replace(/[^0-9x.]/g, ''); // Usuń niepożądane znaki
+
+    // Dodajemy "x" po dwóch wymiarach
+    if (input.length > 2 && input[2] !== 'x') {
+      input = input.slice(0, 5) + 'x' + input.slice(5);
+    }
+    if (input.length > 9 && input[9] !== 'x') {
+      input = input.slice(0, 10) + 'x' + input.slice(10);
+    }
+
+    // Jeśli wpisane są 4 cyfry dla każdej sekcji, ograniczamy długość
+    if (input.length > 15) {
+      input = input.slice(0, 15);
+    }
+
+    // Aktualizujemy wartość pola tekstowego
+    event.target.value = input;
+    this.addMaterialRequest.dimensions = input;
   }
 
   resetForm() {

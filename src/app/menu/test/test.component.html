@@ -1,36 +1,56 @@
-<div class="container">
-  <h2>Test EAN Generation</h2>
-  <div class="form-group">
-    <label for="ean">EAN</label>
-    <input
-      type="text"
-      id="ean"
-      class="form-control"
-      [(ngModel)]="ean"
-      (input)="onEanInputChange()"
-      placeholder="Enter 13-digit EAN"
-    />
-  </div>
+<div style="width: 100%; height: 600px;" xmlns:svg="http://www.w3.org/1999/XSL/Transform">
+  <ngx-graph
+    [links]="links"
+    [nodes]="nodes"
+    [layout]="'dagreCluster'"
+    [enableZoom]="true"
+    [autoZoom]="true"
+    [zoomLevel]="0.75"
+    [panOnZoom]="true"
+  >
+    <ng-template #defsTemplate>
+      <svg:marker
+        id="end-arrow"
+        viewBox="0 -5 10 10"
+        refX="15"
+        markerWidth="6"
+        markerHeight="6"
+        orient="auto"
+      >
+        <svg:path d="M0,-5L10,0L0,5" fill="#000"></svg:path>
+      </svg:marker>
+    </ng-template>
 
-  <div class="form-group">
-    <label for="eanName">Nazwa EAN</label>
-    <input
-      type="text"
-      id="eanName"
-      class="form-control"
-      [(ngModel)]="eanName"
-      (input)="onEanInputChange()"
-      placeholder="Enter EAN Name"
-    />
-  </div>
+    <ng-template #nodeTemplate let-node>
+      <div
+        [ngClass]="{
+          'product-node': node.data.type === 'product',
+          'material-node': node.data.type === 'material'
+        }"
+        class="node-container"
+      >
+        {{ node.label }}
+      </div>
+    </ng-template>
 
-  <button class="btn btn-primary" (click)="generateEANImage()">Generate EAN Image</button>
-
-  <div *ngIf="eanImageUrl; else errorTemplate" class="ean-image">
-    <img [src]="eanImageUrl" alt="Generated EAN Image" />
-  </div>
-
-  <ng-template #errorTemplate>
-    <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
-  </ng-template>
+    <ng-template #linkTemplate let-link>
+      <svg:g class="edge">
+        <svg:path
+          class="line"
+          stroke-width="2"
+          [attr.marker-end]="'url(#end-arrow)'"
+          [attr.d]="generateLine(link.points)"
+        ></svg:path>
+        <svg:text>
+          <textPath
+            [attr.href]="'#' + link.id"
+            startOffset="50%"
+            text-anchor="middle"
+          >
+            {{ link.label }}
+          </textPath>
+        </svg:text>
+      </svg:g>
+    </ng-template>
+  </ngx-graph>
 </div>

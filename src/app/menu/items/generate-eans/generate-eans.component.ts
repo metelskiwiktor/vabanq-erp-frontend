@@ -71,15 +71,13 @@ export class GenerateEansComponent implements OnInit {
       || (item.eanName && item.eanName.toLowerCase().includes(term));
   }
 
-
   generateEANImage(product: any) {
     if (!product.ean || product.ean.length !== 13) {
-      product.eanImageUrl = '';
       product.errorMessage = 'EAN musi składać się z 13 cyfr.';
+      product.eanImageUrl = '';
       return;
     }
 
-    // Tworzenie canvas dla kodu kreskowego
     const canvasBarcode = document.createElement('canvas');
     try {
       JsBarcode(canvasBarcode, product.ean, {
@@ -91,81 +89,83 @@ export class GenerateEansComponent implements OnInit {
         height: 100,
         margin: 10,
       });
+
+      // Only create name canvas if eanName is provided
+      let canvasNameHeight = 0;
+      const canvasName = document.createElement('canvas');
+      const ctxName = canvasName.getContext('2d');
+      if (ctxName && product.eanName) {
+        let fontSize = 18;
+        canvasName.width = canvasBarcode.width;
+
+        const wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth: number) => {
+          const words = text.split(' ');
+          let lines: string[] = [];
+          let currentLine = words[0];
+
+          for (let i = 1; i < words.length; i++) {
+            const word = words[i];
+            const width = context.measureText(currentLine + ' ' + word).width;
+            if (width < maxWidth) {
+              currentLine += ' ' + word;
+            } else {
+              lines.push(currentLine);
+              currentLine = word;
+            }
+          }
+          lines.push(currentLine);
+          return lines;
+        };
+
+        do {
+          ctxName.font = `${fontSize}px Arial`;
+          var lines = wrapText(ctxName, product.eanName, canvasName.width - 20);
+          if (lines.length > 3) {
+            fontSize -= 1;
+          }
+        } while (lines.length > 3 && fontSize > 10);
+
+        const lineHeight = fontSize + 3;
+        canvasName.height = lines.length * lineHeight + 5;
+        canvasNameHeight = canvasName.height - 3; // Adjusted spacing between text and barcode
+
+        ctxName.fillStyle = '#FFFFFF';
+        ctxName.fillRect(0, 0, canvasName.width, canvasName.height);
+        ctxName.font = `${fontSize}px Arial`;
+        ctxName.fillStyle = '#000000';
+        ctxName.textAlign = 'center';
+        ctxName.textBaseline = 'top';
+
+        const centerX = canvasName.width / 2;
+        let y = 5;
+
+        for (let i = 0; i < lines.length; i++) {
+          ctxName.fillText(lines[i], centerX, y);
+          y += lineHeight;
+        }
+      }
+
+      const mainCanvas = document.createElement('canvas');
+      mainCanvas.width = canvasBarcode.width;
+      mainCanvas.height = canvasBarcode.height + canvasNameHeight;
+      const ctxMain = mainCanvas.getContext('2d');
+
+      if (ctxMain) {
+        ctxMain.fillStyle = '#FFFFFF';
+        ctxMain.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+        if (product.eanName) {
+          ctxMain.drawImage(canvasName, 0, 0); // Draw text above the barcode if eanName exists
+        }
+        ctxMain.drawImage(canvasBarcode, 0, canvasNameHeight); // Position barcode below text
+      }
+
+      product.eanImageUrl = mainCanvas.toDataURL('image/png');
+      product.errorMessage = '';
     } catch (error) {
       console.log(error);
       product.errorMessage = `Błąd generowania obrazu EAN: ${error}`;
       product.eanImageUrl = '';
-      return;
     }
-
-    // Tworzenie canvas dla nazwy EAN
-    const canvasName = document.createElement('canvas');
-    const ctxName = canvasName.getContext('2d');
-    if (ctxName) {
-      let fontSize = 18;
-      canvasName.width = canvasBarcode.width;
-
-      const wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth: number) => {
-        const words = text.split(' ');
-        let lines: string[] = [];
-        let currentLine = words[0];
-
-        for (let i = 1; i < words.length; i++) {
-          const word = words[i];
-          const width = context.measureText(currentLine + ' ' + word).width;
-          if (width < maxWidth) {
-            currentLine += ' ' + word;
-          } else {
-            lines.push(currentLine);
-            currentLine = word;
-          }
-        }
-        lines.push(currentLine);
-        return lines;
-      };
-
-      do {
-        ctxName.font = `${fontSize}px Arial`;
-        var lines = wrapText(ctxName, product.eanName, canvasName.width - 20);
-        if (lines.length > 3) {
-          fontSize -= 1;
-        }
-      } while (lines.length > 3 && fontSize > 10);
-
-      const lineHeight = fontSize + 5;
-      canvasName.height = lines.length * lineHeight + 10;
-
-      ctxName.fillStyle = '#FFFFFF';
-      ctxName.fillRect(0, 0, canvasName.width, canvasName.height);
-
-      ctxName.font = `${fontSize}px Arial`;
-      ctxName.fillStyle = '#000000';
-      ctxName.textAlign = 'left';
-      ctxName.textBaseline = 'top';
-      const x = 10;
-      let y = 5;
-
-      for (let i = 0; i < lines.length; i++) {
-        ctxName.fillText(lines[i], x, y);
-        y += lineHeight;
-      }
-    }
-
-    // Tworzenie głównego canvas i łączenie elementów
-    const mainCanvas = document.createElement('canvas');
-    mainCanvas.width = canvasBarcode.width;
-    mainCanvas.height = canvasName.height + canvasBarcode.height;
-    const ctxMain = mainCanvas.getContext('2d');
-
-    if (ctxMain) {
-      ctxMain.fillStyle = '#FFFFFF';
-      ctxMain.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-      ctxMain.drawImage(canvasName, 0, 0);
-      ctxMain.drawImage(canvasBarcode, 0, canvasName.height);
-    }
-
-    product.eanImageUrl = mainCanvas.toDataURL('image/png');
-    product.errorMessage = ''; // Czyszczenie komunikatu o błędzie po pomyślnym wygenerowaniu
   }
 
   onEanNameChange(product: any) {
