@@ -2,7 +2,6 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable, of, Subject, tap} from 'rxjs';
 import {environment} from "../../../environments/environment";
-import {CreateWmsRequest} from "../model/request/create-wms-request";
 import {KeycloakService} from "keycloak-angular";
 import {GroupedAccessoriesResponse} from "../model/request/add-product-request";
 import {ProductResponse} from "../model/response/product-response.model";
@@ -21,7 +20,7 @@ export class ProductService {
   constructor(private http: HttpClient, private readonly keycloak: KeycloakService) {
     this.apiProductUrl = environment.backendUrl + '/api/products';
     this.apiMaterialUrl = environment.backendUrl + '/api/accessories';
-    this.apiWmsUrl = environment.backendUrl + '/wms';
+    this.apiWmsUrl = environment.backendUrl + '/api/inventory';
     this.apiAllegroUrl = environment.backendUrl + '/allegro';
     console.log(this.apiProductUrl);
   }
@@ -130,9 +129,6 @@ export class ProductService {
       })
     );
   }
-  createWms(data: CreateWmsRequest): Observable<any> {
-    return this.http.post<any>(this.apiWmsUrl, data);
-  }
 
   getMaterials(): Observable<GroupedAccessoriesResponse> {
     return this.http.get<GroupedAccessoriesResponse>(`${this.apiMaterialUrl}/all`);
@@ -141,6 +137,20 @@ export class ProductService {
   getTags(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiProductUrl}/tags`);
   }
+
+  updateWmsProduct(productId: string, wms: any) {
+    return this.http.post<void>(`${this.apiWmsUrl}/update-wms/product?productId=${productId}`, wms);
+  }
+  updateWmsFastenersAccessory(id: string, wms: any) {
+    return this.http.post<void>(`${this.apiWmsUrl}/update-wms/fasteners-accessory?fastenerAccessoryId=${id}`, wms);
+  }
+  updateWmsFilamentAccessory(id: string, wms: any) {
+    return this.http.post<void>(`${this.apiWmsUrl}/update-wms/filament-accessory?filamentAccessoryId=${id}`, wms);
+  }
+  updateWmsPackagingAccessory(id: string, wms: any) {
+    return this.http.post<void>(`${this.apiWmsUrl}/update-wms/packaging-accessory?packagingAccessoryId=${id}`, wms);
+  }
+
 
   getOffers(token: string): Observable<any> {
     return this.http.get<any>(this.apiAllegroUrl + "/synchronization/my-offers", {headers: new HttpHeaders().set('allegro-api', token)});

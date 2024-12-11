@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 
-import { ProductService } from '../../../utility/service/product.service';
-import { ProductResponse } from '../../../utility/model/response/product-response.model';
+import {ProductService} from '../../../utility/service/product.service';
+import {ProductResponse} from '../../../utility/model/response/product-response.model';
 import JsBarcode from 'jsbarcode';
 import {AddProductComponent} from "../../add-item/add-product/add-product.component";
 import {MatDialog} from "@angular/material/dialog";
@@ -18,7 +18,8 @@ export class GenerateEansComponent implements OnInit {
   selectedProducts: any[] = []; // Tablica przechowująca wybrane produkty z dodatkowymi polami
   selectedProductsMap: Map<string, any> = new Map();
 
-  constructor(private productService: ProductService, public dialog: MatDialog){ }
+  constructor(private productService: ProductService, public dialog: MatDialog) {
+  }
 
   ngOnInit(): void {
     this.fetchProducts();
@@ -54,7 +55,8 @@ export class GenerateEansComponent implements OnInit {
           eanName: product.eanName || '',
           ean: product.ean || '',
           eanImageUrl: '',
-          errorMessage: ''
+          errorMessage: '',
+          quantity: 1
         };
         this.generateEANImage(productCopy);
         this.selectedProductsMap.set(product.id, productCopy);
@@ -62,6 +64,19 @@ export class GenerateEansComponent implements OnInit {
     }
 
     this.selectedProducts = Array.from(this.selectedProductsMap.values());
+  }
+
+  increaseQuantity(product: any) {
+    if(product.quantity >= 28) {
+      product.quantity = 28;
+    } else
+    product.quantity = (product.quantity || 1) + 1;
+  }
+
+  decreaseQuantity(product: any) {
+    if (product.quantity > 1) {
+      product.quantity -= 1;
+    }
   }
 
   customSearchFn(term: string, item: any) {
@@ -209,39 +224,41 @@ export class GenerateEansComponent implements OnInit {
       return;
     }
 
-    const imagePromises = validProducts.map(product => {
-      return new Promise<void>((resolve) => {
-        const imgData = product.eanImageUrl;
+    const imagePromises = validProducts.flatMap(product => {
+      return Array(product.quantity).fill(0).map(() => {
+        return new Promise<void>((resolve) => {
+          const imgData = product.eanImageUrl;
 
-        const image = new Image();
-        image.src = imgData;
+          const image = new Image();
+          image.src = imgData;
 
-        image.onload = () => {
-          const aspectRatio = image.width / image.height;
-          const imgHeight = imgWidth / aspectRatio;
+          image.onload = () => {
+            const aspectRatio = image.width / image.height;
+            const imgHeight = imgWidth / aspectRatio;
 
-          if (x + imgWidth > pageWidth - 10) {
-            x = 10;
-            y += imgHeight + spacing;
-          }
+            if (x + imgWidth > pageWidth - 10) {
+              x = 10;
+              y += imgHeight + spacing;
+            }
 
-          if (y + imgHeight > pageHeight - 10) {
-            doc.addPage();
-            x = 10;
-            y = 10;
-          }
+            if (y + imgHeight > pageHeight - 10) {
+              doc.addPage();
+              x = 10;
+              y = 10;
+            }
 
-          doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+            doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
 
-          x += imgWidth + spacing;
+            x += imgWidth + spacing;
 
-          resolve();
-        };
+            resolve();
+          };
 
-        image.onerror = () => {
-          console.error('Błąd ładowania obrazu.');
-          resolve();
-        };
+          image.onerror = () => {
+            console.error('Błąd ładowania obrazu.');
+            resolve();
+          };
+        });
       });
     });
 
@@ -249,10 +266,20 @@ export class GenerateEansComponent implements OnInit {
 
     const now = new Date();
     const formattedDate = now.toLocaleDateString('pl-PL');
-    const formattedTime = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-    const eanCount = validProducts.length;
+    const formattedTime = now.toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'});
+    const eanCount = validProducts.reduce((sum, product) => sum + product.quantity, 0);
     const fileName = `${formattedDate} ${formattedTime} ${eanCount} kody ean`;
 
     doc.save(`${fileName}.pdf`);
   }
+
+  onQuantityChange(product: any) {
+    if (product.quantity < 1) {
+      product.quantity = 1;
+    }
+    if(product.quantity >= 28) {
+      product.quantity = 28;
+    }
+  }
+
 }

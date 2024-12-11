@@ -12,6 +12,13 @@ export interface ProductResponse {
   tags: string[];
   preview: ProductFile;
   files: ProductFile[];
+  wms: Wms;
+}
+
+export interface Wms {
+  enabled: boolean;
+  quantity: number;
+  criticalStock: number;
 }
 
 export interface ProductAccessoriesResponse {
@@ -31,6 +38,7 @@ export interface FastenersAccessoryResponse {
   netPricePerQuantity: number;
   quantity: number;
   description: string;
+  wms: Wms;
 }
 
 export interface FilamentAccessoryResponse {
@@ -44,6 +52,7 @@ export interface FilamentAccessoryResponse {
   color: string;
   description: string;
   quantity: number;
+  wms: Wms;
 }
 
 export interface PackagingAccessoryResponse {
@@ -54,6 +63,7 @@ export interface PackagingAccessoryResponse {
   netPricePerQuantity: number;
   quantity: number;
   description: string;
+  wms: Wms;
 }
 
 export interface ProductFile {

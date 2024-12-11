@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 import {MenuComponent} from "./menu/menu.component";
 import {AddProductComponent} from "./menu/add-item/add-product/add-product.component";
 import {AllegroSynchronizationComponent} from "./menu/allegro-synchronization/allegro-synchronization.component";
-import {WmsComponent} from "./menu/wms/wms.component";
 import {SettingsComponent} from "./menu/settings/settings.component";
 import {AllegroSynchronizedComponent} from "./menu/allegro-synchronized/allegro-synchronized.component";
 import {AuthGuard} from "./utility/service/auth.guard";
@@ -12,6 +11,9 @@ import {AddItemComponent} from "./menu/add-item/add-item.component";
 import {ListItemsComponent} from "./menu/list-items/list-items.component";
 import {GenerateEansComponent} from "./menu/items/generate-eans/generate-eans.component";
 import {TestComponent} from "./menu/test/test.component";
+import {
+  ProductMaterialsWmsTableComponent
+} from "./menu/product-materials-wms-table/product-materials-wms-table.component";
 
 
 const routes: Routes = [
@@ -22,7 +24,7 @@ const routes: Routes = [
   { path: 'test', component: TestComponent, canActivate: [AuthGuard] },
   { path: 'allegro-synchronization', component: AllegroSynchronizationComponent, canActivate: [AuthGuard] },
   { path: 'allegro-synchronized', component: AllegroSynchronizedComponent, canActivate: [AuthGuard] },
-  { path: 'wms', component: WmsComponent, canActivate: [AuthGuard] },
+  { path: 'wms', component: ProductMaterialsWmsTableComponent, canActivate: [AuthGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
   // { path: 'login', component: LoginComponent }, // Nie wymagamy zalogowania się na stronie logowania
   { path: '**', redirectTo: '' },

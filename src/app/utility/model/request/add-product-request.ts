@@ -1,3 +1,5 @@
+import {Wms} from "../response/product-response.model";
+
 export class AddProductRequest {
   name: string = '';
   ean: string = '';
@@ -48,6 +50,7 @@ export interface FastenersAccessoryResponse {
   netPricePerQuantity: string;
   quantity: number;
   description: string;
+  wms: Wms;
 }
 
 export interface FilamentAccessoryResponse {
@@ -61,6 +64,7 @@ export interface FilamentAccessoryResponse {
   color: string;
   description: string;
   quantity: number;
+  wms: Wms;
 }
 
 export interface PackagingAccessoryResponse {
@@ -71,4 +75,5 @@ export interface PackagingAccessoryResponse {
   netPricePerQuantity: string;
   quantity: number;
   description: string;
+  wms: Wms;
 }

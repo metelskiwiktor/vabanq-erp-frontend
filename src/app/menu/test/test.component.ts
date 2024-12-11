@@ -1,7 +1,5 @@
 import { Component } from '@angular/core';
 import {Edge, Node} from "@swimlane/ngx-graph";
-// @ts-ignore
-import * as shape from 'd3-shape';
 
 
 @Component({
@@ -15,9 +13,9 @@ export class TestComponent {
   line: any;
 
   constructor() {
-    this.line = shape.line()
-      .x((d: any) => d.x)
-      .y((d: any) => d.y);
+    // this.line = shape.line()
+    //   .x((d: any) => d.x)
+    //   .y((d: any) => d.y);
 
     this.initializeGraph();
   }

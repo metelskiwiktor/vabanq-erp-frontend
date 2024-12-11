@@ -17,11 +17,27 @@
 
   <div class="product-ean-cards">
     <div class="ean-card" *ngFor="let product of selectedProducts">
-      <h3 class="product-title">
-        <button type="submit" class="btn btn-info product-btn" (click)="viewProduct(product)">
-          {{ product.name }}
-        </button>
-      </h3>
+      <div class="product-header">
+        <h3 class="product-title">
+          <button type="submit" class="btn btn-primary" (click)="viewProduct(product)">
+            {{ product.name }}
+          </button>
+        </h3>
+        <div class="quantity-counter">
+          <button class="btn btn-danger quantity-btn-minus" (click)="decreaseQuantity(product)">-</button>
+          <input
+            type="number"
+            class="quantity-input"
+            [(ngModel)]="product.quantity"
+            (change)="onQuantityChange(product)"
+            min="1"
+          />
+          <button class="btn btn-success quantity-btn-plus" (click)="increaseQuantity(product)">+</button>
+        </div>
+      </div>
+
+
+      <br>
 
       <div class="form-group">
         <label for="ean-{{product.id}}">EAN</label>
@@ -45,6 +61,7 @@
     </div>
   </div>
 
+  <br>
 
   <div class="text-right">
     <button type="submit" (click)="downloadPDF()" class="btn btn-primary">Pobierz jako PDF</button>

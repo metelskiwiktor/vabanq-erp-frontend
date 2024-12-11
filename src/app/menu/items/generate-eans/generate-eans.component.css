@@ -52,3 +52,70 @@
   color: red;
   font-weight: bold;
 }
+
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.quantity-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem; /* Większa przerwa między elementami */
+}
+
+.quantity-input {
+  width: 4ch;
+  height: 2.5rem;
+  text-align: center;
+  font-size: 1.2rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+  -webkit-appearance: none; /* Chrome, Safari, Edge */
+  margin: 0; /* Usunięcie dodatkowego marginesu */
+}
+.quantity-counter .btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 1rem;
+}
+
+.quantity-value {
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: center;
+  min-width: 2rem;
+}
+
+.quantity-btn-minus {
+  background-color: #4c1d1d; /* Bootstrap's danger red */
+  border-color: #4c1d1d;
+  color: #fff;
+}
+
+.quantity-btn-plus {
+  background-color: #1d672d; /* Bootstrap's success green */
+  border-color: #1d672d;
+  color: #fff;
+}
+
+.quantity-btn-minus:hover {
+  background-color: #c82333; /* Darker red on hover */
+  border-color: #bd2130;
+}
+
+.quantity-btn-plus:hover {
+  background-color: #218838; /* Darker green on hover */
+  border-color: #1e7e34;
+}
