@@ -1,17 +1,25 @@
-import {Component, OnInit} from '@angular/core';
-import {MatTableDataSource} from '@angular/material/table';
-import {FormBuilder, FormControl, FormGroup} from '@angular/forms';
-import {MatDialog} from '@angular/material/dialog';
-import {ProductService} from '../../utility/service/product.service';
-import {AddProductComponent} from '../add-item/add-product/add-product.component';
-import {AddMaterialComponent} from '../add-item/add-material/add-material.component';
+import { Component, OnInit } from '@angular/core';
+import { MatTableDataSource } from '@angular/material/table';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { ProductService } from '../../utility/service/product.service';
+import { AddProductComponent } from '../add-item/add-product/add-product.component';
+import { AddMaterialComponent } from '../add-item/add-material/add-material.component';
+import {SummaryDialogComponent} from "../summary-dialog/summary-dialog.component";
+
+interface WmsData {
+  enabled: boolean;
+  quantity: number;
+  criticalStock: number;
+}
 
 interface WmsItem {
   type: 'product' | 'filament' | 'package' | 'fastener';
   id: string;
   name: string;
-  wms: { enabled: boolean; quantity: number; criticalStock: number };
+  wms: WmsData;
   fullObject?: any; // Stores the full product or material object
+  originalWms: WmsData; // To store the original state for comparison
 }
 
 @Component({
@@ -20,7 +28,7 @@ interface WmsItem {
   styleUrls: ['./product-materials-wms-table.component.css'],
 })
 export class ProductMaterialsWmsTableComponent implements OnInit {
-  displayedColumns = ['name', 'enabled', 'quantity', 'criticalStock', 'actions'];
+  displayedColumns = ['name', 'enabled', 'quantity', 'criticalStock'];
   productDataSource = new MatTableDataSource<WmsItem>();
   materialDataSource = new MatTableDataSource<WmsItem>();
   filteredProductDataSource = new MatTableDataSource<WmsItem>();
@@ -28,7 +36,6 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
 
   editForm: { [key: string]: FormGroup } = {};
 
-  // Filtrowanie
   productFilter: string = '';
   materialFilter: string = '';
   availableTags: string[] = [];
@@ -48,10 +55,11 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
         name: p.name,
         wms: p.wms,
         fullObject: p,
+        originalWms: {...p.wms} // store original values
       }));
 
       this.productDataSource.data = productItems;
-      this.filteredProductDataSource.data = productItems; // Set filtered data
+      this.filteredProductDataSource.data = productItems;
       this.extractTags(products);
       productItems.forEach((item) => this.createEditForm(item));
 
@@ -64,6 +72,7 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
             name: f.name,
             wms: f.wms,
             fullObject: f,
+            originalWms: {...f.wms}
           })
         );
         materials.packages.forEach((p) =>
@@ -73,6 +82,7 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
             name: p.name,
             wms: p.wms,
             fullObject: p,
+            originalWms: {...p.wms}
           })
         );
         materials.fasteners.forEach((f) =>
@@ -82,11 +92,12 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
             name: f.name,
             wms: f.wms,
             fullObject: f,
+            originalWms: {...f.wms}
           })
         );
 
         this.materialDataSource.data = materialItems;
-        this.filteredMaterialDataSource.data = materialItems; // Set filtered data
+        this.filteredMaterialDataSource.data = materialItems;
         materialItems.forEach((item) => this.createEditForm(item));
       });
     });
@@ -96,7 +107,7 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
     const filterValue = this.productFilter.trim().toLowerCase();
     this.filteredProductDataSource.data = this.productDataSource.data.filter((item) =>
       item.name.toLowerCase().includes(filterValue) &&
-      (this.selectedTags.length === 0 || item.fullObject.tags.some((tag: string) => this.selectedTags.includes(tag)))
+      (this.selectedTags.length === 0 || (item.fullObject?.tags || []).some((tag: string) => this.selectedTags.includes(tag)))
     );
   }
 
@@ -120,12 +131,8 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
     });
   }
 
-  saveWms(item: WmsItem) {
-    const wms = this.editForm[item.id].value;
-    if(item.type==='product') this.productService.updateWmsProduct(item.id,wms).subscribe(()=>this.loadData());
-    if(item.type==='filament') this.productService.updateWmsFilamentAccessory(item.id,wms).subscribe(()=>this.loadData());
-    if(item.type==='package') this.productService.updateWmsPackagingAccessory(item.id,wms).subscribe(()=>this.loadData());
-    if(item.type==='fastener') this.productService.updateWmsFastenersAccessory(item.id,wms).subscribe(()=>this.loadData());
+  getControl(id: string, controlName: string): FormControl {
+    return this.editForm[id]?.get(controlName) as FormControl;
   }
 
   previewProduct(productId: string): void {
@@ -133,11 +140,13 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
     if (selectedProduct) {
       const dialogRef = this.dialog.open(AddProductComponent, {
         data: {
-          product: selectedProduct, // Pass the full product object
+          product: selectedProduct,
           viewMode: true,
         },
-        width: '80%',
         maxHeight: '90vh',
+        width: '80%',
+        hasBackdrop: true,
+        autoFocus: false
       });
 
       dialogRef.afterClosed().subscribe(() => this.loadData());
@@ -149,19 +158,81 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
     if (selectedMaterial) {
       const dialogRef = this.dialog.open(AddMaterialComponent, {
         data: {
-          material: selectedMaterial.fullObject, // Pass the full material object
-          type: selectedMaterial.type, // Pass the type dynamically
+          material: selectedMaterial.fullObject,
+          type: selectedMaterial.type,
+          viewMode: true
         },
+        maxHeight: '80vh',
         width: '80%',
-        maxHeight: '90vh',
+        hasBackdrop: true,
+        autoFocus: false
       });
 
       dialogRef.afterClosed().subscribe(() => this.loadData());
     }
   }
 
+  // Funkcja wywoływana po kliknięciu "Wprowadź zmiany"
+  openChangeSummaryDialog() {
+    const changedItems = this.getChangedItems();
 
-  getControl(id: string, controlName: string): FormControl {
-    return this.editForm[id]?.get(controlName) as FormControl;
+    const dialogRef = this.dialog.open(SummaryDialogComponent, {
+      data: {
+        changedItems: changedItems
+      },
+      maxHeight: '90vh',
+      width: '80%',
+      height: 'auto',
+      hasBackdrop: true,
+      autoFocus: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if(result === 'save') {
+        this.saveAllChanges(changedItems);
+      }
+    });
+  }
+
+  // Pobierz listę zmienionych pozycji wraz z różnicami
+  getChangedItems() {
+    const changed: {item: WmsItem, changes: Partial<WmsData>}[] = [];
+    [...this.productDataSource.data, ...this.materialDataSource.data].forEach(item => {
+      const current = this.editForm[item.id].value as WmsData;
+      const original = item.originalWms;
+      const diff: Partial<WmsData> = {};
+
+      if(current.enabled !== original.enabled) diff.enabled = current.enabled;
+      if(current.quantity !== original.quantity) diff.quantity = current.quantity;
+      if(current.criticalStock !== original.criticalStock) diff.criticalStock = current.criticalStock;
+
+      if(Object.keys(diff).length > 0) {
+        changed.push({item, changes: diff});
+      }
+    });
+    return changed;
+  }
+
+  // Po kliknięciu "Zapisz" w dialogu wysyłamy requesty
+  saveAllChanges(changed: {item: WmsItem, changes: Partial<WmsData>}[]) {
+    const requests = changed.map(ch => {
+      const wms = {
+        enabled: this.editForm[ch.item.id].get('enabled')!.value,
+        quantity: this.editForm[ch.item.id].get('quantity')!.value,
+        criticalStock: this.editForm[ch.item.id].get('criticalStock')!.value
+      };
+      if(ch.item.type==='product') return this.productService.updateWmsProduct(ch.item.id,wms);
+      if(ch.item.type==='filament') return this.productService.updateWmsFilamentAccessory(ch.item.id,wms);
+      if(ch.item.type==='package') return this.productService.updateWmsPackagingAccessory(ch.item.id,wms);
+      if(ch.item.type==='fastener') return this.productService.updateWmsFastenersAccessory(ch.item.id,wms);
+      return null;
+    }).filter(r => r !== null);
+
+    if(requests.length > 0) {
+      // Poczekaj na wszystkie requesty
+      Promise.all(requests.map(r => r!.toPromise())).then(() => {
+        this.loadData();
+      });
+    }
   }
 }

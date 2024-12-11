@@ -1,0 +1,13 @@
+.changed-items-container {
+  max-height: 70vh; /* Ustal maksymalną wysokość kontenera */
+  overflow-y: auto; /* Włącz przewijanie w pionie */
+}
+
+.changed-item {
+  padding: 10px; /* Odstęp wewnętrzny dla każdego elementu */
+  border-bottom: 1px solid #ccc; /* Linia oddzielająca elementy */
+}
+
+.changed-item:last-child {
+  border-bottom: none; /* Usuń dolną linię dla ostatniego elementu */
+}

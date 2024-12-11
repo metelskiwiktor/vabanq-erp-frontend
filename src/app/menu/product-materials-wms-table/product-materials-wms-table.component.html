@@ -1,17 +1,17 @@
+<div style="display:flex; justify-content: flex-end; margin-bottom:20px;">
+  <button mat-button color="primary" (click)="openChangeSummaryDialog()">Wprowadź zmiany</button>
+</div>
+
 <div>
   <h2>Produkty</h2>
-
-  <!-- Filtruj nazwę produktu -->
   <mat-form-field class="filter-input">
     <mat-label>Filtruj nazwę</mat-label>
     <input matInput [(ngModel)]="productFilter" placeholder="Szukaj produktów" (input)="applyProductFilter()" />
   </mat-form-field>
 
-  <!-- Filtruj tagi -->
   <div class="form-group">
     <ng-select
       [items]="availableTags"
-      bindLabel="name"
       [multiple]="true"
       [closeOnSelect]="false"
       placeholder="Filtruj tagi"
@@ -55,22 +55,15 @@
       </mat-cell>
     </ng-container>
 
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-button (click)="saveWms(element)">Zapisz</button>
-      </mat-cell>
-    </ng-container>
-
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
     <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
   </mat-table>
 </div>
+
 <br><br>
+
 <div>
   <h2>Materiały</h2>
-
-  <!-- Filtruj nazwę materiału -->
   <mat-form-field class="filter-input">
     <mat-label>Filtruj nazwę</mat-label>
     <input matInput [(ngModel)]="materialFilter" placeholder="Szukaj materiałów" (input)="applyMaterialFilter()" />
@@ -111,12 +104,6 @@
       </mat-cell>
     </ng-container>
 
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-button (click)="saveWms(element)">Zapisz</button>
-      </mat-cell>
-    </ng-container>
 
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
     <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
