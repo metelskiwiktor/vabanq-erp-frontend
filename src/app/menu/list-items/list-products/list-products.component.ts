@@ -131,11 +131,6 @@ export class ListProductsComponent implements OnInit {
     }
   }
 
-
-  createNewProduct(): void {
-    console.log('Creating new product...');
-  }
-
   formatTags(product: ProductResponse) {
     return product.tags.map(tag => `#${tag}`).join(', ');
   }

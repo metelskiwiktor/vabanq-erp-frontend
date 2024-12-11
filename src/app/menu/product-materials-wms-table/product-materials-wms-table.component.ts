@@ -1,59 +1,137 @@
-import {Component, OnInit} from '@angular/core';
-import {MatTableDataSource} from "@angular/material/table";
-import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
-import {ProductService} from "../../utility/service/product.service";
+import { Component, OnInit } from '@angular/core';
+import { MatTableDataSource } from '@angular/material/table';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { ProductService } from '../../utility/service/product.service';
+import { AddProductComponent } from '../add-item/add-product/add-product.component';
+import { AddMaterialComponent } from '../add-item/add-material/add-material.component';
 
 interface WmsItem {
-  type: 'product'|'filament'|'packaging'|'fasteners';
+  type: 'product' | 'filament' | 'package' | 'fastener';
   id: string;
   name: string;
-  wms: {enabled: boolean, quantity: number, criticalStock: number};
+  wms: { enabled: boolean; quantity: number; criticalStock: number };
+  fullObject?: any; // Stores the full product or material object
 }
-
 
 @Component({
   selector: 'app-product-materials-wms-table',
   templateUrl: './product-materials-wms-table.component.html',
-  styleUrl: './product-materials-wms-table.component.css'
+  styleUrls: ['./product-materials-wms-table.component.css'],
 })
 export class ProductMaterialsWmsTableComponent implements OnInit {
-  displayedColumns = ['name','enabled','quantity','criticalStock','actions'];
-  dataSource = new MatTableDataSource<WmsItem>();
-  editForm: {[key: string]: FormGroup} = {};
+  displayedColumns = ['name', 'enabled', 'quantity', 'criticalStock', 'actions'];
+  productDataSource = new MatTableDataSource<WmsItem>();
+  materialDataSource = new MatTableDataSource<WmsItem>();
+  editForm: { [key: string]: FormGroup } = {};
 
-  constructor(private productService: ProductService, private fb: FormBuilder) {}
+  constructor(
+    private productService: ProductService,
+    private fb: FormBuilder,
+    private dialog: MatDialog
+  ) {}
 
   ngOnInit(): void {
     this.loadData();
   }
 
-  loadData(){
-    this.productService.getProducts().subscribe(products=>{
-      this.productService.getMaterials().subscribe(materials=>{
-        const items:WmsItem[] = [];
-        products.forEach(p=>items.push({type:'product',id:p.id,name:p.name,wms:p.wms}));
-        materials.filaments.forEach(f=>items.push({type:'filament',id:f.id,name:f.name,wms:f.wms}));
-        materials.packages.forEach(p=>items.push({type:'packaging',id:p.id,name:p.name,wms:p.wms}));
-        materials.fasteners.forEach(f=>items.push({type:'fasteners',id:f.id,name:f.name,wms:f.wms}));
-        this.dataSource.data=items;
-        items.forEach(i=>{
-          this.editForm[i.id]=this.fb.group({
-            enabled:[i.wms.enabled],
-            quantity:[i.wms.quantity],
-            criticalStock:[i.wms.criticalStock]
-          });
-        });
+  loadData() {
+    // Fetch products
+    this.productService.getProducts().subscribe((products) => {
+      const productItems: WmsItem[] = products.map((p) => ({
+        type: 'product',
+        id: p.id,
+        name: p.name,
+        wms: p.wms,
+        fullObject: p, // Store the full product object
+      }));
+      this.productDataSource.data = productItems;
+      productItems.forEach((item) => this.createEditForm(item));
+
+      // Fetch materials
+      this.productService.getMaterials().subscribe((materials) => {
+        const materialItems: WmsItem[] = [];
+        materials.filaments.forEach((f) =>
+          materialItems.push({
+            type: 'filament',
+            id: f.id,
+            name: f.name,
+            wms: f.wms,
+            fullObject: f, // Store the full material object
+          })
+        );
+        materials.packages.forEach((p) =>
+          materialItems.push({
+            type: 'package',
+            id: p.id,
+            name: p.name,
+            wms: p.wms,
+            fullObject: p, // Store the full material object
+          })
+        );
+        materials.fasteners.forEach((f) =>
+          materialItems.push({
+            type: 'fastener',
+            id: f.id,
+            name: f.name,
+            wms: f.wms,
+            fullObject: f, // Store the full material object
+          })
+        );
+        this.materialDataSource.data = materialItems;
+        materialItems.forEach((item) => this.createEditForm(item));
       });
     });
   }
 
-  saveWms(item:WmsItem){
+  createEditForm(item: WmsItem) {
+    this.editForm[item.id] = this.fb.group({
+      enabled: [item.wms.enabled],
+      quantity: [item.wms.quantity],
+      criticalStock: [item.wms.criticalStock],
+    });
+  }
+
+  saveWms(item: WmsItem) {
     const wms = this.editForm[item.id].value;
     if(item.type==='product') this.productService.updateWmsProduct(item.id,wms).subscribe(()=>this.loadData());
     if(item.type==='filament') this.productService.updateWmsFilamentAccessory(item.id,wms).subscribe(()=>this.loadData());
-    if(item.type==='packaging') this.productService.updateWmsPackagingAccessory(item.id,wms).subscribe(()=>this.loadData());
-    if(item.type==='fasteners') this.productService.updateWmsFastenersAccessory(item.id,wms).subscribe(()=>this.loadData());
+    if(item.type==='package') this.productService.updateWmsPackagingAccessory(item.id,wms).subscribe(()=>this.loadData());
+    if(item.type==='fastener') this.productService.updateWmsFastenersAccessory(item.id,wms).subscribe(()=>this.loadData());
   }
+
+  previewProduct(productId: string): void {
+    const selectedProduct = this.productDataSource.data.find((item) => item.id === productId)?.fullObject;
+    if (selectedProduct) {
+      const dialogRef = this.dialog.open(AddProductComponent, {
+        data: {
+          product: selectedProduct, // Pass the full product object
+          viewMode: true,
+        },
+        width: '80%',
+        maxHeight: '90vh',
+      });
+
+      dialogRef.afterClosed().subscribe(() => this.loadData());
+    }
+  }
+
+  previewMaterial(materialId: string): void {
+    const selectedMaterial = this.materialDataSource.data.find((item) => item.id === materialId);
+    if (selectedMaterial) {
+      const dialogRef = this.dialog.open(AddMaterialComponent, {
+        data: {
+          material: selectedMaterial.fullObject, // Pass the full material object
+          type: selectedMaterial.type, // Pass the type dynamically
+        },
+        width: '80%',
+        maxHeight: '90vh',
+      });
+
+      dialogRef.afterClosed().subscribe(() => this.loadData());
+    }
+  }
+
 
   getControl(id: string, controlName: string): FormControl {
     return this.editForm[id]?.get(controlName) as FormControl;
