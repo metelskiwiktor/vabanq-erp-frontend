@@ -1,6 +1,26 @@
 <div>
   <h2>Produkty</h2>
-  <mat-table [dataSource]="productDataSource" class="mat-elevation-z8">
+
+  <!-- Filtruj nazwę produktu -->
+  <mat-form-field class="filter-input">
+    <mat-label>Filtruj nazwę</mat-label>
+    <input matInput [(ngModel)]="productFilter" placeholder="Szukaj produktów" (input)="applyProductFilter()" />
+  </mat-form-field>
+
+  <!-- Filtruj tagi -->
+  <div class="form-group">
+    <ng-select
+      [items]="availableTags"
+      bindLabel="name"
+      [multiple]="true"
+      [closeOnSelect]="false"
+      placeholder="Filtruj tagi"
+      [(ngModel)]="selectedTags"
+      (change)="applyProductFilter()">
+    </ng-select>
+  </div>
+
+  <mat-table [dataSource]="filteredProductDataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="name">
       <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
       <mat-cell *matCellDef="let element">
@@ -21,7 +41,7 @@
       <mat-header-cell *matHeaderCellDef>Ilość</mat-header-cell>
       <mat-cell *matCellDef="let element">
         <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'quantity')"/>
+          <input matInput type="number" [formControl]="getControl(element.id, 'quantity')" />
         </mat-form-field>
       </mat-cell>
     </ng-container>
@@ -30,7 +50,7 @@
       <mat-header-cell *matHeaderCellDef>Krytyczny Stan</mat-header-cell>
       <mat-cell *matCellDef="let element">
         <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')"/>
+          <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')" />
         </mat-form-field>
       </mat-cell>
     </ng-container>
@@ -49,7 +69,14 @@
 <br><br>
 <div>
   <h2>Materiały</h2>
-  <mat-table [dataSource]="materialDataSource" class="mat-elevation-z8">
+
+  <!-- Filtruj nazwę materiału -->
+  <mat-form-field class="filter-input">
+    <mat-label>Filtruj nazwę</mat-label>
+    <input matInput [(ngModel)]="materialFilter" placeholder="Szukaj materiałów" (input)="applyMaterialFilter()" />
+  </mat-form-field>
+
+  <mat-table [dataSource]="filteredMaterialDataSource" class="mat-elevation-z8">
     <ng-container matColumnDef="name">
       <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
       <mat-cell *matCellDef="let element">
@@ -70,7 +97,7 @@
       <mat-header-cell *matHeaderCellDef>Ilość</mat-header-cell>
       <mat-cell *matCellDef="let element">
         <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'quantity')"/>
+          <input matInput type="number" [formControl]="getControl(element.id, 'quantity')" />
         </mat-form-field>
       </mat-cell>
     </ng-container>
@@ -79,7 +106,7 @@
       <mat-header-cell *matHeaderCellDef>Krytyczny Stan</mat-header-cell>
       <mat-cell *matCellDef="let element">
         <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')"/>
+          <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')" />
         </mat-form-field>
       </mat-cell>
     </ng-container>

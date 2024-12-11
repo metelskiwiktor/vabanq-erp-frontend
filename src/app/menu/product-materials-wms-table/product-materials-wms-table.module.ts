@@ -17,6 +17,7 @@ import {MatCardModule} from "@angular/material/card";
 import {MatButtonModule} from "@angular/material/button";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatSlideToggle} from "@angular/material/slide-toggle";
+import {NgSelectModule} from "@ng-select/ng-select";
 
 
 
@@ -44,6 +45,7 @@ import {MatSlideToggle} from "@angular/material/slide-toggle";
     MatRow,
     MatRowDef,
     MatHeaderRowDef,
+    NgSelectModule,
   ]
 })
 export class ProductMaterialsWmsTableModule { }
