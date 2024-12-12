@@ -14,10 +14,12 @@ import {TestComponent} from "./menu/test/test.component";
 import {
   ProductMaterialsWmsTableComponent
 } from "./menu/product-materials-wms-table/product-materials-wms-table.component";
+import {DashboardComponent} from "./menu/dashboard/dashboard.component";
 
 
 const routes: Routes = [
   { path: '', component: MenuComponent, canActivate: [AuthGuard] }, // Zabezpieczamy komponent MenuComponent
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'add-item', component: AddItemComponent, canActivate: [AuthGuard] },
   { path: 'items', component: ListItemsComponent, canActivate: [AuthGuard] },
   { path: 'generate-eans', component: GenerateEansComponent, canActivate: [AuthGuard] },

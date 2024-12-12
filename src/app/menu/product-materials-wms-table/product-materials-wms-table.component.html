@@ -1,111 +1,132 @@
-<div style="display:flex; justify-content: flex-end; margin-bottom:20px;">
-  <button mat-button color="primary" (click)="openChangeSummaryDialog()">Wprowadź zmiany</button>
-</div>
+<div class="container" style="max-width: 80%; margin: 0 auto;">
+  <br><br>
+  <section class="mb-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h2>Produkty</h2>
+      <button mat-raised-button color="primary" style="margin-left: auto;" (click)="openChangeSummaryDialog()">Wprowadź zmiany</button>
+    </div>
 
-<div>
-  <h2>Produkty</h2>
-  <mat-form-field class="filter-input">
-    <mat-label>Filtruj nazwę</mat-label>
-    <input matInput [(ngModel)]="productFilter" placeholder="Szukaj produktów" (input)="applyProductFilter()" />
-  </mat-form-field>
+    <!-- Filtr nazwy -->
+    <mat-form-field class="w-100 mb-3">
+      <mat-label>Filtruj nazwę</mat-label>
+      <input matInput [(ngModel)]="productFilter" placeholder="Szukaj produktów" (input)="applyProductFilter()" />
+    </mat-form-field>
 
-  <div class="form-group">
-    <ng-select
-      [items]="availableTags"
-      [multiple]="true"
-      [closeOnSelect]="false"
-      placeholder="Filtruj tagi"
-      [(ngModel)]="selectedTags"
-      (change)="applyProductFilter()">
-    </ng-select>
-  </div>
+    <!-- Filtr tagów -->
+    <div class="mb-3">
+      <ng-select
+        [items]="availableTags"
+        [multiple]="true"
+        [closeOnSelect]="false"
+        placeholder="Filtruj tagi"
+        [(ngModel)]="selectedTags"
+        (change)="applyProductFilter()">
+      </ng-select>
+    </div>
 
-  <mat-table [dataSource]="filteredProductDataSource" class="mat-elevation-z8">
-    <ng-container matColumnDef="name">
-      <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-button color="primary" (click)="previewProduct(element.id)">
-          {{ element.name }}
-        </button>
-      </mat-cell>
-    </ng-container>
+    <!-- Tabela produktów -->
+    <mat-table [dataSource]="filteredProductDataSource" class="mat-elevation-z8">
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <button mat-button color="primary" (click)="previewProduct(element.id)">
+            {{ element.name }}
+          </button>
+        </mat-cell>
+      </ng-container>
 
-    <ng-container matColumnDef="enabled">
-      <mat-header-cell *matHeaderCellDef>Aktywny</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <mat-slide-toggle [formControl]="getControl(element.id, 'enabled')"></mat-slide-toggle>
-      </mat-cell>
-    </ng-container>
+      <ng-container matColumnDef="enabled">
+        <mat-header-cell *matHeaderCellDef>Aktywny</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-slide-toggle [formControl]="getControl(element.id, 'enabled')"></mat-slide-toggle>
+        </mat-cell>
+      </ng-container>
 
-    <ng-container matColumnDef="quantity">
-      <mat-header-cell *matHeaderCellDef>Ilość</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'quantity')" />
-        </mat-form-field>
-      </mat-cell>
-    </ng-container>
+      <ng-container matColumnDef="quantity">
+        <mat-header-cell *matHeaderCellDef>Ilość</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-form-field appearance="outline">
+            <input matInput type="number" [formControl]="getControl(element.id, 'quantity')" />
+          </mat-form-field>
+        </mat-cell>
+      </ng-container>
 
-    <ng-container matColumnDef="criticalStock">
-      <mat-header-cell *matHeaderCellDef>Krytyczny Stan</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')" />
-        </mat-form-field>
-      </mat-cell>
-    </ng-container>
+      <ng-container matColumnDef="criticalStock">
+        <mat-header-cell *matHeaderCellDef>Krytyczny Stan</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-form-field appearance="outline">
+            <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')" />
+          </mat-form-field>
+        </mat-cell>
+      </ng-container>
 
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-  </mat-table>
-</div>
+      <ng-container matColumnDef="percentCriticalStock">
+        <mat-header-cell *matHeaderCellDef>% Krytyczny</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          {{ calculateCriticalStockPercentage(element.wms.quantity, element.wms.criticalStock) | number: '1.0-2' }}%
+        </mat-cell>
+      </ng-container>
 
-<br><br>
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </section>
 
-<div>
-  <h2>Materiały</h2>
-  <mat-form-field class="filter-input">
-    <mat-label>Filtruj nazwę</mat-label>
-    <input matInput [(ngModel)]="materialFilter" placeholder="Szukaj materiałów" (input)="applyMaterialFilter()" />
-  </mat-form-field>
+  <!-- Sekcja: Materiały -->
+  <section>
+    <h2>Materiały</h2>
 
-  <mat-table [dataSource]="filteredMaterialDataSource" class="mat-elevation-z8">
-    <ng-container matColumnDef="name">
-      <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <button mat-button color="primary" (click)="previewMaterial(element.id)">
-          {{ element.name }}
-        </button>
-      </mat-cell>
-    </ng-container>
+    <!-- Filtr nazwy -->
+    <mat-form-field class="w-100 mb-3">
+      <mat-label>Filtruj nazwę</mat-label>
+      <input matInput [(ngModel)]="materialFilter" placeholder="Szukaj materiałów" (input)="applyMaterialFilter()" />
+    </mat-form-field>
 
-    <ng-container matColumnDef="enabled">
-      <mat-header-cell *matHeaderCellDef>Aktywny</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <mat-slide-toggle [formControl]="getControl(element.id, 'enabled')"></mat-slide-toggle>
-      </mat-cell>
-    </ng-container>
+    <!-- Tabela materiałów -->
+    <mat-table [dataSource]="filteredMaterialDataSource" class="mat-elevation-z8">
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <button mat-button color="primary" (click)="previewMaterial(element.id)">
+            {{ element.name }}
+          </button>
+        </mat-cell>
+      </ng-container>
 
-    <ng-container matColumnDef="quantity">
-      <mat-header-cell *matHeaderCellDef>Ilość</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'quantity')" />
-        </mat-form-field>
-      </mat-cell>
-    </ng-container>
+      <ng-container matColumnDef="enabled">
+        <mat-header-cell *matHeaderCellDef>Aktywny</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-slide-toggle [formControl]="getControl(element.id, 'enabled')"></mat-slide-toggle>
+        </mat-cell>
+      </ng-container>
 
-    <ng-container matColumnDef="criticalStock">
-      <mat-header-cell *matHeaderCellDef>Krytyczny Stan</mat-header-cell>
-      <mat-cell *matCellDef="let element">
-        <mat-form-field>
-          <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')" />
-        </mat-form-field>
-      </mat-cell>
-    </ng-container>
+      <ng-container matColumnDef="quantity">
+        <mat-header-cell *matHeaderCellDef>Ilość</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-form-field appearance="outline">
+            <input matInput type="number" [formControl]="getControl(element.id, 'quantity')" />
+          </mat-form-field>
+        </mat-cell>
+      </ng-container>
 
+      <ng-container matColumnDef="criticalStock">
+        <mat-header-cell *matHeaderCellDef>Krytyczny Stan</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          <mat-form-field appearance="outline">
+            <input matInput type="number" [formControl]="getControl(element.id, 'criticalStock')" />
+          </mat-form-field>
+        </mat-cell>
+      </ng-container>
 
-    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-  </mat-table>
+      <ng-container matColumnDef="percentCriticalStock">
+        <mat-header-cell *matHeaderCellDef>% Krytyczny</mat-header-cell>
+        <mat-cell *matCellDef="let element">
+          {{ calculateCriticalStockPercentage(element.wms.quantity, element.wms.criticalStock) | number: '1.0-2' }}%
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </section>
 </div>

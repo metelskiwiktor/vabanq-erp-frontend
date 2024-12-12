@@ -22,12 +22,14 @@ import {GenerateEansModule} from "./items/generate-eans/generate-eans.module";
 import {TestModule} from "./test/test.module";
 import {ProductMaterialsWmsTableModule} from "./product-materials-wms-table/product-materials-wms-table.module";
 import {SummaryDialogModule} from "./summary-dialog/summary-dialog.module";
+import {DashboardModule} from "./dashboard/dashboard.module";
 @NgModule({
   imports: [
     AllegroSynchronizationModule,
     AllegroSynchronizedModule,
     ProductMaterialsWmsTableModule,
     SummaryDialogModule,
+    DashboardModule,
     SettingsModule,
     BrowserModule,
     BrowserAnimationsModule,

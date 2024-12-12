@@ -1,6 +1,6 @@
 <h1 mat-dialog-title>Podsumowanie zmian</h1>
 <div mat-dialog-content>
-  <p>Zmieniłeś {{data.changedItems.length}} elementów.</p>
+  <p>Zmieniasz {{data.changedItems.length}} elementy.</p>
   <div class="changed-items-container">
     <div class="changed-item" *ngFor="let ch of data.changedItems">
       <b>{{ch.item.type}}: {{ch.item.name}}</b><br>

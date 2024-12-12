@@ -19,6 +19,10 @@ import {ToastService} from "./utility/service/toast-service";
       max-height: 100px;
     }
 
+    body {
+      background-color: #121212;
+      color: #ffffff;
+    }
   `]
 })
 export class AppComponent {

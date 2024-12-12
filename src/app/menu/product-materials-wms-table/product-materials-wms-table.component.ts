@@ -18,8 +18,8 @@ interface WmsItem {
   id: string;
   name: string;
   wms: WmsData;
-  fullObject?: any; // Stores the full product or material object
-  originalWms: WmsData; // To store the original state for comparison
+  fullObject?: any;
+  originalWms: WmsData;
 }
 
 @Component({
@@ -28,7 +28,7 @@ interface WmsItem {
   styleUrls: ['./product-materials-wms-table.component.css'],
 })
 export class ProductMaterialsWmsTableComponent implements OnInit {
-  displayedColumns = ['name', 'enabled', 'quantity', 'criticalStock'];
+  displayedColumns = ['name', 'enabled', 'quantity', 'criticalStock', 'percentCriticalStock'];
   productDataSource = new MatTableDataSource<WmsItem>();
   materialDataSource = new MatTableDataSource<WmsItem>();
   filteredProductDataSource = new MatTableDataSource<WmsItem>();
@@ -229,10 +229,16 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
     }).filter(r => r !== null);
 
     if(requests.length > 0) {
-      // Poczekaj na wszystkie requesty
       Promise.all(requests.map(r => r!.toPromise())).then(() => {
         this.loadData();
       });
     }
+  }
+
+  calculateCriticalStockPercentage(quantity: number, criticalStock: number): number {
+    if (criticalStock === 0) {
+      return 0;
+    }
+    return (criticalStock / quantity) * 100;
   }
 }
