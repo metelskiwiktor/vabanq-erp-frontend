@@ -72,7 +72,7 @@ export class ProductService {
   }
 
   deleteFile(productId: string, fileId: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiProductUrl}/${productId}/file/${fileId}`, ).pipe(
+    return this.http.delete<any>(`${this.apiProductUrl}/${productId}/file/${fileId}`,).pipe(
       tap(() => console.log('File removed:', fileId))
     );
   }
@@ -141,31 +141,21 @@ export class ProductService {
   updateWmsProduct(productId: string, wms: any) {
     return this.http.post<void>(`${this.apiWmsUrl}/update-wms/product?productId=${productId}`, wms);
   }
+
   updateWmsFastenersAccessory(id: string, wms: any) {
     return this.http.post<void>(`${this.apiWmsUrl}/update-wms/fasteners-accessory?fastenerAccessoryId=${id}`, wms);
   }
+
   updateWmsFilamentAccessory(id: string, wms: any) {
     return this.http.post<void>(`${this.apiWmsUrl}/update-wms/filament-accessory?filamentAccessoryId=${id}`, wms);
   }
+
   updateWmsPackagingAccessory(id: string, wms: any) {
     return this.http.post<void>(`${this.apiWmsUrl}/update-wms/packaging-accessory?packagingAccessoryId=${id}`, wms);
   }
 
-
   getOffers(token: string): Observable<any> {
     return this.http.get<any>(this.apiAllegroUrl + "/synchronization/my-offers", {headers: new HttpHeaders().set('allegro-api', token)});
-  }
-
-  getAllWms() {
-    return this.http.get<any[]>(this.apiWmsUrl);
-  }
-
-  getWmsById(id: string) {
-    return this.http.get<any>(this.apiWmsUrl + "/" + id);
-  }
-
-  updateWms(id: string, formData: FormData) {
-    return this.http.post<any>(this.apiWmsUrl + "/" + id + "/update", formData);
   }
 
   getAllegroAuthUrl() {
@@ -178,14 +168,6 @@ export class ProductService {
 
   createOfferProducts(body: any) {
     return this.http.post<any>(this.apiAllegroUrl + "/synchronization/save-offer-products", body);
-  }
-
-  myOrders(token: string) {
-    return this.http.get<any>(this.apiAllegroUrl + "/synchronization/ready-orders", {headers: new HttpHeaders().set('allegro-api', token)});
-  }
-
-  startSynchronization(token: string) {
-    return this.http.get<any>(this.apiAllegroUrl + "/synchronization/start-synchronization", {headers: new HttpHeaders().set('allegro-api', token)});
   }
 
   getOffersProducts(token: string) {

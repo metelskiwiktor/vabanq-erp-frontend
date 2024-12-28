@@ -28,16 +28,6 @@ export class AddMaterialRequest {
   dimensions?: string;
 }
 
-export class PrintTime {
-  constructor(hours?: number, minutes?: number) {
-    this.hours = hours;
-    this.minutes = minutes;
-  }
-
-  public hours?: number;
-  public minutes?: number;
-}
-
 export interface GroupedAccessoriesResponse {
   fasteners: FastenersAccessoryResponse[];
   filaments: FilamentAccessoryResponse[];

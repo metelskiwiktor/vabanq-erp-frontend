@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -6,6 +6,7 @@ import { ProductService } from '../../utility/service/product.service';
 import { AddProductComponent } from '../add-item/add-product/add-product.component';
 import { AddMaterialComponent } from '../add-item/add-material/add-material.component';
 import {SummaryDialogComponent} from "../summary-dialog/summary-dialog.component";
+import {MatSort} from "@angular/material/sort";
 
 interface WmsData {
   enabled: boolean;
@@ -14,6 +15,7 @@ interface WmsData {
 }
 
 interface WmsItem {
+  [key: string]: any; // Dodaje dynamiczne klucze
   type: 'product' | 'filament' | 'package' | 'fastener';
   id: string;
   name: string;
@@ -27,7 +29,9 @@ interface WmsItem {
   templateUrl: './product-materials-wms-table.component.html',
   styleUrls: ['./product-materials-wms-table.component.css'],
 })
-export class ProductMaterialsWmsTableComponent implements OnInit {
+export class ProductMaterialsWmsTableComponent implements OnInit, AfterViewInit {
+  @ViewChild('productSort') productSort!: MatSort;
+  @ViewChild('materialSort') materialSort!: MatSort;
   displayedColumns = ['name', 'enabled', 'quantity', 'criticalStock', 'percentCriticalStock'];
   productDataSource = new MatTableDataSource<WmsItem>();
   materialDataSource = new MatTableDataSource<WmsItem>();
@@ -41,10 +45,68 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
   availableTags: string[] = [];
   selectedTags: string[] = [];
 
+  selectedMaterialType: string = '';
+
   constructor(private productService: ProductService, private fb: FormBuilder, private dialog: MatDialog) {}
 
   ngOnInit(): void {
     this.loadData();
+  }
+
+  ngAfterViewInit(): void {
+    this.filteredProductDataSource.sortingDataAccessor = (item: WmsItem, property: keyof WmsItem | 'percentCriticalStock') => {
+      switch (property) {
+        case 'percentCriticalStock':
+          return this.calculateCriticalStockPercentage(item.wms.quantity, item.wms.criticalStock);
+        case 'enabled':
+          return item.wms.enabled ? 1 : 0;
+        case 'name':
+          return item.name.toLowerCase();
+        case 'quantity':
+          return item.wms.quantity;
+        case 'criticalStock':
+          return item.wms.criticalStock;
+        default:
+          return (item as any)[property];
+      }
+    };
+
+    this.filteredProductDataSource.sort = this.productSort;
+    this.productSort.active = 'enabled';
+    this.productSort.direction = 'desc';
+    this.filteredProductDataSource.data = this.filteredProductDataSource.data
+      .sort((a, b) => {
+        const enabledDiff = (b.wms.enabled ? 1 : 0) - (a.wms.enabled ? 1 : 0);
+        if (enabledDiff !== 0) return enabledDiff;
+        return a.name.localeCompare(b.name);
+      });
+
+    this.filteredMaterialDataSource.sortingDataAccessor = (item: WmsItem, property: keyof WmsItem | 'percentCriticalStock') => {
+      switch (property) {
+        case 'percentCriticalStock':
+          return this.calculateCriticalStockPercentage(item.wms.quantity, item.wms.criticalStock);
+        case 'enabled':
+          return item.wms.enabled ? 1 : 0;
+        case 'name':
+          return item.name.toLowerCase();
+        case 'quantity':
+          return item.wms.quantity;
+        case 'criticalStock':
+          return item.wms.criticalStock;
+        default:
+          return (item as any)[property];
+      }
+    };
+
+    this.filteredMaterialDataSource.sort = this.materialSort;
+    this.materialSort.active = 'enabled';
+    this.materialSort.direction = 'desc';
+    this.filteredMaterialDataSource.data = this.filteredMaterialDataSource.data
+      .sort((a, b) => {
+        const enabledDiff = (b.wms.enabled ? 1 : 0) - (a.wms.enabled ? 1 : 0);
+        if (enabledDiff !== 0) return enabledDiff;
+        return a.name.localeCompare(b.name);
+      });
   }
 
   loadData() {
@@ -113,9 +175,13 @@ export class ProductMaterialsWmsTableComponent implements OnInit {
 
   applyMaterialFilter() {
     const filterValue = this.materialFilter.trim().toLowerCase();
-    this.filteredMaterialDataSource.data = this.materialDataSource.data.filter((item) =>
-      item.name.toLowerCase().includes(filterValue)
-    );
+
+    this.filteredMaterialDataSource.data = this.materialDataSource.data.filter((item) => {
+      const matchesNameFilter = item.name.toLowerCase().includes(filterValue);
+      const matchesTypeFilter = !this.selectedMaterialType || item.type === this.selectedMaterialType;
+
+      return matchesNameFilter && matchesTypeFilter;
+    });
   }
 
   extractTags(products: any[]) {

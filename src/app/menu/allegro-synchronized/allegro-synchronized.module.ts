@@ -4,6 +4,15 @@ import {AllegroSynchronizedComponent} from "./allegro-synchronized.component";
 import {MatNestedTreeNode, MatTree, MatTreeModule} from "@angular/material/tree";
 import {MatIcon} from "@angular/material/icon";
 import {MatIconButton} from "@angular/material/button";
+import {
+  MatCell,
+  MatCellDef,
+  MatColumnDef,
+  MatHeaderCell,
+  MatHeaderCellDef,
+  MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
+  MatTable
+} from "@angular/material/table";
 
 
 
@@ -15,7 +24,17 @@ import {MatIconButton} from "@angular/material/button";
     CommonModule,
     MatTreeModule,
     MatIcon,
-    MatIconButton
+    MatIconButton,
+    MatTable,
+    MatHeaderCell,
+    MatColumnDef,
+    MatCellDef,
+    MatHeaderCellDef,
+    MatCell,
+    MatHeaderRow,
+    MatHeaderRowDef,
+    MatRow,
+    MatRowDef
   ]
 })
 export class AllegroSynchronizedModule { }

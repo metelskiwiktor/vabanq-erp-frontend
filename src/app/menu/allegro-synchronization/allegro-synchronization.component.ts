@@ -31,18 +31,19 @@ export interface Offer {
 })
 export class AllegroSynchronizationComponent implements OnInit {
   offers: Offer[] = [];
-  printItems: any = [
-    {
-      "name": "asdsa",
-      "id": "1234",
-      "quantity": 1
-    },
-    {
-      "name": "sdfsdfdsfs",
-      "id": "12344",
-      "quantity": 1
-    }
-  ]
+  printItems: any;
+  // printItems: any = [
+  //   {
+  //     "name": "asdsa",
+  //     "id": "1234",
+  //     "quantity": 1
+  //   },
+  //   {
+  //     "name": "sdfsdfdsfs",
+  //     "id": "12344",
+  //     "quantity": 1
+  //   }
+  // ]
   firstFormGroup: FormGroup;
   displayedColumns: string[] = ['name', 'quantity', 'action']
 
@@ -86,14 +87,14 @@ export class AllegroSynchronizationComponent implements OnInit {
         console.log(error)
       }
     );
-    // this.productService.getProducts().subscribe(
-    //   (response: any[]) => {
-    //     response.forEach(offer => {
-    //       offer.quantity = 1;
-    //     })
-    //     this.printItems = response;
-    //   }
-    // )
+    this.productService.getProducts().subscribe(
+      (response: any[]) => {
+        response.forEach(offer => {
+          offer.quantity = 1;
+        })
+        this.printItems = response;
+      }
+    )
   }
 
   addQuantity(row: any) {

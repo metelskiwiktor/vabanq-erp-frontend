@@ -9,25 +9,18 @@ interface SynchronizationNode {
   children?: SynchronizationNode[];
 }
 
-const TREE_DATA: SynchronizationNode[] = [
-  {
-    name: 'Oferta1',
-    children: [{name: 'Przedmiot1'}, {name: 'Przedmiot2'}, {name: 'Przedmiot3'}],
-  },
-  {
-    name: 'Vegetables',
-    children: [
-      {
-        name: 'Green',
-        children: [{name: 'Broccoli'}, {name: 'Brussels sprouts'}],
-      },
-      {
-        name: 'Orange',
-        children: [{name: 'Pumpkins'}, {name: 'Carrots'}],
-      },
-    ],
-  },
-];
+export interface Offer {
+  number: number;
+  imageUrl: string;
+  auctionName: string;
+  offerNumber: string;
+  linkedProducts: string;
+  price: number;
+  allegroQuantity: number;
+  wmsQuantity: number;
+  commission: number;
+  ean: string;
+}
 
 @Component({
   selector: 'app-allegro-synchronized',
@@ -35,30 +28,40 @@ const TREE_DATA: SynchronizationNode[] = [
   styleUrl: './allegro-synchronized.component.css'
 })
 export class AllegroSynchronizedComponent implements OnInit{
-  treeControl = new NestedTreeControl<SynchronizationNode>(node => node.children);
-  dataSource = new MatTreeNestedDataSource<SynchronizationNode>();
+  displayedColumns: string[] = [
+    'number',
+    'imageUrl',
+    'auctionName',
+    'offerNumber',
+    'linkedProducts',
+    'price',
+    'allegroQuantity',
+    'wmsQuantity',
+    'commission',
+    'ean'
+  ];
+
+  offers: Offer[] = [];
   constructor(private productService: ProductService, private localStorageService: LocalStorageService) {
 
   }
 
   ngOnInit(): void {
-    this.productService.getOffersProducts(localStorage.getItem('allegro-token')!).subscribe(
-      response => {
-        const synchronizedData: SynchronizationNode[] = response.map((item: { offerName: any; allegroOfferProducts: any[]; }) => ({
-          name: item.offerName,
-          children: item.allegroOfferProducts.map(product => ({
-            name: product.productName + "(" + product.quantity + ")",
-            children: product.allegroOfferProducts ? product.allegroOfferProducts.map((innerProduct: { productName: any; quantity: any; }) => ({
-              name: innerProduct.productName + "(" + innerProduct.quantity + ")",
-              children: null
-            })) : null
-          }))
-        }));
-        this.dataSource.data = synchronizedData;
-        console.log(synchronizedData);
-      }
-    );
-
+    const token = localStorage.getItem('allegro-token')!;
+    this.productService.getOffersProducts(token).subscribe((response: any[]) => {
+      this.offers = response.map((item, index) => ({
+        number: index + 1,
+        imageUrl: item.imageUrl || 'assets/default-image.png', // Placeholder for missing images
+        auctionName: item.offerName,
+        offerNumber: item.offerId,
+        linkedProducts: item.allegroOfferProducts.map((p: { productName: any; }) => p.productName).join(', '),
+        price: item.price,
+        allegroQuantity: item.allegroQuantity,
+        wmsQuantity: item.wmsQuantity,
+        commission: item.commission,
+        ean: item.ean
+      }));
+    });
   }
   hasChild = (_: number, node: SynchronizationNode) => !!node.children && node.children.length > 0;
 

@@ -8,16 +8,18 @@ import {
   MatHeaderCell,
   MatHeaderCellDef,
   MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
-  MatTable
+  MatTable, MatTableModule
 } from "@angular/material/table";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatInputModule} from "@angular/material/input";
 import {MatCardModule} from "@angular/material/card";
-import {MatButtonModule} from "@angular/material/button";
+import {MatButtonModule, MatIconButton} from "@angular/material/button";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatSlideToggle} from "@angular/material/slide-toggle";
 import {NgSelectModule} from "@ng-select/ng-select";
+import {MatSort, MatSortHeader} from "@angular/material/sort";
+import {MatIcon} from "@angular/material/icon";
 
 
 
@@ -26,6 +28,18 @@ import {NgSelectModule} from "@ng-select/ng-select";
     ProductMaterialsWmsTableComponent,
   ],
   imports: [
+    CommonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    FormsModule,
+    MatIcon,
+    MatIconButton,
+    MatSort,
+    MatSortHeader,
+    NgSelectModule,
+    MatSlideToggle,
+    ReactiveFormsModule,
     CommonModule,
     MatTable,
     MatToolbarModule,
@@ -46,6 +60,7 @@ import {NgSelectModule} from "@ng-select/ng-select";
     MatRowDef,
     MatHeaderRowDef,
     NgSelectModule,
+    MatSort,
   ]
 })
 export class ProductMaterialsWmsTableModule { }
