@@ -1,9 +1,9 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {AllegroSynchronizedComponent} from "./allegro-synchronized.component";
 import {MatNestedTreeNode, MatTree, MatTreeModule} from "@angular/material/tree";
 import {MatIcon} from "@angular/material/icon";
-import {MatIconButton} from "@angular/material/button";
+import {MatButton, MatIconButton} from "@angular/material/button";
 import {
   MatCell,
   MatCellDef,
@@ -13,7 +13,7 @@ import {
   MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
   MatTable
 } from "@angular/material/table";
-
+import {OfferEditDialogModule} from "./offer-edit-dialog/offer-edit-dialog.module";
 
 
 @NgModule({
@@ -34,7 +34,10 @@ import {
     MatHeaderRow,
     MatHeaderRowDef,
     MatRow,
-    MatRowDef
+    MatRowDef,
+    MatButton,
+    OfferEditDialogModule,
   ]
 })
-export class AllegroSynchronizedModule { }
+export class AllegroSynchronizedModule {
+}

@@ -32,18 +32,6 @@ export interface Offer {
 export class AllegroSynchronizationComponent implements OnInit {
   offers: Offer[] = [];
   printItems: any;
-  // printItems: any = [
-  //   {
-  //     "name": "asdsa",
-  //     "id": "1234",
-  //     "quantity": 1
-  //   },
-  //   {
-  //     "name": "sdfsdfdsfs",
-  //     "id": "12344",
-  //     "quantity": 1
-  //   }
-  // ]
   firstFormGroup: FormGroup;
   displayedColumns: string[] = ['name', 'quantity', 'action']
 

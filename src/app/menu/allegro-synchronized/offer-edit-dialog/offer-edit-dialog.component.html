@@ -1,0 +1,34 @@
+<!-- 4. Template okna dialogowego: offer-edit-dialog.component.html -->
+<h1 mat-dialog-title>Edytuj ofertę: {{ offerNumber }}</h1>
+
+<div mat-dialog-content>
+  <table mat-table [dataSource]="products" class="mat-elevation-z8">
+    <!-- Produkt Kolumna -->
+    <ng-container matColumnDef="productName">
+      <th mat-header-cell *matHeaderCellDef> Produkt </th>
+      <td mat-cell *matCellDef="let row"> {{ row.productName }} </td>
+    </ng-container>
+
+    <!-- EAN Kolumna -->
+    <ng-container matColumnDef="productEan">
+      <th mat-header-cell *matHeaderCellDef> EAN </th>
+      <td mat-cell *matCellDef="let row"> {{ row.productEan }} </td>
+    </ng-container>
+
+    <!-- Quantity Kolumna -->
+    <ng-container matColumnDef="quantity">
+      <th mat-header-cell *matHeaderCellDef> Ilość </th>
+      <td mat-cell *matCellDef="let row">
+        <input [(ngModel)]="row.quantity" type="number" min="0" style="width: 50px;">
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="['productName','productEan','quantity']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['productName','productEan','quantity']"></tr>
+  </table>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Anuluj</button>
+  <button mat-raised-button color="primary" (click)="onSave()">Zapisz</button>
+</div>

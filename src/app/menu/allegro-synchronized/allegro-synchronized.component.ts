@@ -1,13 +1,10 @@
+// allegro-synchronized.component.ts
+
 import {Component, OnInit} from '@angular/core';
 import {ProductService} from "../../utility/service/product.service";
-import {LocalStorageService} from "../../local-storage.service";
-import {NestedTreeControl} from "@angular/cdk/tree";
-import {MatTreeNestedDataSource} from "@angular/material/tree";
-
-interface SynchronizationNode {
-  name: string;
-  children?: SynchronizationNode[];
-}
+import {HttpHeaders} from "@angular/common/http";
+import {MatDialog} from "@angular/material/dialog";
+import {OfferEditDialogComponent} from "./offer-edit-dialog/offer-edit-dialog.component";
 
 export interface Offer {
   number: number;
@@ -16,7 +13,7 @@ export interface Offer {
   offerNumber: string;
   linkedProducts: string;
   price: number;
-  allegroQuantity: number;
+  allegroQuantity: string;
   wmsQuantity: number;
   commission: number;
   ean: string;
@@ -25,9 +22,9 @@ export interface Offer {
 @Component({
   selector: 'app-allegro-synchronized',
   templateUrl: './allegro-synchronized.component.html',
-  styleUrl: './allegro-synchronized.component.css'
+  styleUrls: ['./allegro-synchronized.component.css']
 })
-export class AllegroSynchronizedComponent implements OnInit{
+export class AllegroSynchronizedComponent implements OnInit {
   displayedColumns: string[] = [
     'number',
     'imageUrl',
@@ -38,31 +35,62 @@ export class AllegroSynchronizedComponent implements OnInit{
     'allegroQuantity',
     'wmsQuantity',
     'commission',
-    'ean'
+    'ean',
+    'auctionStatus',
+    'actions'
   ];
 
   offers: Offer[] = [];
-  constructor(private productService: ProductService, private localStorageService: LocalStorageService) {
 
+  constructor(
+    private productService: ProductService,
+    private dialog: MatDialog
+  ) {}
+  ngOnInit(): void {
+    this.loadOffers();
   }
 
-  ngOnInit(): void {
-    const token = localStorage.getItem('allegro-token')!;
-    this.productService.getOffersProducts(token).subscribe((response: any[]) => {
+  loadOffers(): void {
+    const token = localStorage.getItem('allegro-token') || '';
+    this.productService.getLinkedOffers(token).subscribe((response: any[]) => {
+      // response to List<LinkedOfferResponse> z backendu
+      // Mapujemy do interfejsu Offer
       this.offers = response.map((item, index) => ({
         number: index + 1,
-        imageUrl: item.imageUrl || 'assets/default-image.png', // Placeholder for missing images
+        imageUrl: item.imageUrl || 'assets/default-image.png',
         auctionName: item.offerName,
         offerNumber: item.offerId,
-        linkedProducts: item.allegroOfferProducts.map((p: { productName: any; }) => p.productName).join(', '),
-        price: item.price,
-        allegroQuantity: item.allegroQuantity,
-        wmsQuantity: item.wmsQuantity,
-        commission: item.commission,
-        ean: item.ean
+        linkedProducts: (item.products || [])
+          .map((p: any) => p.productName)
+          .join(', '),
+        price: item.price || 0,
+        allegroQuantity: item.availableStock + "/" + (item.availableStock + item.soldStock) || "0",
+        wmsQuantity: item.soldStock || 0,
+        commission: 0, // jeśli brak w backendzie, ustaw np. 0
+        ean: item.ean || '',
+        auctionStatus: item.auctionStatus || '?'
       }));
     });
   }
-  hasChild = (_: number, node: SynchronizationNode) => !!node.children && node.children.length > 0;
 
+  synchronize(): void {
+    const token = localStorage.getItem('allegro-token') || '';
+    this.productService.synchronize(token).subscribe(() => {
+      this.loadOffers(); // Po synchronizacji przeładuj oferty
+    });
+  }
+
+  openEditDialog(offer: Offer): void {
+    const dialogRef = this.dialog.open(OfferEditDialogComponent, {
+      width: '500px',
+      data: { offer }
+    });
+
+    dialogRef.afterClosed().subscribe((saved) => {
+      // Po zapisie odśwież tabelę
+      if (saved) {
+        this.loadOffers();
+      }
+    });
+  }
 }

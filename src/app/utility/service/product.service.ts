@@ -173,4 +173,28 @@ export class ProductService {
   getOffersProducts(token: string) {
     return this.http.get<any>(this.apiAllegroUrl + "/synchronization/all-offers-products", {headers: new HttpHeaders().set('allegro-api', token)});
   }
+
+  // product.service.ts (dodaj dwie metody)
+
+  synchronize(token: string) {
+    return this.http.get<any>(`${this.apiAllegroUrl}/synchronize`, {
+      headers: new HttpHeaders().set('allegro-api', token)
+    });
+  }
+
+  getLinkedOffers(token: string) {
+    return this.http.get<any>(`${this.apiAllegroUrl}/offers`, {
+      headers: new HttpHeaders().set('allegro-api', token)
+    });
+  }
+
+  updateOfferAssignment(offerId: string, requests: any[], token: string) {
+    const headers = new HttpHeaders().set('allegro-api', token);
+    return this.http.post<void>(
+      `${this.apiAllegroUrl}/${offerId}/update-assignment`,
+      requests,
+      { headers }
+    );
+  }
+
 }
