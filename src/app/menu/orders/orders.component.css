@@ -21,3 +21,18 @@ table {
 .mat-header-cell {
   font-weight: bold;
 }
+
+.example-element-detail {
+  overflow: hidden;
+  transition: height 0.3s ease; /* Smooth expand/collapse animation */
+}
+
+.example-element-detail[aria-expanded='false'] {
+  height: 0; /* Ensure hidden content is fully collapsed */
+  padding: 0; /* Remove any padding when collapsed */
+  margin: 0; /* Remove any margin when collapsed */
+}
+
+.example-element-detail[aria-expanded='true'] {
+  height: auto; /* Automatically adjust height when expanded */
+}
