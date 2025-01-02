@@ -1,47 +1,53 @@
-<div class="order-container mat-elevation-z8">
-  <h1>Data sprzedaży: {{ order.saleDate | date:'long' }}</h1>
-  <p><strong>Rynek:</strong> {{ order.market }}</p>
-  <p><strong>Status:</strong> {{ order.status }}</p>
+<div class="order-container mat-elevation-z8" style="display: flex; flex-wrap: wrap;">
+  <!-- Left Section: Order and Product Details -->
+  <div style="width: 60%; padding-right: 20px; box-sizing: border-box;">
+    <h1>Data sprzedaży: {{ order.saleDate | date:'long' }}</h1>
+    <p><strong>Rynek:</strong> {{ order.market }}</p>
+    <p><strong>Status:</strong> {{ order.status }}</p>
 
-  <h2>Zamówione produkty</h2>
-  <table mat-table [dataSource]="order.products" class="mat-elevation-z8">
-    <ng-container matColumnDef="quantity">
-      <th mat-header-cell *matHeaderCellDef>Ilość</th>
-      <td mat-cell *matCellDef="let product">{{ product.quantity }}</td>
-    </ng-container>
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Produkt</th>
-      <td mat-cell *matCellDef="let product">{{ product.name }}</td>
-    </ng-container>
-    <ng-container matColumnDef="unitPrice">
-      <th mat-header-cell *matHeaderCellDef>Cena</th>
-      <td mat-cell *matCellDef="let product">{{ product.unitPrice | currency:'PLN' }}</td>
-    </ng-container>
-    <ng-container matColumnDef="totalPrice">
-      <th mat-header-cell *matHeaderCellDef>Łącznie</th>
-      <td mat-cell *matCellDef="let product">{{ product.totalPrice | currency:'PLN' }}</td>
-    </ng-container>
+    <h2>Zamówione produkty</h2>
+    <table mat-table [dataSource]="order.products" class="mat-elevation-z8">
+      <ng-container matColumnDef="quantity">
+        <th mat-header-cell *matHeaderCellDef>Ilość</th>
+        <td mat-cell *matCellDef="let product">{{ product.quantity }}</td>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Produkt</th>
+        <td mat-cell *matCellDef="let product">{{ product.name }}</td>
+      </ng-container>
+      <ng-container matColumnDef="unitPrice">
+        <th mat-header-cell *matHeaderCellDef>Cena</th>
+        <td mat-cell *matCellDef="let product">{{ product.unitPrice | currency:'PLN' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="totalPrice">
+        <th mat-header-cell *matHeaderCellDef>Łącznie</th>
+        <td mat-cell *matCellDef="let product">{{ product.totalPrice | currency:'PLN' }}</td>
+      </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
 
-  <h3><strong>Suma:</strong> {{ order.totalAmount | currency:'PLN' }}</h3>
+    <h3><strong>Suma:</strong> {{ order.totalAmount | currency:'PLN' }}</h3>
+  </div>
 
-  <h2>Dane zamawiającego</h2>
-  <p><strong>Kupujący:</strong> {{ order.buyer.firstName }} {{ order.buyer.lastName }}</p>
-  <p><strong>E-mail:</strong> {{ order.buyer.email }}</p>
-  <p><strong>Telefon:</strong> {{ order.buyer.phoneNumber }}</p>
-  <p><strong>Język kupującego:</strong> {{ order.buyer.language }}</p>
+  <!-- Right Section: Buyer and Delivery Details -->
+  <div style="width: 35%; border-left: 1px solid #ccc; padding-left: 20px; box-sizing: border-box;">
+    <h2>Dane zamawiającego</h2>
+    <p><strong>Kupujący:</strong> {{ order.buyer.firstName }} {{ order.buyer.lastName }}</p>
+    <p><strong>E-mail:</strong> {{ order.buyer.email }}</p>
+    <p><strong>Telefon:</strong> {{ order.buyer.phoneNumber }}</p>
+    <p><strong>Język kupującego:</strong> {{ order.buyer.language }}</p>
 
-  <h2>Sposób/dane dostawy</h2>
-  <p><strong>Czas na wysłanie:</strong> {{ order.delivery.dispatchTimeTo | date:'short' }}</p>
-  <p><strong>Przewidywany czas dostawy:</strong> {{ order.delivery.deliveryTimeTo | date:'short' }}</p>
-  <p><strong>Metoda:</strong> {{ order.delivery.methodName }}</p>
-  <p><strong>Koszt dostawy:</strong> {{ order.delivery.cost | currency:'PLN' }}</p>
-  <p><strong>Dane dostawy:</strong></p>
-  <p>{{ order.delivery.deliveryAddress.street }}</p>
-  <p>{{ order.delivery.deliveryAddress.postCode }} {{ order.delivery.deliveryAddress.city }}</p>
-  <p>{{ order.delivery.deliveryAddress.countryCode }}</p>
-  <p><strong>Telefon:</strong> {{ order.buyer.phoneNumber }}</p>
+    <h2>Sposób/dane dostawy</h2>
+    <p><strong>Czas na wysłanie:</strong> {{ order.delivery.dispatchTimeTo | date:'short' }}</p>
+    <p><strong>Przewidywany czas dostawy:</strong> {{ order.delivery.deliveryTimeTo | date:'short' }}</p>
+    <p><strong>Metoda:</strong> {{ order.delivery.methodName }}</p>
+    <p><strong>Koszt dostawy:</strong> {{ order.delivery.cost | currency:'PLN' }}</p>
+    <p><strong>Dane dostawy:</strong></p>
+    <p>{{ order.delivery.deliveryAddress.street }}</p>
+    <p>{{ order.delivery.deliveryAddress.postCode }} {{ order.delivery.deliveryAddress.city }}</p>
+    <p>{{ order.delivery.deliveryAddress.countryCode }}</p>
+    <p><strong>Telefon:</strong> {{ order.buyer.phoneNumber }}</p>
+  </div>
 </div>
