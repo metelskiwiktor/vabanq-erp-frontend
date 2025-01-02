@@ -1,6 +1,16 @@
 <!-- allegro-synchronized.component.html -->
+<ng-template #successTpl let-toast>
+  <div class="toast-header">
+    <strong class="mr-auto">Synchronization</strong>
+    <button type="button" class="ml-2 mb-1 close" (click)="toast.remove()">&times;</button>
+  </div>
+  <div class="toast-body">
+    {{ toastSuccessMessage }}
+  </div>
+</ng-template>
 
-<button mat-raised-button color="primary" (click)="synchronize()">Synchronizuj</button>
+<button mat-raised-button color="primary" (click)="synchronize(successTpl)">Synchronizuj</button>
+<button mat-raised-button color="primary" (click)="synchronizeOrders()">Synchronizuj zamówienia</button>
 
 <table mat-table [dataSource]="offers" class="mat-elevation-z8">
   <ng-container matColumnDef="number">
@@ -36,18 +46,8 @@
   </ng-container>
 
   <ng-container matColumnDef="allegroQuantity">
-    <th mat-header-cell *matHeaderCellDef> Ilość na Allegro </th>
+    <th mat-header-cell *matHeaderCellDef> Ilość </th>
     <td mat-cell *matCellDef="let offer"> {{ offer.allegroQuantity }} </td>
-  </ng-container>
-
-  <ng-container matColumnDef="wmsQuantity">
-    <th mat-header-cell *matHeaderCellDef> Ilość w WMS </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.wmsQuantity }} </td>
-  </ng-container>
-
-  <ng-container matColumnDef="commission">
-    <th mat-header-cell *matHeaderCellDef> Prowizja </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.commission | number:'1.2-2' }} </td>
   </ng-container>
 
   <ng-container matColumnDef="ean">

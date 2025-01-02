@@ -1,0 +1,23 @@
+.order-container {
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  margin: 16px;
+}
+
+h1, h2, h3 {
+  color: #3f51b5;
+}
+
+table {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.mat-header-row, .mat-row {
+  border-bottom: 1px solid #ddd;
+}
+
+.mat-header-cell {
+  font-weight: bold;
+}

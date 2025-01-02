@@ -12,7 +12,9 @@ import {
   MatTable
 } from "@angular/material/table";
 import {FormsModule} from "@angular/forms";
-import {MatButton} from "@angular/material/button";
+import {MatButton, MatIconButton} from "@angular/material/button";
+import {NgSelectModule} from "@ng-select/ng-select";
+import {MatIcon} from "@angular/material/icon";
 
 
 
@@ -36,7 +38,10 @@ import {MatButton} from "@angular/material/button";
     MatHeaderRowDef,
     MatRowDef,
     MatDialogActions,
-    MatButton
+    MatButton,
+    NgSelectModule,
+    MatIcon,
+    MatIconButton
   ]
 })
 export class OfferEditDialogModule { }

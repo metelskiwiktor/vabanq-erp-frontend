@@ -1,20 +1,17 @@
-
-// 3. Dodaj nowy komponent OfferEditDialogComponent
-// offer-edit-dialog.component.ts
-
-import { Component, Inject, OnInit } from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { ProductService } from "../../../utility/service/product.service";
+import {MatTableDataSource} from "@angular/material/table";
 
 interface ProductQuantityRequest {
   productId: string;
   quantity: number;
 }
 
-interface LinkedProduct {
-  productId: string;
-  productName: string;
-  productEan: string;
+interface ProductItem {
+  id: string;
+  name: string;
+  ean: string;
   quantity: number;
 }
 
@@ -24,48 +21,82 @@ interface LinkedProduct {
   templateUrl: './offer-edit-dialog.component.html'
 })
 export class OfferEditDialogComponent implements OnInit {
-  offerNumber: string = '';
-  products: LinkedProduct[] = [];
-
+  offerId: string = '';
+  assignedItems = new MatTableDataSource<ProductItem>([]);
+  selectedProducts: ProductItem[] = [];
+  allProducts: ProductItem[] = [];
+  displayedColumns: string[] = ['name', 'quantity', 'actions'];
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     private dialogRef: MatDialogRef<OfferEditDialogComponent>,
-    private productService: ProductService
+    private productService: ProductService,
   ) {
     // Przekazujemy z parenta: data.offer
-    this.offerNumber = data.offer.offerNumber;
+    this.offerId = data.offer.offerNumber;
   }
 
-  ngOnInit() {
-    // Załóżmy, że w polu 'linkedProducts' mamy nazwy, ale
-    // w oryginalnym obiekcie (z backendu) powinniśmy mieć tablicę `products`.
-    // Tutaj trzeba pobrać ofertę (z ewent. innym endpointem) albo
-    // założyć że w data.offer mamy "raw" tablicę item.products
-    //
-    // Przykład: item.products => { productId, productName, productEan, quantity }
-    //
-    // Jeśli w tym momencie mamy tylko string, to trzeba to przepisać,
-    // ale w idealnym scenariuszu w data.offer mamy już szczegółowe info:
+  ngOnInit(): void {
+    this.productService.getProducts().subscribe((response: any[]) => {
+      this.allProducts = response.map(p => ({
+        id: p.id,
+        name: p.name,
+        ean: p.ean,
+        quantity: 1
+      }));
+    });
 
-    // Tu uproszczony wariant (jeśli w data.offer mamy `products` jako tablicę obiektów):
-    const backendProducts = this.data.offer.products || [];
-    this.products = backendProducts.map((bp: any) => ({
-      productId: bp.productId,
-      productName: bp.productName,
-      productEan: bp.productEan,
-      quantity: bp.quantity
-    }));
-  }
-
-  onSave() {
-    // Szykujemy tablicę ProductQuantityRequest do wysłania do backendu
-    const token = localStorage.getItem('allegro-token') || '';
-    const body: ProductQuantityRequest[] = this.products.map((p) => ({
-      productId: p.productId,
+    const existing = this.data.offer.products || [];
+    const assignedData = existing.map((p: any) => ({
+      id: p.productId,
+      name: p.productName,
+      ean: p.productEan,
       quantity: p.quantity
     }));
 
-    this.productService.updateOfferAssignment(this.offerNumber, body, token).subscribe(() => {
+    this.assignedItems.data = assignedData;
+    this.selectedProducts = [...assignedData];
+  }
+
+  onProductChange(selected: ProductItem[]) {
+    // Synchronize selected products with assignedItems
+    const selectedIds = selected.map(p => p.id);
+
+    // Add new items to assignedItems
+    selected.forEach(item => {
+      if (!this.assignedItems.data.find(p => p.id === item.id)) {
+        this.assignedItems.data = [
+          ...this.assignedItems.data,
+          { ...item, quantity: item.quantity || 1 }
+        ];
+      }
+    });
+
+    this.assignedItems.data = this.assignedItems.data.filter(item =>
+      selectedIds.includes(item.id)
+    );
+  }
+
+
+  removeItem(row: ProductItem) {
+    this.assignedItems.data = this.assignedItems.data.filter(item => item.id !== row.id);
+
+    this.selectedProducts = this.selectedProducts.filter(item => item.id !== row.id);
+  }
+
+  addQuantity(row: ProductItem) {
+    row.quantity++;
+  }
+
+  subtractQuantity(row: ProductItem) {
+    if (row.quantity > 1) row.quantity--;
+  }
+
+  onSave() {
+    const body: ProductQuantityRequest[] = this.assignedItems.data.map(item => ({
+      productId: item.id,
+      quantity: item.quantity
+    }));
+    this.productService.updateOfferAssignment(this.offerId, body).subscribe(() => {
       this.dialogRef.close(true);
     });
   }

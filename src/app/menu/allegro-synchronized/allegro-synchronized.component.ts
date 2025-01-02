@@ -1,10 +1,11 @@
 // allegro-synchronized.component.ts
 
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit, TemplateRef} from '@angular/core';
 import {ProductService} from "../../utility/service/product.service";
 import {HttpHeaders} from "@angular/common/http";
 import {MatDialog} from "@angular/material/dialog";
 import {OfferEditDialogComponent} from "./offer-edit-dialog/offer-edit-dialog.component";
+import {ToastService} from "../../utility/service/toast-service";
 
 export interface Offer {
   number: number;
@@ -14,9 +15,13 @@ export interface Offer {
   linkedProducts: string;
   price: number;
   allegroQuantity: string;
-  wmsQuantity: number;
-  commission: number;
   ean: string;
+  products?: {
+    productId: string;
+    productName: string;
+    productEan: string;
+    quantity: number;
+  }[];
 }
 
 @Component({
@@ -25,6 +30,9 @@ export interface Offer {
   styleUrls: ['./allegro-synchronized.component.css']
 })
 export class AllegroSynchronizedComponent implements OnInit {
+  toastSuccessMessage: string = '';
+  offers: Offer[] = [];
+  toastService = inject(ToastService);
   displayedColumns: string[] = [
     'number',
     'imageUrl',
@@ -33,14 +41,11 @@ export class AllegroSynchronizedComponent implements OnInit {
     'linkedProducts',
     'price',
     'allegroQuantity',
-    'wmsQuantity',
-    'commission',
     'ean',
     'auctionStatus',
     'actions'
   ];
 
-  offers: Offer[] = [];
 
   constructor(
     private productService: ProductService,
@@ -64,21 +69,42 @@ export class AllegroSynchronizedComponent implements OnInit {
           .map((p: any) => p.productName)
           .join(', '),
         price: item.price || 0,
-        allegroQuantity: item.availableStock + "/" + (item.availableStock + item.soldStock) || "0",
-        wmsQuantity: item.soldStock || 0,
-        commission: 0, // jeśli brak w backendzie, ustaw np. 0
-        ean: item.ean || '',
-        auctionStatus: item.auctionStatus || '?'
+        allegroQuantity: item.availableStock + "/" + (item.availableStock + item.soldStock) || "?",
+        ean: item.ean || '?',
+        auctionStatus: item.auctionStatus || '?',
+        products: item.products
       }));
     });
   }
 
-  synchronize(): void {
+  synchronize(template: TemplateRef<any>): void {
     const token = localStorage.getItem('allegro-token') || '';
-    this.productService.synchronize(token).subscribe(() => {
-      this.loadOffers(); // Po synchronizacji przeładuj oferty
-    });
+    this.productService.synchronize(token).subscribe(
+      (response: { created: number; updated: number }) => {
+        if(response.created == 0 && response.updated == 0) {
+          this.toastSuccessMessage = `Pomyślnie zsynchronizowano. Brak aktualizacji.`
+        } else {
+          this.toastSuccessMessage = `Pomyślnie zsynchronizowano.\n${response.created} nowych ofert\n${response.updated} zaktualizowanych ofert.`;
+        }
+        this.showSuccess(template);
+        this.loadOffers();
+      },
+      (error) => {
+        console.error('Synchronization failed:', error);
+        this.toastService.show({
+          template: template,
+          classname: 'bg-danger text-light',
+          delay: 2000,
+          text: 'Synchronization failed. Please try again.',
+        });
+      }
+    );
   }
+
+  showSuccess(template: TemplateRef<any>) {
+    this.toastService.show({template, classname: 'bg-success text-light', delay: 2000, text: this.toastSuccessMessage});
+  }
+
 
   openEditDialog(offer: Offer): void {
     const dialogRef = this.dialog.open(OfferEditDialogComponent, {
@@ -92,5 +118,10 @@ export class AllegroSynchronizedComponent implements OnInit {
         this.loadOffers();
       }
     });
+  }
+
+  synchronizeOrders() {
+    const token = localStorage.getItem('allegro-token') || '';
+    this.productService.synchronizeOrders(token).subscribe(value => console.log(value));
   }
 }

@@ -23,6 +23,7 @@ import {TestModule} from "./test/test.module";
 import {ProductMaterialsWmsTableModule} from "./product-materials-wms-table/product-materials-wms-table.module";
 import {SummaryDialogModule} from "./summary-dialog/summary-dialog.module";
 import {DashboardModule} from "./dashboard/dashboard.module";
+import {OrdersModule} from "./orders/orders.module";
 @NgModule({
   imports: [
     AllegroSynchronizationModule,
@@ -45,7 +46,8 @@ import {DashboardModule} from "./dashboard/dashboard.module";
     MatInputModule,
     MatCardModule,
     MatButtonModule,
-    FormsModule
+    FormsModule,
+    OrdersModule
   ],
   declarations: [
     MenuComponent

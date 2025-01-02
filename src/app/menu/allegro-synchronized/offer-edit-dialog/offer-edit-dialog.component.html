@@ -1,34 +1,53 @@
-<!-- 4. Template okna dialogowego: offer-edit-dialog.component.html -->
-<h1 mat-dialog-title>Edytuj ofertę: {{ offerNumber }}</h1>
+<h1 mat-dialog-title>Edytowanie oferty: {{ offerId }}</h1>
 
-<div mat-dialog-content>
-  <table mat-table [dataSource]="products" class="mat-elevation-z8">
-    <!-- Produkt Kolumna -->
-    <ng-container matColumnDef="productName">
+<mat-dialog-content>
+
+  <div style="margin-bottom: 10px;">
+    <label>Zarządzaj produktami:</label>
+    <ng-select
+      [items]="allProducts"
+      bindLabel="name"
+      [multiple]="true"
+      [(ngModel)]="selectedProducts"
+      (ngModelChange)="onProductChange($event)">
+    </ng-select>
+  </div>
+
+  <table mat-table [dataSource]="assignedItems" class="mat-elevation-z8">
+    <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef> Produkt </th>
-      <td mat-cell *matCellDef="let row"> {{ row.productName }} </td>
+      <td mat-cell *matCellDef="let row"> {{ row.name }} (EAN: {{ row.ean }}) </td>
     </ng-container>
 
-    <!-- EAN Kolumna -->
-    <ng-container matColumnDef="productEan">
-      <th mat-header-cell *matHeaderCellDef> EAN </th>
-      <td mat-cell *matCellDef="let row"> {{ row.productEan }} </td>
-    </ng-container>
-
-    <!-- Quantity Kolumna -->
     <ng-container matColumnDef="quantity">
       <th mat-header-cell *matHeaderCellDef> Ilość </th>
       <td mat-cell *matCellDef="let row">
-        <input [(ngModel)]="row.quantity" type="number" min="0" style="width: 50px;">
+        {{ row.quantity }}
+        <button mat-icon-button (click)="addQuantity(row)">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-icon-button (click)="subtractQuantity(row)">
+          <mat-icon>remove</mat-icon>
+        </button>
       </td>
     </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="['productName','productEan','quantity']"></tr>
-    <tr mat-row *matRowDef="let row; columns: ['productName','productEan','quantity']"></tr>
-  </table>
-</div>
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef> Usuń </th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button color="warn" (click)="removeItem(row)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
 
-<div mat-dialog-actions align="end">
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
   <button mat-button (click)="onCancel()">Anuluj</button>
   <button mat-raised-button color="primary" (click)="onSave()">Zapisz</button>
-</div>
+</mat-dialog-actions>

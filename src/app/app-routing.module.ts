@@ -15,6 +15,7 @@ import {
   ProductMaterialsWmsTableComponent
 } from "./menu/product-materials-wms-table/product-materials-wms-table.component";
 import {DashboardComponent} from "./menu/dashboard/dashboard.component";
+import {OrdersComponent} from "./menu/orders/orders.component";
 
 
 const routes: Routes = [
@@ -24,6 +25,7 @@ const routes: Routes = [
   { path: 'items', component: ListItemsComponent, canActivate: [AuthGuard] },
   { path: 'generate-eans', component: GenerateEansComponent, canActivate: [AuthGuard] },
   { path: 'test', component: TestComponent, canActivate: [AuthGuard] },
+  { path: 'orders', component: OrdersComponent, canActivate: [AuthGuard] },
   { path: 'allegro-synchronization', component: AllegroSynchronizationComponent, canActivate: [AuthGuard] },
   { path: 'allegro-synchronized', component: AllegroSynchronizedComponent, canActivate: [AuthGuard] },
   { path: 'wms', component: ProductMaterialsWmsTableComponent, canActivate: [AuthGuard] },

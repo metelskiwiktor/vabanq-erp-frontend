@@ -176,10 +176,20 @@ export class ProductService {
 
   // product.service.ts (dodaj dwie metody)
 
-  synchronize(token: string) {
-    return this.http.get<any>(`${this.apiAllegroUrl}/synchronize`, {
-      headers: new HttpHeaders().set('allegro-api', token)
-    });
+  synchronize(token: string): Observable<{ created: number; updated: number }> {
+    const headers = new HttpHeaders().set('allegro-api', token);
+    return this.http.get<{ created: number; updated: number }>(
+      `${this.apiAllegroUrl}/synchronize`,
+      { headers }
+    );
+  }
+
+  synchronizeOrders(token: string): Observable<any> {
+    const headers = new HttpHeaders().set('allegro-api', token);
+    return this.http.get(
+      `${this.apiAllegroUrl}/synchronize-orders`,
+      { headers }
+    );
   }
 
   getLinkedOffers(token: string) {
@@ -188,12 +198,10 @@ export class ProductService {
     });
   }
 
-  updateOfferAssignment(offerId: string, requests: any[], token: string) {
-    const headers = new HttpHeaders().set('allegro-api', token);
+  updateOfferAssignment(offerId: string, requests: any[]) {
     return this.http.post<void>(
       `${this.apiAllegroUrl}/${offerId}/update-assignment`,
-      requests,
-      { headers }
+      requests
     );
   }
 
