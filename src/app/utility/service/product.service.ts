@@ -5,6 +5,7 @@ import {environment} from "../../../environments/environment";
 import {KeycloakService} from "keycloak-angular";
 import {GroupedAccessoriesResponse} from "../model/request/add-product-request";
 import {ProductResponse} from "../model/response/product-response.model";
+import {Order} from "../../menu/orders/model/orders-model";
 
 @Injectable({
   providedIn: 'root'
@@ -202,6 +203,13 @@ export class ProductService {
     return this.http.post<void>(
       `${this.apiAllegroUrl}/${offerId}/update-assignment`,
       requests
+    );
+  }
+
+  getOrders(token: string): Observable<Order[]> {
+    const headers = new HttpHeaders().set('allegro-api', token);
+    return this.http.get<Order[]>(`${this.apiAllegroUrl}/orders`, { headers }).pipe(
+      tap((orders) => console.log('Fetched orders from backend:', orders))
     );
   }
 
