@@ -77,9 +77,9 @@ export class AllegroSynchronizedComponent implements OnInit {
     });
   }
 
-  synchronize(template: TemplateRef<any>): void {
+  synchronizeOffers(template: TemplateRef<any>): void {
     const token = localStorage.getItem('allegro-token') || '';
-    this.productService.synchronize(token).subscribe(
+    this.productService.synchronizeOffers(token).subscribe(
       (response: { created: number; updated: number }) => {
         if(response.created == 0 && response.updated == 0) {
           this.toastSuccessMessage = `Pomyślnie zsynchronizowano. Brak aktualizacji.`
@@ -118,10 +118,5 @@ export class AllegroSynchronizedComponent implements OnInit {
         this.loadOffers();
       }
     });
-  }
-
-  synchronizeOrders() {
-    const token = localStorage.getItem('allegro-token') || '';
-    this.productService.synchronizeOrders(token).subscribe(value => console.log(value));
   }
 }

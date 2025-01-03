@@ -10,6 +10,7 @@ import {
   MatRow, MatRowDef,
   MatTable
 } from "@angular/material/table";
+import {MatButton} from "@angular/material/button";
 
 
 
@@ -28,7 +29,8 @@ import {
     MatHeaderRow,
     MatRowDef,
     MatHeaderRowDef,
-    MatHeaderCellDef
+    MatHeaderCellDef,
+    MatButton
   ]
 })
 export class OrdersModule { }

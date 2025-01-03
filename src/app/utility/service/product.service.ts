@@ -176,17 +176,17 @@ export class ProductService {
 
   // product.service.ts (dodaj dwie metody)
 
-  synchronize(token: string): Observable<{ created: number; updated: number }> {
+  synchronizeOffers(token: string): Observable<{ created: number; updated: number }> {
     const headers = new HttpHeaders().set('allegro-api', token);
     return this.http.get<{ created: number; updated: number }>(
-      `${this.apiAllegroUrl}/synchronize`,
+      `${this.apiAllegroUrl}/synchronize-offers`,
       { headers }
     );
   }
 
-  synchronizeOrders(token: string): Observable<any> {
+  synchronizeOrders(token: string): Observable<{ created: number; updated: number }> {
     const headers = new HttpHeaders().set('allegro-api', token);
-    return this.http.get(
+    return this.http.get<{ created: number; updated: number }>(
       `${this.apiAllegroUrl}/synchronize-orders`,
       { headers }
     );

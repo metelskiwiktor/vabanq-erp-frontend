@@ -22,17 +22,46 @@ table {
   font-weight: bold;
 }
 
+tr.example-detail-row {
+  height: 0;
+}
+
+tr.example-element-row:not(.example-expanded-row):hover {
+  background: #f5f5f5;
+}
+
+tr.example-element-row:not(.example-expanded-row):active {
+  background: #efefef;
+}
+
+.example-element-row td {
+  border-bottom-width: 0;
+}
+
 .example-element-detail {
   overflow: hidden;
-  transition: height 0.3s ease; /* Smooth expand/collapse animation */
+  display: flex;
 }
 
-.example-element-detail[aria-expanded='false'] {
-  height: 0; /* Ensure hidden content is fully collapsed */
-  padding: 0; /* Remove any padding when collapsed */
-  margin: 0; /* Remove any margin when collapsed */
+.example-element-diagram {
+  min-width: 80px;
+  border: 2px solid black;
+  padding: 8px;
+  font-weight: lighter;
+  margin: 8px 0;
+  height: 104px;
 }
 
-.example-element-detail[aria-expanded='true'] {
-  height: auto; /* Automatically adjust height when expanded */
+.example-element-symbol {
+  font-weight: bold;
+  font-size: 40px;
+  line-height: normal;
+}
+
+.example-element-description {
+  padding: 16px;
+}
+
+.example-element-description-attribution {
+  opacity: 0.5;
 }

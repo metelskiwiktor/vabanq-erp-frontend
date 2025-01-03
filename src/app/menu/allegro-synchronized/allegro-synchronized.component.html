@@ -9,8 +9,7 @@
   </div>
 </ng-template>
 
-<button mat-raised-button color="primary" (click)="synchronize(successTpl)">Synchronizuj</button>
-<button mat-raised-button color="primary" (click)="synchronizeOrders()">Synchronizuj zamówienia</button>
+<button mat-raised-button color="primary" (click)="synchronizeOffers(successTpl)">Synchronizuj</button>
 
 <table mat-table [dataSource]="offers" class="mat-elevation-z8">
   <ng-container matColumnDef="number">

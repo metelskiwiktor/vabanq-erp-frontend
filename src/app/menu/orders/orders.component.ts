@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, inject, OnInit, TemplateRef} from '@angular/core';
 import { Order } from './model/orders-model';
 import {
   trigger,
@@ -7,6 +7,8 @@ import {
   transition,
   animate
 } from '@angular/animations';
+import {ProductService} from "../../utility/service/product.service";
+import {ToastService} from "../../utility/service/toast-service";
 
 @Component({
   selector: 'app-orders',
@@ -23,7 +25,8 @@ import {
 export class OrdersComponent implements OnInit {
   // Lista zamówień (zamiast jednego obiektu "order")
   orders: Order[] = [];
-
+  toastSuccessMessage: string = '';
+  toastService = inject(ToastService);
   // Kolumny do wyświetlenia w tabeli
   columnsToDisplay: string[] = [
     'orderId',
@@ -36,7 +39,9 @@ export class OrdersComponent implements OnInit {
   // Zmienna do śledzenia aktualnie rozwiniętego wiersza
   expandedElement: Order | null = null;
 
-  constructor() {}
+  constructor(
+    private productService: ProductService
+  ) {}
 
   ngOnInit(): void {
     // Przykładowe dane — możesz je oczywiście pobrać z API itp.
@@ -108,4 +113,33 @@ export class OrdersComponent implements OnInit {
       }
     ];
   }
+
+  synchronizeOrders(template: TemplateRef<any>): void {
+    const token = localStorage.getItem('allegro-token') || '';
+    this.productService.synchronizeOrders(token).subscribe(
+      (response: { created: number; updated: number }) => {
+        if(response.created == 0 && response.updated == 0) {
+          this.toastSuccessMessage = `Pomyślnie zsynchronizowano. Brak aktualizacji.`
+        } else {
+          this.toastSuccessMessage = `Pomyślnie zsynchronizowano.\n${response.created} nowych zamówień\n${response.updated} zaktualizowanych zamówień.`;
+        }
+        this.showSuccess(template);
+      },
+      (error) => {
+        console.error('Synchronization failed:', error);
+        this.toastService.show({
+          template: template,
+          classname: 'bg-danger text-light',
+          delay: 2000,
+          text: 'Synchronization failed. Please try again.',
+        });
+      }
+    );
+  }
+
+  showSuccess(template: TemplateRef<any>) {
+    this.toastService.show({template, classname: 'bg-success text-light', delay: 2000, text: this.toastSuccessMessage});
+  }
+
+
 }
