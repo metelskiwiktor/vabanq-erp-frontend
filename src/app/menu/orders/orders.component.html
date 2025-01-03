@@ -9,6 +9,9 @@
 </ng-template>
 
 <button mat-raised-button color="primary" (click)="synchronizeOrders(successTpl)">Synchronizuj</button>
+<button mat-raised-button color="accent" (click)="toggleAllDetails()">
+  Rozwiń/Zwiń wszystkie zamówienia
+</button>
 
 <table mat-table [dataSource]="orders" multiTemplateDataRows class="mat-elevation-z8">
 
@@ -46,7 +49,7 @@
   <ng-container matColumnDef="expandedDetail">
     <td mat-cell *matCellDef="let element" [attr.colspan]="columnsToDisplay.length">
       <div class="example-element-detail"
-           [@detailExpand]="element === expandedElement ? 'expanded' : 'collapsed'">
+           [@detailExpand]="element.isExpanded ? 'expanded' : 'collapsed'">
 
         <!-- Tutaj wstawiasz swój kod szczegółów zamówienia -->
         <div class="order-container mat-elevation-z8" style="display: flex; flex-wrap: wrap; margin-top: 20px;">
@@ -118,8 +121,7 @@
   <tr mat-row
       *matRowDef="let element; columns: columnsToDisplay"
       class="example-element-row"
-      [class.example-expanded-row]="expandedElement === element"
-      (click)="expandedElement = expandedElement === element ? null : element">
+      (click)="element.isExpanded = !element.isExpanded">
   </tr>
 
   <!-- Wiersz szczegółów (expandable) z warunkiem "when" -->

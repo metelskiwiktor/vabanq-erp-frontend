@@ -40,31 +40,38 @@
         <span class="tooltip">Stwórz nowy produkt</span>
       </li>
       <li>
+        <a routerLink="/wms" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bx bx-grid-alt"></i>
+          <span class="links_name">Stany magazynowe</span>
+        </a>
+        <span class="tooltip">Stany magazynowe</span>
+      </li>
+      <li>
         <a routerLink="/generate-eans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
           <i class="bx bx-barcode"></i>
           <span class="links_name">Generowanie EAN</span>
         </a>
         <span class="tooltip">Generowanie EAN</span>
       </li>
-      <!-- Można dodać więcej podkategorii tutaj -->
     </ul>
 
-    <li>
-      <a routerLink="/wms" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bx bx-grid-alt"></i>
-        <span class="links_name">Stany magazynowe</span>
+    <li class="category">
+      <a routerLink="/offers" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <i class="bx bx-list-ul"></i>
+        <span class="links_name">Aukcje</span>
       </a>
-      <span class="tooltip">Stany magazynowe</span>
+      <span class="tooltip">Aukcje</span>
     </li>
 
-    <li>
-      <a routerLink="/allegro-synchronized" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bx bx-grid-alt"></i>
-        <span class="links_name">Oferty</span>
-      </a>
-      <span class="tooltip">Oferty</span>
-    </li>
-
+    <ul *ngIf="subcategories['items']" class="subcategories">
+      <li>
+        <a routerLink="/orders" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bx bx-grid-alt"></i>
+          <span class="links_name">Zamówienia</span>
+        </a>
+        <span class="tooltip">Zamówieniae</span>
+      </li>
+    </ul>
 
     <li>
       <a routerLink="/settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
@@ -74,13 +81,6 @@
       <span class="tooltip">Stany magazynowe</span>
     </li>
 
-    <li>
-      <a routerLink="/orders" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bx bx-grid-alt"></i>
-        <span class="links_name">Zamówienia</span>
-      </a>
-      <span class="tooltip">Zamówieniae</span>
-    </li>
 
 
 

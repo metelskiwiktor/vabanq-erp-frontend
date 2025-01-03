@@ -36,6 +36,7 @@ export class OrdersComponent implements OnInit {
   ];
 
   expandedElement: Order | null = null;
+  allExpanded: boolean = false;
 
   constructor(private productService: ProductService) {}
 
@@ -47,8 +48,8 @@ export class OrdersComponent implements OnInit {
     const token = localStorage.getItem('allegro-token') || '';
     this.productService.getOrders(token).subscribe({
       next: (orders: Order[]) => {
-        this.orders = orders;
-        console.log('Fetched orders:', orders);
+        this.orders = orders.map(order => ({ ...order, isExpanded: false }));
+        console.log('Fetched orders:', this.orders);
       },
       error: (error) => {
         console.error('Failed to fetch orders:', error);
@@ -78,6 +79,11 @@ export class OrdersComponent implements OnInit {
         });
       }
     );
+  }
+
+  toggleAllDetails(): void {
+    this.allExpanded = !this.allExpanded;
+    this.orders = this.orders.map(order => ({ ...order, isExpanded: this.allExpanded }));
   }
 
   showSuccess(template: TemplateRef<any>): void {

@@ -39,4 +39,5 @@ export interface Order {
   delivery: DeliveryOrder;
   products: ProductOrder[];
   totalAmount: number;
+  isExpanded?: boolean;
 }
