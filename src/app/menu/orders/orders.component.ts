@@ -35,7 +35,6 @@ export class OrdersComponent implements OnInit {
     'totalAmount'
   ];
 
-  expandedElement: Order | null = null;
   allExpanded: boolean = false;
 
   constructor(private productService: ProductService) {}

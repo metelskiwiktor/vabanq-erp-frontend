@@ -24,6 +24,7 @@ export interface DeliveryOrder {
 }
 
 export interface ProductOrder {
+  productId: string;
   name: string;
   quantity: number;
   unitPrice: number;

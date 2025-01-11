@@ -10,7 +10,7 @@
 
 <button mat-raised-button color="primary" (click)="synchronizeOrders(successTpl)">Synchronizuj</button>
 <button mat-raised-button color="accent" (click)="toggleAllDetails()">
-  Rozwiń/Zwiń wszystkie zamówienia
+  Przełącz szczegóły zamówień
 </button>
 
 <table mat-table [dataSource]="orders" multiTemplateDataRows class="mat-elevation-z8">
@@ -67,7 +67,12 @@
               </ng-container>
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Produkt</th>
-                <td mat-cell *matCellDef="let product">{{ product.name }}</td>
+                <td mat-cell *matCellDef="let product">
+                  <a [href]="'https://allegro.pl.allegrosandbox.pl/oferta/' + product.productId" target="_blank" rel="noopener noreferrer">
+                    {{ product.name }}
+                  </a>
+                </td>
+
               </ng-container>
               <ng-container matColumnDef="unitPrice">
                 <th mat-header-cell *matHeaderCellDef>Cena</th>
@@ -104,8 +109,8 @@
             <p><strong>Koszt dostawy:</strong> {{ element.delivery.cost | currency:'PLN' }}</p>
             <p><strong>Dane dostawy:</strong></p>
             <p>{{ element.delivery.deliveryAddress.street }}</p>
-            <p>{{ element.delivery.deliveryAddress.postCode }} {{ element.delivery.deliveryAddress.city }}</p>
-            <p>{{ element.delivery.deliveryAddress.countryCode }}</p>
+            <p>{{ element.delivery.deliveryAddress.postCode }} {{ element.delivery.deliveryAddress.city }} {{ element.delivery.deliveryAddress.countryCode }}</p>
+
             <p><strong>Telefon:</strong> {{ element.buyer.phoneNumber }}</p>
           </div>
         </div>

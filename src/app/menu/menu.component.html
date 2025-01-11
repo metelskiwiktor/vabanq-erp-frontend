@@ -21,27 +21,25 @@
       <span class="tooltip">Dashboard</span>
     </li>
 
-    <!-- Produkty (Items) -->
     <li class="category">
       <a routerLink="/items" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bx bx-list-ul"></i>
+        <i class="bx bx-cube"></i>
         <span class="links_name">Produkty</span>
       </a>
       <span class="tooltip">Produkty</span>
     </li>
 
-    <!-- Subcategories -->
     <ul *ngIf="subcategories['items']" class="subcategories">
       <li>
         <a routerLink="/add-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bx bxs-file-plus"></i>
+          <i class="bx bxs-plus-circle"></i>
           <span class="links_name">Stwórz produkt</span>
         </a>
         <span class="tooltip">Stwórz nowy produkt</span>
       </li>
       <li>
         <a routerLink="/wms" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bx bx-grid-alt"></i>
+          <i class="bx bx-package"></i>
           <span class="links_name">Stany magazynowe</span>
         </a>
         <span class="tooltip">Stany magazynowe</span>
@@ -57,7 +55,7 @@
 
     <li class="category">
       <a routerLink="/offers" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bx bx-list-ul"></i>
+        <i class="bx bx-store"></i>
         <span class="links_name">Aukcje</span>
       </a>
       <span class="tooltip">Aukcje</span>
@@ -66,21 +64,20 @@
     <ul *ngIf="subcategories['items']" class="subcategories">
       <li>
         <a routerLink="/orders" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bx bx-grid-alt"></i>
+          <i class="bx bx-cart"></i>
           <span class="links_name">Zamówienia</span>
         </a>
-        <span class="tooltip">Zamówieniae</span>
+        <span class="tooltip">Zamówienia</span>
       </li>
     </ul>
 
     <li>
       <a routerLink="/settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bx bx-grid-alt"></i>
+        <i class="bx bx-cog"></i>
         <span class="links_name">Ustawienia</span>
       </a>
-      <span class="tooltip">Stany magazynowe</span>
+      <span class="tooltip">Ustawienia</span>
     </li>
-
 
 
 
