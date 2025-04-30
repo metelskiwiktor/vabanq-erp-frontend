@@ -9,9 +9,7 @@
 </ng-template>
 
 <button mat-raised-button color="primary" (click)="synchronizeOrders(successTpl)">Synchronizuj</button>
-<button mat-raised-button color="accent" (click)="toggleAllDetails()">
-  Przełącz szczegóły zamówień
-</button>
+<button mat-raised-button color="accent" (click)="toggleAllDetails()">Przełącz szczegóły zamówień</button>
 
 <table mat-table [dataSource]="orders" multiTemplateDataRows class="mat-elevation-z8">
 
@@ -41,7 +39,7 @@
   <ng-container matColumnDef="totalAmount">
     <th mat-header-cell *matHeaderCellDef>Suma</th>
     <td mat-cell *matCellDef="let element">
-      {{ element.totalAmount | currency:'PLN' }}
+      {{ element.totalAmount | currency:'PLN ' }}
     </td>
   </ng-container>
 
@@ -77,13 +75,13 @@
               <ng-container matColumnDef="unitPrice">
                 <th mat-header-cell *matHeaderCellDef>Cena</th>
                 <td mat-cell *matCellDef="let product">
-                  {{ product.unitPrice | currency:'PLN' }}
+                  {{ product.unitPrice | currency:'PLN ' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="totalPrice">
                 <th mat-header-cell *matHeaderCellDef>Łącznie</th>
                 <td mat-cell *matCellDef="let product">
-                  {{ product.totalPrice | currency:'PLN' }}
+                  {{ product.totalPrice | currency:'PLN ' }}
                 </td>
               </ng-container>
 
@@ -91,7 +89,7 @@
               <tr mat-row *matRowDef="let row; columns: ['quantity', 'name', 'unitPrice', 'totalPrice']"></tr>
             </table>
 
-            <h3><strong>Suma:</strong> {{ element.totalAmount | currency:'PLN' }}</h3>
+            <h3><strong>Suma:</strong> {{ element.totalAmount | currency:'PLN ' }}</h3>
           </div>
 
           <!-- Right Section: Buyer and Delivery Details -->
