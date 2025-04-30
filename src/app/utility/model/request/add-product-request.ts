@@ -1,31 +1,69 @@
+import {Wms} from "../response/product-response.model";
+
 export class AddProductRequest {
-  public name?: string;
-  public accessoryIds?: string[];
-  public printTime?: PrintTime;
-  public price: number = 0;
-  public allegroTax: number = 0;
-  public ean?: string;
+  name: string = '';
+  ean: string = '';
+  accessoriesQ: { quantity: number, id: string }[] = [];
+  printHours: number = 0;
+  printMinutes: number = 0;
+  price: string = '';
+  allegroTax: string = '';
+  description: string = '';  // Dodajemy pole opisu,
+  tags: string[] = [];
+  eanName: string = '';
 }
 
 export class AddMaterialRequest {
   public name?: string;
   public price?: string;
   public accessoryType?: string;
-  public packagingSize?: string;
-  public dimensions?: string;
   public color?: string;
   public temperaturePrint?: string;
   public temperatureDesk?: string;
   public producer?: string;
   public filamentType?: string;
+  public description?: string;
+  public quantity?: number = 0;
+  packagingSize?: string;
+  dimensions?: string;
 }
 
-export class PrintTime {
-  constructor(hours?: number, minutes?: number) {
-    this.hours = hours;
-    this.minutes = minutes;
-  }
+export interface GroupedAccessoriesResponse {
+  fasteners: FastenersAccessoryResponse[];
+  filaments: FilamentAccessoryResponse[];
+  packages: PackagingAccessoryResponse[];
+}
 
-  public hours?: number;
-  public minutes?: number;
+export interface FastenersAccessoryResponse {
+  id: string;
+  name: string;
+  netPricePerQuantity: string;
+  quantity: number;
+  description: string;
+  wms: Wms;
+}
+
+export interface FilamentAccessoryResponse {
+  id: string;
+  name: string;
+  producer: string;
+  filamentType: string;
+  printTemperature: number;
+  deskTemperature: number;
+  pricePerKg: string;
+  color: string;
+  description: string;
+  quantity: number;
+  wms: Wms;
+}
+
+export interface PackagingAccessoryResponse {
+  id: string;
+  name: string;
+  packagingSize: string;
+  dimensions: string;
+  netPricePerQuantity: string;
+  quantity: number;
+  description: string;
+  wms: Wms;
 }

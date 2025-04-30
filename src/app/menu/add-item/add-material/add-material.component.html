@@ -1,0 +1,191 @@
+<ng-template #successTpl></ng-template>
+<ng-template #errorTpl></ng-template>
+
+<div class="container-fluid" style="width: 80%;">
+  <br>
+  <h2>{{ dialogTitle }}</h2>
+  <hr>
+
+  <form>
+    <div class="container-fluid">
+      <div class="row align-items-end">
+        <div class="form-group col-md-6" style="padding: 0">
+          <h2><label for="materials">Nazwa</label></h2>
+          <input type="text" class="form-control" id="materials" name="materials-name"
+                 [(ngModel)]="addMaterialRequest.name" autocomplete="off" placeholder="Nazwa materiału">
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="form-group">
+      <h2><label>Typ</label></h2>
+      <ng-select [items]="accessoryTypes"
+                 bindLabel="translation"
+                 bindValue="name"
+                 [clearable]="false"
+                 [multiple]="false"
+                 [closeOnSelect]="true"
+                 [ngModelOptions]="{standalone: true}"
+                 (change)="onMaterialsChange($event)"
+                 [disabled]="isEditMode"
+                 [(ngModel)]="addMaterialRequest.accessoryType">
+      </ng-select>
+    </div>
+
+    <br>
+
+    <div class="container-fluid">
+      <div class="row" *ngIf='showFilamentOptions'>
+        <div class="col-md-6" style="padding-left: 0">
+          <form [formGroup]="form">
+            <!-- Producent -->
+            <div class="form-group">
+              <h2><label for="producer">Producent</label></h2>
+              <input type="text" class="form-control" id="producer" [ngModelOptions]="{standalone: true}" required
+                     [(ngModel)]="addMaterialRequest.producer" autocomplete="off"
+                     #name="ngModel">
+            </div>
+
+            <br>
+
+            <!-- Typ filamentu -->
+            <div class="form-group">
+              <h2><label>Typ filamentu</label></h2>
+              <ng-select [items]="filamentTypes"
+                         [multiple]="false"
+                         [closeOnSelect]="true"
+                         [ngModelOptions]="{standalone: true}"
+                         [(ngModel)]="addMaterialRequest.filamentType">
+              </ng-select>
+            </div>
+
+            <br>
+
+            <!-- Temperatura druku -->
+            <div class="form-group">
+              <h2><label for="temp2">Temperatura dyszy</label></h2>
+              <div class="input-group mb-3">
+                <input class="form-control" [(ngModel)]="addMaterialRequest.temperaturePrint"
+                       [ngModelOptions]="{standalone: true}" autocomplete="off"
+                       type="text" id="temp1" mask="separator.2" thousandSeparator="">
+                <span class="input-group-text" style="margin-right: 16px">&deg;C</span>
+              </div>
+            </div>
+
+            <br>
+
+            <!-- Temperatura stołu -->
+            <div class="form-group">
+              <h2><label for="temp2">Temperatura stołu</label></h2>
+              <div class="input-group mb-3">
+                <input class="form-control" [(ngModel)]="addMaterialRequest.temperatureDesk"
+                       [ngModelOptions]="{standalone: true}" autocomplete="off"
+                       type="text" id="temp2" mask="separator.2" thousandSeparator="">
+                <span class="input-group-text" style="margin-right: 16px">&deg;C</span>
+              </div>
+            </div>
+
+            <br>
+
+            <!-- Cena -->
+            <div>
+              <h2><label *ngIf="showFilamentOptions; else elseBlock" for="price">Cena</label></h2>
+              <ng-template #elseBlock><h2><label for="price">Cena</label></h2></ng-template>
+              <div class="input-group mb-3">
+                <input
+                  type="text"
+                  id="price"
+                  [ngModelOptions]="{standalone: true}"
+                  [(ngModel)]="addMaterialRequest.price"
+                  class="form-control"
+                  autocomplete="off"
+                  aria-describedby="basic-addon2"
+                  mask="separator.2"
+                  thousandSeparator=""
+                />
+                <span class="input-group-text" style="margin-right: 16px">zł za kilogram</span>
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-group" style="margin-left: 100px">
+            <h2><label>Kolor</label></h2>
+            <!-- Ustawiamy domyślny kolor, jeśli jest undefined -->
+            <color-sketch [color]="addMaterialRequest.color || '#ffffff'"
+                          (onChange)="handleChange($event)"></color-sketch>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div *ngIf='showPackageOptions'>
+      <!-- Gabaryt InPost -->
+      <div class="form-group">
+        <h2><label>Gabaryt InPost</label></h2>
+        <ng-select [items]="packageSize"
+                   [multiple]="false"
+                   [closeOnSelect]="true"
+                   [ngModelOptions]="{standalone: true}"
+                   [(ngModel)]="addMaterialRequest.packagingSize">
+        </ng-select>
+      </div>
+
+      <br>
+
+      <!-- Wymiary -->
+      <div class="form-group">
+        <h2><label>Wymiary (długość x szerokość x wysokość)</label></h2>
+        <input type="text" [(ngModel)]="addMaterialRequest.dimensions"
+               class="form-control"
+               placeholder="00.00x00.00x00.00"
+               name="dimensions"
+               autocomplete="off"
+               >
+      </div>
+
+    </div>
+
+    <!-- Cena netto za sztukę -->
+    <div *ngIf='!showFilamentOptions'>
+      <h2><label>Cena</label></h2>
+      <div class="input-group mb-3">
+        <input
+          type="text"
+          id="price2"
+          name="price"
+          [(ngModel)]="addMaterialRequest.price"
+          class="form-control"
+          autocomplete="off"
+          aria-describedby="basic-addon2"
+          mask="separator.2"
+          thousandSeparator=""
+        />
+        <span class="input-group-text" style="margin-right: 16px">zł za sztukę</span>
+      </div>
+    </div>
+
+    <br>
+
+    <!-- Pole Opis dostępne dla każdego typu akcesorium -->
+    <div class="form-group">
+      <h2><label for="description">Opis</label></h2>
+      <textarea class="form-control" id="description" rows="3"
+                [(ngModel)]="addMaterialRequest.description"
+                name="description" placeholder="Opcjonalny opis materiału"></textarea>
+    </div>
+
+    <br>
+
+    <div class="text-right">
+      <button type="submit" (click)="onMaterialSubmit(successTpl, errorTpl)" class="btn btn-primary">{{ buttonText }}
+      </button>
+    </div>
+  </form>
+  <br>
+</div>

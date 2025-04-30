@@ -1,65 +1,122 @@
-import {Component, OnInit} from '@angular/core';
+// allegro-synchronized.component.ts
+
+import {Component, inject, OnInit, TemplateRef} from '@angular/core';
 import {ProductService} from "../../utility/service/product.service";
-import {LocalStorageService} from "../../local-storage.service";
-import {NestedTreeControl} from "@angular/cdk/tree";
-import {MatTreeNestedDataSource} from "@angular/material/tree";
+import {HttpHeaders} from "@angular/common/http";
+import {MatDialog} from "@angular/material/dialog";
+import {OfferEditDialogComponent} from "./offer-edit-dialog/offer-edit-dialog.component";
+import {ToastService} from "../../utility/service/toast-service";
 
-interface SynchronizationNode {
-  name: string;
-  children?: SynchronizationNode[];
+export interface Offer {
+  number: number;
+  imageUrl: string;
+  auctionName: string;
+  offerNumber: string;
+  linkedProducts: string;
+  price: number;
+  allegroQuantity: string;
+  ean: string;
+  products?: {
+    productId: string;
+    productName: string;
+    productEan: string;
+    quantity: number;
+  }[];
 }
-
-const TREE_DATA: SynchronizationNode[] = [
-  {
-    name: 'Oferta1',
-    children: [{name: 'Przedmiot1'}, {name: 'Przedmiot2'}, {name: 'Przedmiot3'}],
-  },
-  {
-    name: 'Vegetables',
-    children: [
-      {
-        name: 'Green',
-        children: [{name: 'Broccoli'}, {name: 'Brussels sprouts'}],
-      },
-      {
-        name: 'Orange',
-        children: [{name: 'Pumpkins'}, {name: 'Carrots'}],
-      },
-    ],
-  },
-];
 
 @Component({
   selector: 'app-allegro-synchronized',
   templateUrl: './allegro-synchronized.component.html',
-  styleUrl: './allegro-synchronized.component.css'
+  styleUrls: ['./allegro-synchronized.component.css']
 })
-export class AllegroSynchronizedComponent implements OnInit{
-  treeControl = new NestedTreeControl<SynchronizationNode>(node => node.children);
-  dataSource = new MatTreeNestedDataSource<SynchronizationNode>();
-  constructor(private productService: ProductService, private localStorageService: LocalStorageService) {
+export class AllegroSynchronizedComponent implements OnInit {
+  toastSuccessMessage: string = '';
+  offers: Offer[] = [];
+  toastService = inject(ToastService);
+  displayedColumns: string[] = [
+    'number',
+    'imageUrl',
+    'auctionName',
+    'offerNumber',
+    'linkedProducts',
+    'price',
+    'allegroQuantity',
+    'ean',
+    'auctionStatus',
+    'actions'
+  ];
 
+
+  constructor(
+    private productService: ProductService,
+    private dialog: MatDialog
+  ) {}
+  ngOnInit(): void {
+    this.loadOffers();
   }
 
-  ngOnInit(): void {
-    this.productService.getOffersProducts(localStorage.getItem('allegro-token')!).subscribe(
-      response => {
-        const synchronizedData: SynchronizationNode[] = response.map((item: { offerName: any; allegroOfferProducts: any[]; }) => ({
-          name: item.offerName,
-          children: item.allegroOfferProducts.map(product => ({
-            name: product.productName + "(" + product.quantity + ")",
-            children: product.allegroOfferProducts ? product.allegroOfferProducts.map((innerProduct: { productName: any; quantity: any; }) => ({
-              name: innerProduct.productName + "(" + innerProduct.quantity + ")",
-              children: null
-            })) : null
-          }))
-        }));
-        this.dataSource.data = synchronizedData;
-        console.log(synchronizedData);
+  loadOffers(): void {
+    const token = localStorage.getItem('allegro-token') || '';
+    this.productService.getLinkedOffers(token).subscribe((response: any[]) => {
+      // response to List<LinkedOfferResponse> z backendu
+      // Mapujemy do interfejsu Offer
+      this.offers = response.map((item, index) => ({
+        number: index + 1,
+        imageUrl: item.imageUrl || 'assets/default-image.png',
+        auctionName: item.offerName,
+        offerNumber: item.offerId,
+        linkedProducts: (item.products || [])
+          .map((p: any) => p.productName)
+          .join(', '),
+        price: item.price || 0,
+        allegroQuantity: item.availableStock + "/" + (item.availableStock + item.soldStock) || "?",
+        ean: item.ean || '?',
+        auctionStatus: item.auctionStatus || '?',
+        products: item.products
+      }));
+    });
+  }
+
+  synchronizeOffers(template: TemplateRef<any>): void {
+    const token = localStorage.getItem('allegro-token') || '';
+    this.productService.synchronizeOffers(token).subscribe(
+      (response: { created: number; updated: number }) => {
+        if(response.created == 0 && response.updated == 0) {
+          this.toastSuccessMessage = `Pomyślnie zsynchronizowano. Brak aktualizacji.`
+        } else {
+          this.toastSuccessMessage = `Pomyślnie zsynchronizowano.\n${response.created} nowych ofert\n${response.updated} zaktualizowanych ofert.`;
+        }
+        this.showSuccess(template);
+        this.loadOffers();
+      },
+      (error) => {
+        console.error('Synchronization failed:', error);
+        this.toastService.show({
+          template: template,
+          classname: 'bg-danger text-light',
+          delay: 2000,
+          text: 'Synchronization failed. Please try again.',
+        });
       }
     );
-
   }
-  hasChild = (_: number, node: SynchronizationNode) => !!node.children && node.children.length > 0;
 
+  showSuccess(template: TemplateRef<any>) {
+    this.toastService.show({template, classname: 'bg-success text-light', delay: 2000, text: this.toastSuccessMessage});
+  }
+
+
+  openEditDialog(offer: Offer): void {
+    const dialogRef = this.dialog.open(OfferEditDialogComponent, {
+      width: '500px',
+      data: { offer }
+    });
+
+    dialogRef.afterClosed().subscribe((saved) => {
+      // Po zapisie odśwież tabelę
+      if (saved) {
+        this.loadOffers();
+      }
+    });
+  }
 }

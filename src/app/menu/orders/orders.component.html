@@ -1,0 +1,135 @@
+<ng-template #successTpl let-toast>
+  <div class="toast-header">
+    <strong class="mr-auto">Synchronization</strong>
+    <button type="button" class="ml-2 mb-1 close" (click)="toast.remove()">&times;</button>
+  </div>
+  <div class="toast-body">
+    {{ toastSuccessMessage }}
+  </div>
+</ng-template>
+
+<button mat-raised-button color="primary" (click)="synchronizeOrders(successTpl)">Synchronizuj</button>
+<button mat-raised-button color="accent" (click)="toggleAllDetails()">Przełącz szczegóły zamówień</button>
+
+<table mat-table [dataSource]="orders" multiTemplateDataRows class="mat-elevation-z8">
+
+  <!-- Kolumny "normalne": orderId, saleDate, market, status, totalAmount -->
+  <ng-container matColumnDef="orderId">
+    <th mat-header-cell *matHeaderCellDef>Numer zamówienia</th>
+    <td mat-cell *matCellDef="let element">{{ element.orderId }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="saleDate">
+    <th mat-header-cell *matHeaderCellDef>Data sprzedaży</th>
+    <td mat-cell *matCellDef="let element">
+      {{ element.saleDate | date:'long' }}
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="market">
+    <th mat-header-cell *matHeaderCellDef>Rynek</th>
+    <td mat-cell *matCellDef="let element">{{ element.market }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="status">
+    <th mat-header-cell *matHeaderCellDef>Status</th>
+    <td mat-cell *matCellDef="let element">{{ element.status }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="totalAmount">
+    <th mat-header-cell *matHeaderCellDef>Suma</th>
+    <td mat-cell *matCellDef="let element">
+      {{ element.totalAmount | currency:'PLN ' }}
+    </td>
+  </ng-container>
+
+  <!-- Kolumna na szczegóły (expandable row) -->
+  <ng-container matColumnDef="expandedDetail">
+    <td mat-cell *matCellDef="let element" [attr.colspan]="columnsToDisplay.length">
+      <div class="example-element-detail"
+           [@detailExpand]="element.isExpanded ? 'expanded' : 'collapsed'">
+
+        <!-- Tutaj wstawiasz swój kod szczegółów zamówienia -->
+        <div class="order-container mat-elevation-z8" style="display: flex; flex-wrap: wrap; margin-top: 20px;">
+          <!-- Left Section: Order and Product Details -->
+          <div style="width: 60%; padding-right: 20px; box-sizing: border-box;">
+            <h1>Data sprzedaży: {{ element.saleDate | date:'long' }}</h1>
+            <p><strong>Rynek:</strong> {{ element.market }}</p>
+            <p><strong>Status:</strong> {{ element.status }}</p>
+
+            <h2>Zamówione produkty</h2>
+            <table mat-table [dataSource]="element.products" class="mat-elevation-z8">
+              <ng-container matColumnDef="quantity">
+                <th mat-header-cell *matHeaderCellDef>Ilość</th>
+                <td mat-cell *matCellDef="let product">{{ product.quantity }}</td>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Produkt</th>
+                <td mat-cell *matCellDef="let product">
+                  <a [href]="'https://allegro.pl.allegrosandbox.pl/oferta/' + product.productId" target="_blank" rel="noopener noreferrer">
+                    {{ product.name }}
+                  </a>
+                </td>
+
+              </ng-container>
+              <ng-container matColumnDef="unitPrice">
+                <th mat-header-cell *matHeaderCellDef>Cena</th>
+                <td mat-cell *matCellDef="let product">
+                  {{ product.unitPrice | currency:'PLN ' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="totalPrice">
+                <th mat-header-cell *matHeaderCellDef>Łącznie</th>
+                <td mat-cell *matCellDef="let product">
+                  {{ product.totalPrice | currency:'PLN ' }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['quantity', 'name', 'unitPrice', 'totalPrice']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['quantity', 'name', 'unitPrice', 'totalPrice']"></tr>
+            </table>
+
+            <h3><strong>Suma:</strong> {{ element.totalAmount | currency:'PLN ' }}</h3>
+          </div>
+
+          <!-- Right Section: Buyer and Delivery Details -->
+          <div style="width: 35%; border-left: 1px solid #ccc; padding-left: 20px; box-sizing: border-box;">
+            <h2>Dane zamawiającego</h2>
+            <p><strong>Kupujący:</strong> {{ element.buyer.firstName }} {{ element.buyer.lastName }}</p>
+            <p><strong>E-mail:</strong> {{ element.buyer.email }}</p>
+            <p><strong>Telefon:</strong> {{ element.buyer.phoneNumber }}</p>
+            <p><strong>Język kupującego:</strong> {{ element.buyer.language }}</p>
+
+            <h2>Sposób/dane dostawy</h2>
+            <p><strong>Czas na wysłanie:</strong> {{ element.delivery.dispatchTimeTo | date:'short' }}</p>
+            <p><strong>Przewidywany czas dostawy:</strong> {{ element.delivery.deliveryTimeTo | date:'short' }}</p>
+            <p><strong>Metoda:</strong> {{ element.delivery.methodName }}</p>
+            <p><strong>Koszt dostawy:</strong> {{ element.delivery.cost | currency:'PLN' }}</p>
+            <p><strong>Dane dostawy:</strong></p>
+            <p>{{ element.delivery.deliveryAddress.street }}</p>
+            <p>{{ element.delivery.deliveryAddress.postCode }} {{ element.delivery.deliveryAddress.city }} {{ element.delivery.deliveryAddress.countryCode }}</p>
+
+            <p><strong>Telefon:</strong> {{ element.buyer.phoneNumber }}</p>
+          </div>
+        </div>
+
+      </div>
+    </td>
+  </ng-container>
+
+  <!-- Nagłówek tabeli -->
+  <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+
+  <!-- Wiersz główny (domyślny), wyświetlający kolumny z danymi -->
+  <tr mat-row
+      *matRowDef="let element; columns: columnsToDisplay"
+      class="example-element-row"
+      (click)="element.isExpanded = !element.isExpanded">
+  </tr>
+
+  <!-- Wiersz szczegółów (expandable) z warunkiem "when" -->
+  <tr mat-row
+      *matRowDef="let row; columns: ['expandedDetail']"
+      class="example-detail-row">
+  </tr>
+</table>

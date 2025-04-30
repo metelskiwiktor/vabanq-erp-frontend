@@ -1,0 +1,51 @@
+<div class="container">
+<!--  <mat-toolbar color="primary">-->
+<!--    <span>Produkty</span>-->
+<!--    <span class="spacer"></span>-->
+<!--    <button mat-raised-button color="accent" (click)="createNewProduct()">Create a project</button>-->
+<!--  </mat-toolbar>-->
+
+  <!-- Filter by product name -->
+  <mat-form-field class="filter-input">
+    <mat-label>Filtruj nazwy</mat-label>
+    <input matInput [(ngModel)]="filter" placeholder="Search products">
+  </mat-form-field>
+
+  <!-- Filter by tags using ng-select -->
+  <div class="form-group">
+    <ng-select
+      [items]="availableTags"
+      bindLabel="name"
+      [multiple]="true"
+      [closeOnSelect]="false"
+      placeholder="Filtruj tagi"
+      [(ngModel)]="selectedTags">
+    </ng-select>
+  </div>
+
+  <br>
+
+  <div class="card-grid">
+    <mat-card class="card" *ngFor="let product of filteredProducts()">
+      <mat-card-header>
+        <div mat-card-avatar class="product-image"></div>
+        <mat-card-title>{{ product.name }}</mat-card-title>
+        <mat-card-subtitle>{{ product.ean }}</mat-card-subtitle>
+      </mat-card-header>
+      <img mat-card-image [src]="product.imageUrl" alt="{{ product.name }}">
+
+      <mat-card-content>
+        <p>{{ product.description }}</p>
+        <!-- Display product tags -->
+        <p *ngIf="product.tags.length > 0">
+          {{ formatTags(product) }}
+        </p>
+      </mat-card-content>
+      <mat-card-actions style="display: flex; justify-content: space-between; padding: 8px;">
+        <button mat-button style="background-color: #ffffff; margin-right: 8px;" (click)="previewProduct(product.id)">Podgląd</button>
+        <button mat-button style="background-color: #ffffff; margin-left: 8px;" (click)="editProduct(product.id)">Edytuj</button>
+      </mat-card-actions>
+
+    </mat-card>
+  </div>
+</div>

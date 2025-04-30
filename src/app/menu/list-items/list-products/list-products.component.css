@@ -1,0 +1,58 @@
+.container {
+  padding: 20px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.filter-input {
+  margin: 20px 0;
+  width: 100%;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Zapewnia, że zawartość karty zostanie rozmieszczona między górą a dołem */
+  height: 100%;
+}
+
+.product-image {
+  background-color: #eee;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+mat-card-header {
+  align-items: center;
+}
+
+.mat-card-image {
+  max-width: 150px; /* Maksymalna szerokość 150px */
+  width: 100%; /* Obraz zajmuje całą dostępną szerokość */
+  min-height: 150px; /* Minimalna wysokość 150px */
+  height: auto; /* Automatyczna wysokość, aby zachować proporcje */
+  object-fit: contain; /* Skaluje obraz proporcjonalnie */
+  margin: 0 auto; /* Wyśrodkowuje obraz poziomo */
+}
+
+mat-card-content {
+  flex-grow: 1; /* Pozwala zawartości wypełnić przestrzeń między obrazem a przyciskiem */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+mat-card-actions {
+  margin-top: auto; /* Wypycha przyciski na dół karty */
+  align-self: flex-end;
+}
+

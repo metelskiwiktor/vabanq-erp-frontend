@@ -7,26 +7,27 @@ import {KeycloakService} from "keycloak-angular";
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
-export class LoginComponent implements OnInit{
-  public isLoggedIn = false;
-  public userProfile: KeycloakProfile | null = null;
-
-  constructor(private readonly keycloak: KeycloakService) {}
-
-  public async ngOnInit() {
-    this.isLoggedIn = await this.keycloak.isLoggedIn();
-
-    if (this.isLoggedIn) {
-      this.userProfile = await this.keycloak.loadUserProfile();
-      console.log(await this.keycloak.getToken());
-    }
-  }
-
-  public login() {
-    this.keycloak.login();
-  }
-
-  public logout() {
-    this.keycloak.logout();
-  }
+// export class LoginComponent implements OnInit{
+export class LoginComponent {
+  // public isLoggedIn = false;
+  // public userProfile: KeycloakProfile | null = null;
+  //
+  // constructor(private readonly keycloak: KeycloakService) {}
+  //
+  // public async ngOnInit() {
+  //   this.isLoggedIn = await this.keycloak.isLoggedIn();
+  //
+  //   if (this.isLoggedIn) {
+  //     this.userProfile = await this.keycloak.loadUserProfile();
+  //     console.log(await this.keycloak.getToken());
+  //   }
+  // }
+  //
+  // public login() {
+  //   this.keycloak.login();
+  // }
+  //
+  // public logout() {
+  //   this.keycloak.logout();
+  // }
 }

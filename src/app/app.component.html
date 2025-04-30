@@ -3,6 +3,16 @@
     <app-menu></app-menu>
   </div>
   <div style="flex-grow: 1;">
+    <div class="toast-container">
+      <ngb-toast *ngFor="let toast of toastService.toasts"
+                 [class]="toast.classname"
+                 [autohide]="true"
+                 [delay]="toast.delay"
+                 (hidden)="toastService.remove(toast)">
+        {{ toast.text }}
+      </ngb-toast>
+    </div>
+
     <router-outlet></router-outlet>
   </div>
 </div>

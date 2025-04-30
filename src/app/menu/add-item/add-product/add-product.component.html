@@ -1,0 +1,243 @@
+<ng-template #successTpl></ng-template>
+<ng-template #errorTpl></ng-template>
+
+<div class="container-fluid" style="width: 80%;">
+
+  <br>
+  <h2>{{ dialogTitle }}</h2>
+  <hr>
+  <form #heroForm="ngForm">
+    <div class="row">
+      <!-- Column 1: Nazwa, Czas trwania, Opis -->
+      <div class="col-md-6">
+        <div class="form-group">
+          <h2><label for="name">Nazwa</label></h2>
+          <input type="text" class="form-control" id="name" name="name" required [disabled]="isViewMode"
+                 [(ngModel)]="addProductRequest.name" #name="ngModel" placeholder="Nazwa produktu">
+        </div>
+        <div class="form-group">
+          <h2><label for="duration">Czas trwania druku</label></h2>
+          <input type="text" autocomplete="off" class="form-control" id="duration" name="duration"
+                 [disabled]="isViewMode" mask="00:00" [(ngModel)]="duration" placeholder="HH:MM">
+        </div>
+        <div class="form-group">
+          <h2><label for="description">Opis</label></h2>
+          <textarea class="form-control" id="description" rows="3" [(ngModel)]="addProductRequest.description"
+                    [disabled]="isViewMode" name="description" placeholder="Wprowadź opcjonalny opis"></textarea>
+        </div>
+      </div>
+
+      <!-- Column 2: EAN, Nazwa EAN, Generate Button -->
+      <div class="col-md-6">
+        <div class="form-group">
+          <h2><label for="ean">EAN</label></h2>
+          <input type="text" class="form-control" id="ean" name="ean" required [(ngModel)]="addProductRequest.ean"
+                 [disabled]="isViewMode" #ean="ngModel" mask="0000000000000" placeholder="Wpisz 13 cyfr"
+                 (input)="generateEANImage()">
+        </div>
+        <div class="form-group">
+          <h2><label for="eanName">Nazwa EAN</label></h2>
+          <input type="text" class="form-control" id="eanName" name="eanName" [(ngModel)]="addProductRequest.eanName"
+                 [disabled]="isViewMode" placeholder="Nazwa EAN nad barcode EAN" (input)="generateEANImage()">
+        </div>
+        <div *ngIf="eanImageUrl; else errorTemplate">
+          <img [src]="eanImageUrl" alt="EAN-13 Code" class="img-fluid"/>
+        </div>
+        <ng-template #errorTemplate>
+          <div class="error-message" *ngIf="errorMessage.length > 0">{{ errorMessage }}</div>
+        </ng-template>
+      </div>
+
+    </div>
+    <br>
+    <div class="form-group">
+      <h2><label>Materiały</label></h2>
+      <ng-select [items]="dataSource"
+                 bindLabel="name"
+                 [groupBy]="groupMaterialsByFn"
+                 [groupValue]="groupMaterialsValueFn"
+                 [multiple]="true"
+                 [closeOnSelect]="false"
+                 (change)="onMaterialsChangeTable($event)"
+                 [compareWith]="compareFn"
+                 [disabled]="isViewMode"
+                 [ngModelOptions]="{standalone: true}"
+                 [(ngModel)]="selectedListedMaterials">
+        <ng-template ng-optgroup-tmp let-item="item">
+          <span style="vertical-align: middle;">{{ item.name }}</span>
+          <span class="ml-1 badge badge-secondary">{{ item.total }}</span>
+        </ng-template>
+      </ng-select>
+    </div>
+
+    <div class="tables-container">
+      <!-- Table for Filament materials -->
+      <div class="table-wrapper">
+        <h3>Filamenty</h3>
+        <table mat-table [dataSource]="filamentMaterials">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+            <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef>Cena brutto</th>
+            <td mat-cell *matCellDef="let element"> {{ element.price }}zł/kg</td>
+          </ng-container>
+
+          <ng-container matColumnDef="q">
+            <th mat-header-cell *matHeaderCellDef>Ilość</th>
+            <td mat-cell *matCellDef="let element" style="text-align: center">
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" [(ngModel)]="element.q" (change)="calculateMaterialsPrice()"
+                       autocomplete="off" name="{{element.id}}" [disabled]="isViewMode"/>
+                <span class="input-group-text">g</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Table for Elementy złączne (Fasteners) -->
+      <div class="table-wrapper">
+        <h3>Elementy złączne</h3>
+        <table mat-table [dataSource]="fastenerMaterials">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nazwa</th>
+            <td mat-cell *matCellDef="let element"> {{ element.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef>Cena brutto</th>
+            <td mat-cell *matCellDef="let element"> {{ element.price }}zł/szt</td>
+          </ng-container>
+
+          <ng-container matColumnDef="q">
+            <th mat-header-cell *matHeaderCellDef>Ilość</th>
+            <td mat-cell *matCellDef="let element" style="text-align: center">
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" [(ngModel)]="element.q" (change)="calculateMaterialsPrice()"
+                       autocomplete="off" name="{{element.id}}" [disabled]="isViewMode"/>
+                <span class="input-group-text">szt</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+    </div>
+
+    <hr style="margin-top: 0.15em; margin-bottom: 0; border-color: rgba(0, 0, 0, 0.7);">
+
+
+    <div style="display: flex; justify-content: space-between;">
+      <h2><span style="margin-left: 16px">Podsumowanie</span></h2>
+      <h2><span style="margin-right: 16px">{{ total() }} zł</span></h2>
+    </div>
+    <br>
+
+    <div class="form-group">
+      <h2><label>Tagi</label></h2>
+      <ng-select
+        [items]="tags"
+        [multiple]="true"
+        [addTag]="true"
+        [hideSelected]="true"
+        placeholder="Wybierz lub dodaj tag"
+        [disabled]="isViewMode"
+        [ngModelOptions]="{standalone: true}"
+        [(ngModel)]="addProductRequest.tags"
+        [closeOnSelect]="true"
+        (add)="addNewTag($event)">
+        <ng-template ng-tag-tmp let-search="searchTerm">
+          <div>
+            <strong>Dodaj nowy tag: "{{ search }}"</strong>
+          </div>
+        </ng-template>
+      </ng-select>
+
+    </div>
+
+    <br>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-4" style="padding-left: 0;">
+          <div class="form-group">
+            <label>Główny widok</label>
+
+            <!-- View Mode -->
+            <div *ngIf="isViewMode">
+              <div *ngIf="previewUrl">
+                <img [src]="previewUrl" alt="Preview Image" class="img-fluid"/>
+                <div>
+                  <a [href]="previewUrl" [download]="preview[0]!.name">
+                    {{ (preview[0]!.name.length > 40 ? (preview[0]!.name | slice: 0: 40) + '...' : preview[0]!.name) }}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <ngx-dropzone *ngIf="!isViewMode" [accept]="'image/*'" (change)="onSelectPreview($event)"
+                          [expandable]="true">
+              <ngx-dropzone-label>Widok produktu</ngx-dropzone-label>
+
+              <ngx-dropzone-image-preview *ngFor="let f of preview" [file]="f" [removable]="true"
+                                          (removed)="onRemovePreview(f)">
+                <ngx-dropzone-label>
+                  {{ (f.name.length > 40 ? (f.name | slice: 0: 40) + '...' : f.name) }} ({{ f.type }})
+                </ngx-dropzone-label>
+              </ngx-dropzone-image-preview>
+            </ngx-dropzone>
+          </div>
+        </div>
+
+
+        <div class="col-md-8">
+          <div class="form-group">
+            <label>Wszystkie pliki</label>
+
+            <!-- View Mode -->
+            <div *ngIf="isViewMode">
+              <ul class="list-group">
+                <li class="list-group-item" *ngFor="let f of files">
+                  <a [href]="f.url" [download]="f.file.name">
+                    {{ f.file.name }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Edit Mode -->
+            <ngx-dropzone *ngIf="!isViewMode" (change)="onSelectFiles($event)" [expandable]="true">
+              <ngx-dropzone-label>Wszystkie pliki</ngx-dropzone-label>
+
+              <ngx-dropzone-preview *ngFor="let f of files" [removable]="true" (removed)="onRemoveFiles(f)">
+                <ngx-dropzone-label>
+                  {{ (f.file.name.length > 10 ? (f.file.name | slice: 0: 10) + '...' : f.file.name) }}
+                  ({{ f.file.type }})
+                </ngx-dropzone-label>
+              </ngx-dropzone-preview>
+            </ngx-dropzone>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <br>
+    <div *ngIf="!isViewMode">
+      <div class="text-right">
+        <button type="submit" (click)="onProductSubmit(successTpl, errorTpl)" class="btn btn-primary"
+                [disabled]="isViewMode">{{ buttonText }}
+        </button>
+      </div>
+    </div>
+    <br>
+  </form>
+</div>

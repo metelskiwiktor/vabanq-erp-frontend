@@ -1,0 +1,53 @@
+<h1 mat-dialog-title>Edytowanie oferty: {{ offerId }}</h1>
+
+<mat-dialog-content>
+
+  <div style="margin-bottom: 10px;">
+    <label>Zarządzaj produktami:</label>
+    <ng-select
+      [items]="allProducts"
+      bindLabel="name"
+      [multiple]="true"
+      [(ngModel)]="selectedProducts"
+      (ngModelChange)="onProductChange($event)">
+    </ng-select>
+  </div>
+
+  <table mat-table [dataSource]="assignedItems" class="mat-elevation-z8">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef> Produkt </th>
+      <td mat-cell *matCellDef="let row"> {{ row.name }} (EAN: {{ row.ean }}) </td>
+    </ng-container>
+
+    <ng-container matColumnDef="quantity">
+      <th mat-header-cell *matHeaderCellDef> Ilość </th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.quantity }}
+        <button mat-icon-button (click)="addQuantity(row)">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-icon-button (click)="subtractQuantity(row)">
+          <mat-icon>remove</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef> Usuń </th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button color="warn" (click)="removeItem(row)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Anuluj</button>
+  <button mat-raised-button color="primary" (click)="onSave()">Zapisz</button>
+</mat-dialog-actions>

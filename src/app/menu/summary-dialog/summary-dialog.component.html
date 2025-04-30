@@ -1,0 +1,22 @@
+<h1 mat-dialog-title>Podsumowanie zmian</h1>
+<div mat-dialog-content>
+  <p>Zmieniasz {{data.changedItems.length}} elementy.</p>
+  <div class="changed-items-container">
+    <div class="changed-item" *ngFor="let ch of data.changedItems">
+      <b>{{ch.item.type}}: {{ch.item.name}}</b><br>
+      <span *ngIf="ch.changes.enabled !== undefined">
+        Aktywny: {{ch.item.originalWms.enabled}} -> {{ch.changes.enabled}}
+      </span><br>
+      <span *ngIf="ch.changes.quantity !== undefined">
+        Ilość: {{ch.item.originalWms.quantity}} -> {{ch.changes.quantity}}
+      </span><br>
+      <span *ngIf="ch.changes.criticalStock !== undefined">
+        Krytyczny Stan: {{ch.item.originalWms.criticalStock}} -> {{ch.changes.criticalStock}}
+      </span>
+    </div>
+  </div>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Anuluj</button>
+  <button mat-button color="primary" [mat-dialog-close]="'save'">Zapisz</button>
+</div>

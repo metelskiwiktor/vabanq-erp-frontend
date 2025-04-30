@@ -8,20 +8,21 @@ import { KeycloakService } from 'keycloak-angular';
 })
 export class AuthGuard implements CanActivate {
 
-  constructor(private keycloakService: KeycloakService, private router: Router) {}
+  // constructor(private keycloakService: KeycloakService, private router: Router) {}
 
   canActivate(
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
 
-    // Sprawdza, czy użytkownik jest zalogowany
-    if (this.keycloakService.isLoggedIn()) {
-      return true;
-    }
-
-    // Jeśli nie jest zalogowany, przekierowuje do logowania
-    this.keycloakService.login();
-    return false;
+    // // Sprawdza, czy użytkownik jest zalogowany
+    // if (this.keycloakService.isLoggedIn()) {
+    //   return true;
+    // }
+    //
+    // // Jeśli nie jest zalogowany, przekierowuje do logowania
+    // this.keycloakService.login();
+    // return false;
+    return true;
   }
 
 }

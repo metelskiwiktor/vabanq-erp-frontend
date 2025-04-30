@@ -1,0 +1,24 @@
+.node-container {
+  padding: 10px;
+  border-radius: 5px;
+  color: #fff;
+  text-align: center;
+  width: 100px;
+}
+
+.product-node {
+  background-color: #007bff;
+}
+
+.material-node {
+  background-color: #28a745;
+}
+
+.edge .line {
+  stroke: #999;
+}
+
+.edge text {
+  fill: #000;
+  font-size: 12px;
+}

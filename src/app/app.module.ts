@@ -14,6 +14,15 @@ import {BrowserModule} from "@angular/platform-browser";
 import {LoginModule} from "./login/login.module";
 import {KeycloakService} from "keycloak-angular";
 import {environment} from "../environments/environment";
+import {NgbToast} from "@ng-bootstrap/ng-bootstrap";
+import {MatTabsModule} from "@angular/material/tabs";
+import {MatToolbarModule} from "@angular/material/toolbar";
+import {MatFormFieldModule} from "@angular/material/form-field";
+import {MatInputModule} from "@angular/material/input";
+import {MatCardModule} from "@angular/material/card";
+import {FormsModule} from "@angular/forms";
+import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
+
 
 function initializeKeycloak(keycloak: KeycloakService) {
   return () =>
@@ -44,16 +53,24 @@ function initializeKeycloak(keycloak: KeycloakService) {
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
+    NgbToast,
+    MatToolbarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCardModule,
+    MatButtonModule,
+    FormsModule,
   ],
   bootstrap: [AppComponent],
   providers: [
     provideAnimationsAsync(),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeKeycloak,
-      multi: true,
-      deps: [KeycloakService]
-    }
+    provideNgxMask()
+    // {
+    //   provide: APP_INITIALIZER,
+    //   useFactory: initializeKeycloak,
+    //   multi: true,
+    //   deps: [KeycloakService]
+    // }
   ],
   exports: []
 })
