@@ -24,8 +24,15 @@ import { ToastService } from "../../utility/service/toast-service";
 })
 export class OrdersComponent implements OnInit {
   orders: Order[] = [];
+  filteredOrders: Order[] = [];
   toastSuccessMessage: string = '';
   toastService = inject(ToastService);
+
+  // Filtry
+  filterText: string = '';
+  filterStatus: string = '';
+  filterDateFrom: Date | null = null;
+  filterDateTo: Date | null = null;
 
   columnsToDisplay: string[] = [
     'orderId',
@@ -48,6 +55,7 @@ export class OrdersComponent implements OnInit {
     this.productService.getOrders(token).subscribe({
       next: (orders: Order[]) => {
         this.orders = orders.map(order => ({ ...order, isExpanded: false }));
+        this.applyFilters();
         console.log('Fetched orders:', this.orders);
       },
       error: (error) => {
@@ -58,31 +66,31 @@ export class OrdersComponent implements OnInit {
 
   synchronizeOrders(template: TemplateRef<any>): void {
     const token = localStorage.getItem('allegro-token') || '';
-    this.productService.synchronizeOrders(token).subscribe(
-      (response: { created: number; updated: number }) => {
+    this.productService.synchronizeOrders(token).subscribe({
+      next: (response: { created: number; updated: number }) => {
         if (response.created === 0 && response.updated === 0) {
-          this.toastSuccessMessage = `Successfully synchronized. No updates.`;
+          this.toastSuccessMessage = `Synchronizacja zakończona pomyślnie. Brak aktualizacji.`;
         } else {
-          this.toastSuccessMessage = `Successfully synchronized.\n${response.created} new orders\n${response.updated} updated orders.`;
+          this.toastSuccessMessage = `Synchronizacja zakończona pomyślnie.\n${response.created} nowych zamówień\n${response.updated} zaktualizowanych zamówień.`;
         }
         this.fetchOrders();
         this.showSuccess(template);
       },
-      (error) => {
+      error: (error) => {
         console.error('Synchronization failed:', error);
         this.toastService.show({
           template: template,
           classname: 'bg-danger text-light',
           delay: 2000,
-          text: 'Synchronization failed. Please try again.',
+          text: 'Synchronizacja nie powiodła się. Spróbuj ponownie.',
         });
       }
-    );
+    });
   }
 
   toggleAllDetails(): void {
     this.allExpanded = !this.allExpanded;
-    this.orders = this.orders.map(order => ({ ...order, isExpanded: this.allExpanded }));
+    this.filteredOrders = this.filteredOrders.map(order => ({ ...order, isExpanded: this.allExpanded }));
   }
 
   showSuccess(template: TemplateRef<any>): void {
@@ -92,5 +100,111 @@ export class OrdersComponent implements OnInit {
       delay: 2000,
       text: this.toastSuccessMessage
     });
+  }
+
+  // Metody dla filtrów
+  applyFilter(event: Event): void {
+    this.filterText = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    this.applyFilters();
+  }
+
+  filterByStatus(event: Event): void {
+    this.filterStatus = (event.target as HTMLSelectElement).value;
+    this.applyFilters();
+  }
+
+  filterByDateFrom(event: Event): void {
+    const dateStr = (event.target as HTMLInputElement).value;
+    this.filterDateFrom = dateStr ? new Date(dateStr) : null;
+    this.applyFilters();
+  }
+
+  filterByDateTo(event: Event): void {
+    const dateStr = (event.target as HTMLInputElement).value;
+    this.filterDateTo = dateStr ? new Date(dateStr) : null;
+    this.applyFilters();
+  }
+
+  clearFilters(): void {
+    this.filterText = '';
+    this.filterStatus = '';
+    this.filterDateFrom = null;
+    this.filterDateTo = null;
+
+    // Zresetuj elementy formularza
+    const statusSelect = document.querySelector('.filter-select') as HTMLSelectElement;
+    if (statusSelect) statusSelect.value = '';
+
+    const dateInputs = document.querySelectorAll('.filter-date') as NodeListOf<HTMLInputElement>;
+    dateInputs.forEach(input => input.value = '');
+
+    const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+    if (searchInput) searchInput.value = '';
+
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    this.filteredOrders = this.orders.filter(order => {
+      // Filtrowanie po tekście
+      if (this.filterText) {
+        const searchText = this.filterText.toLowerCase();
+        const orderIdMatch = order.orderId.toLowerCase().includes(searchText);
+        const buyerMatch = `${order.buyer.firstName} ${order.buyer.lastName}`.toLowerCase().includes(searchText);
+        const emailMatch = order.buyer.email.toLowerCase().includes(searchText);
+
+        if (!(orderIdMatch || buyerMatch || emailMatch)) {
+          return false;
+        }
+      }
+
+      // Filtrowanie po statusie
+      if (this.filterStatus && order.status !== this.filterStatus) {
+        return false;
+      }
+
+      // Filtrowanie po dacie od
+      if (this.filterDateFrom) {
+        const saleDate = new Date(order.saleDate);
+        if (saleDate < this.filterDateFrom) {
+          return false;
+        }
+      }
+
+      // Filtrowanie po dacie do
+      if (this.filterDateTo) {
+        const saleDate = new Date(order.saleDate);
+        const endOfDay = new Date(this.filterDateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        if (saleDate > endOfDay) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }
+
+  // Metody dla statystyk
+  getOrdersCountByStatus(status: string): number {
+    return this.orders.filter(order => order.status === status).length;
+  }
+
+  getTotalOrdersValue(): number {
+    return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  }
+
+  // Metoda do tłumaczenia statusów na język polski
+  getStatusTranslation(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'READY_FOR_PROCESSING': 'Nowe',
+      'PROCESSING': 'Do wysyłki',
+      'SENT': 'Wysłane',
+      'COMPLETED': 'Zrealizowane',
+      'CANCELLED': 'Anulowane'
+    };
+
+    return statusMap[status] || status;
   }
 }
