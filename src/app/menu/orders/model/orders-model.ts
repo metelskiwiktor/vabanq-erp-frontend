@@ -31,6 +31,14 @@ export interface ProductOrder {
   totalPrice: number;
 }
 
+export interface InvoiceInfo {
+  invoiceId: string;
+  invoiceNumber: string;
+  invoiceStatus: string;
+  invoiceUrl: string;
+  createdAt: string;
+}
+
 export interface Order {
   orderId: string;
   market: string;
@@ -41,4 +49,6 @@ export interface Order {
   products: ProductOrder[];
   totalAmount: number;
   isExpanded?: boolean;
+  invoices?: InvoiceInfo[]; // Added invoice information
+  isInvoiceGenerating?: boolean;
 }

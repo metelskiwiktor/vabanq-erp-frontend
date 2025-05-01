@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, TemplateRef } from '@angular/core';
-import { Order } from './model/orders-model';
+import { Order, InvoiceInfo } from './model/orders-model';
 import {
   trigger,
   state,
@@ -9,6 +9,7 @@ import {
 } from '@angular/animations';
 import { ProductService } from "../../utility/service/product.service";
 import { ToastService } from "../../utility/service/toast-service";
+import { InfaktService } from "../../utility/service/infakt.service";
 
 @Component({
   selector: 'app-orders',
@@ -27,19 +28,22 @@ export class OrdersComponent implements OnInit {
   filteredOrders: Order[] = [];
   toastSuccessMessage: string = '';
   toastService = inject(ToastService);
+  infaktService = inject(InfaktService);
 
   // Filtry
   filterText: string = '';
   filterStatus: string = '';
   filterDateFrom: Date | null = null;
   filterDateTo: Date | null = null;
+  filterHasInvoice: boolean = false;
 
   columnsToDisplay: string[] = [
     'orderId',
     'saleDate',
     'market',
     'status',
-    'totalAmount'
+    'totalAmount',
+    'invoice' // Added invoice column
   ];
 
   allExpanded: boolean = false;
@@ -55,12 +59,30 @@ export class OrdersComponent implements OnInit {
     this.productService.getOrders(token).subscribe({
       next: (orders: Order[]) => {
         this.orders = orders.map(order => ({ ...order, isExpanded: false }));
+        // Check for existing invoices for each order
+        this.fetchInvoicesForOrders();
         this.applyFilters();
         console.log('Fetched orders:', this.orders);
       },
       error: (error) => {
         console.error('Failed to fetch orders:', error);
       }
+    });
+  }
+
+  fetchInvoicesForOrders(): void {
+    this.orders.forEach(order => {
+      this.infaktService.getInvoicesForOrder(order.orderId).subscribe(invoices => {
+        if (invoices && invoices.length > 0) {
+          order.invoices = invoices.map(inv => ({
+            invoiceId: inv.id,
+            invoiceNumber: inv.number,
+            invoiceStatus: inv.status,
+            invoiceUrl: inv.url,
+            createdAt: inv.createdAt
+          }));
+        }
+      });
     });
   }
 
@@ -102,6 +124,86 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  // Invoice generation methods
+  generateInvoice(order: Order, template: TemplateRef<any>): void {
+    // Prevent event propagation to avoid expanding/collapsing order details
+    event?.stopPropagation();
+
+    // Set flag to show loading spinner
+    order.isInvoiceGenerating = true;
+
+    this.infaktService.generateInvoice(order).subscribe({
+      next: (response) => {
+        // Create invoice info and add to order
+        const invoiceInfo: InvoiceInfo = {
+          invoiceId: response.id,
+          invoiceNumber: response.number,
+          invoiceStatus: response.status,
+          invoiceUrl: response.url,
+          createdAt: response.createdAt
+        };
+
+        if (!order.invoices) {
+          order.invoices = [];
+        }
+
+        order.invoices.push(invoiceInfo);
+        order.isInvoiceGenerating = false;
+
+        // Show success message
+        this.toastSuccessMessage = `Faktura ${response.number} została wygenerowana pomyślnie.`;
+        this.showSuccess(template);
+      },
+      error: (error) => {
+        console.error('Failed to generate invoice:', error);
+        order.isInvoiceGenerating = false;
+
+        this.toastService.show({
+          template: template,
+          classname: 'bg-danger text-light',
+          delay: 2000,
+          text: 'Nie udało się wygenerować faktury. Spróbuj ponownie.',
+        });
+      }
+    });
+  }
+
+  sendInvoiceEmail(order: Order, invoiceId: string, template: TemplateRef<any>): void {
+    event?.stopPropagation();
+
+    this.infaktService.sendInvoiceEmail(invoiceId, order.buyer.email).subscribe({
+      next: (success) => {
+        if (success) {
+          this.toastSuccessMessage = `Faktura została wysłana na adres ${order.buyer.email}.`;
+          this.showSuccess(template);
+        }
+      },
+      error: (error) => {
+        console.error('Failed to send invoice email:', error);
+        this.toastService.show({
+          template: template,
+          classname: 'bg-danger text-light',
+          delay: 2000,
+          text: 'Nie udało się wysłać faktury. Spróbuj ponownie.',
+        });
+      }
+    });
+  }
+
+  downloadInvoicePdf(invoiceId: string, invoiceNumber: string): void {
+    event?.stopPropagation();
+
+    this.infaktService.getInvoicePdfUrl(invoiceId).subscribe(url => {
+      // Create an anchor element and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Faktura_${invoiceNumber.replace('/', '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  }
+
   // Metody dla filtrów
   applyFilter(event: Event): void {
     this.filterText = (event.target as HTMLInputElement).value.trim().toLowerCase();
@@ -125,11 +227,17 @@ export class OrdersComponent implements OnInit {
     this.applyFilters();
   }
 
+  toggleInvoiceFilter(): void {
+    this.filterHasInvoice = !this.filterHasInvoice;
+    this.applyFilters();
+  }
+
   clearFilters(): void {
     this.filterText = '';
     this.filterStatus = '';
     this.filterDateFrom = null;
     this.filterDateTo = null;
+    this.filterHasInvoice = false;
 
     // Zresetuj elementy formularza
     const statusSelect = document.querySelector('.filter-select') as HTMLSelectElement;
@@ -140,6 +248,9 @@ export class OrdersComponent implements OnInit {
 
     const searchInput = document.querySelector('.search-input') as HTMLInputElement;
     if (searchInput) searchInput.value = '';
+
+    const invoiceCheckbox = document.querySelector('#invoice-filter') as HTMLInputElement;
+    if (invoiceCheckbox) invoiceCheckbox.checked = false;
 
     this.applyFilters();
   }
@@ -152,14 +263,22 @@ export class OrdersComponent implements OnInit {
         const orderIdMatch = order.orderId.toLowerCase().includes(searchText);
         const buyerMatch = `${order.buyer.firstName} ${order.buyer.lastName}`.toLowerCase().includes(searchText);
         const emailMatch = order.buyer.email.toLowerCase().includes(searchText);
+        const invoiceMatch = order.invoices?.some(inv =>
+          inv.invoiceNumber.toLowerCase().includes(searchText)
+        ) || false;
 
-        if (!(orderIdMatch || buyerMatch || emailMatch)) {
+        if (!(orderIdMatch || buyerMatch || emailMatch || invoiceMatch)) {
           return false;
         }
       }
 
       // Filtrowanie po statusie
       if (this.filterStatus && order.status !== this.filterStatus) {
+        return false;
+      }
+
+      // Filtrowanie po fakturach
+      if (this.filterHasInvoice && (!order.invoices || order.invoices.length === 0)) {
         return false;
       }
 
@@ -195,6 +314,10 @@ export class OrdersComponent implements OnInit {
     return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
   }
 
+  getOrdersWithInvoicesCount(): number {
+    return this.orders.filter(order => order.invoices && order.invoices.length > 0).length;
+  }
+
   // Metoda do tłumaczenia statusów na język polski
   getStatusTranslation(status: string): string {
     const statusMap: { [key: string]: string } = {
@@ -203,6 +326,19 @@ export class OrdersComponent implements OnInit {
       'SENT': 'Wysłane',
       'COMPLETED': 'Zrealizowane',
       'CANCELLED': 'Anulowane'
+    };
+
+    return statusMap[status] || status;
+  }
+
+  // Metoda do tłumaczenia statusów faktury na język polski
+  getInvoiceStatusTranslation(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'draft': 'Szkic',
+      'issued': 'Wystawiona',
+      'sent': 'Wysłana',
+      'paid': 'Opłacona',
+      'partial': 'Częściowo opłacona'
     };
 
     return statusMap[status] || status;
