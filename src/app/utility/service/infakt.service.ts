@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {Observable, of} from 'rxjs';
+import {catchError, map} from 'rxjs/operators';
 import {Order} from "../../menu/orders/model/orders-model";
 
 export interface InfaktInvoiceResponse {
@@ -16,9 +16,11 @@ export interface InfaktInvoiceResponse {
   providedIn: 'root'
 })
 export class InfaktService {
-  private apiUrl = 'https://api.infakt.pl/v3';
+  private apiUrl = '/api/infakt';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    localStorage.setItem('infakt-token', '');
+  }
 
   /**
    * Generate invoice in Infakt based on order data
@@ -38,17 +40,16 @@ export class InfaktService {
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Accept': 'application/json',
+      'X-inFakt-ApiKey': `${token}`
     });
 
-    // Transform order into Infakt invoice format
     const invoiceData = this.prepareInvoiceData(order);
 
-    return this.http.post<InfaktInvoiceResponse>(`${this.apiUrl}/invoices`, invoiceData, { headers })
+    return this.http.post<InfaktInvoiceResponse>(`${this.apiUrl}/async/invoices.json`, { invoice: invoiceData }, { headers })
       .pipe(
         catchError(error => {
           console.error('Error generating invoice:', error);
-          // Return mock data for demo
           return of({
             id: 'mock-id',
             number: 'MOCK/INV/2025/05',
@@ -67,22 +68,25 @@ export class InfaktService {
     const token = localStorage.getItem('infakt-token') || '';
 
     if (!token) {
-      return of([]); // Return empty array if no token
+      return of([]);
     }
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Accept': 'application/json',
+      'X-inFakt-ApiKey': `${token}`
     });
 
-    return this.http.get<{data: InfaktInvoiceResponse[]}>(`${this.apiUrl}/invoices?client_order_id=${orderId}`, { headers })
-      .pipe(
-        map(response => response.data),
-        catchError(error => {
-          console.error('Error fetching invoices:', error);
-          return of([]);
-        })
-      );
+    return this.http.get<{ data: InfaktInvoiceResponse[] }>(
+      `${this.apiUrl}/invoices.json?client_order_id=${orderId}`,
+      {headers}
+    ).pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('Error fetching invoices:', error);
+        return of([]);
+      })
+    );
   }
 
   /**
@@ -106,7 +110,7 @@ export class InfaktService {
       body: 'W załączeniu przesyłamy fakturę. Dziękujemy za zakupy!'
     };
 
-    return this.http.post<any>(`${this.apiUrl}/invoices/${invoiceId}/emails`, emailData, { headers })
+    return this.http.post<any>(`${this.apiUrl}/invoices/${invoiceId}/emails`, emailData, {headers})
       .pipe(
         map(() => true),
         catchError(error => {
@@ -131,7 +135,7 @@ export class InfaktService {
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.get<{url: string}>(`${this.apiUrl}/invoices/${invoiceId}/pdf`, { headers })
+    return this.http.get<{ url: string }>(`${this.apiUrl}/invoices/${invoiceId}/pdf`, {headers})
       .pipe(
         map(response => response.url),
         catchError(error => {
@@ -145,45 +149,34 @@ export class InfaktService {
    * Transform order data to Infakt invoice format
    */
   private prepareInvoiceData(order: Order): any {
-    // This is a simplified version of the transformation
+    const today = new Date().toISOString().split('T')[0];
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
+
+    const fullName = `${order.buyer.firstName} ${order.buyer.lastName}`.trim();
+    const address = order.delivery.deliveryAddress;
+
     return {
-      client: {
-        name: `${order.buyer.firstName} ${order.buyer.lastName}`,
-        email: order.buyer.email,
-        phone: order.buyer.phoneNumber,
-        address: order.delivery.deliveryAddress.street,
-        city: order.delivery.deliveryAddress.city,
-        postal_code: order.delivery.deliveryAddress.postCode,
-        country_code: order.delivery.deliveryAddress.countryCode
-      },
-      client_order_id: order.orderId,
       payment_method: 'transfer',
+      invoice_date: today,
+      sale_date: order.saleDate || today,
+      due_date: dueDate.toISOString().split('T')[0],
+      client_first_name: order.buyer.firstName,
+      client_last_name: order.buyer.lastName,
+      client_email: order.buyer.email,
+      client_company_name: fullName,
+      client_street: address.street,
+      client_city: address.city,
+      client_post_code: address.postCode,
+      client_country: 'PL',
+      client_order_id: order.orderId,
       services: order.products.map(product => ({
         name: product.name,
         quantity: product.quantity,
-        unit_net_price: (product.unitPrice / 1.23).toFixed(2), // Assuming 23% VAT
-        tax_rate: 23,
-        unit: 'szt'
-      })),
-      // Add delivery as a service if cost > 0
-      ...(order.delivery.cost > 0 ? {
-        services: [
-          ...order.products.map(product => ({
-            name: product.name,
-            quantity: product.quantity,
-            unit_net_price: (product.unitPrice / 1.23).toFixed(2),
-            tax_rate: 23,
-            unit: 'szt'
-          })),
-          {
-            name: `Dostawa: ${order.delivery.methodName}`,
-            quantity: 1,
-            unit_net_price: (order.delivery.cost / 1.23).toFixed(2),
-            tax_rate: 23,
-            unit: 'usł'
-          }
-        ]
-      } : {})
+        unit: 'szt.',
+        unit_net_price: product.unitPrice,
+        tax_symbol: 23
+      }))
     };
   }
 }

@@ -1,0 +1,10 @@
+{
+  "/api/infakt": {
+    "target": "https://api.sandbox-infakt.pl/api/v3",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/infakt": ""
+    }
+  }
+}

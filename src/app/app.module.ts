@@ -22,6 +22,7 @@ import {MatInputModule} from "@angular/material/input";
 import {MatCardModule} from "@angular/material/card";
 import {FormsModule} from "@angular/forms";
 import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
+import { SharedModule } from './shared/shared.module';
 
 
 function initializeKeycloak(keycloak: KeycloakService) {
@@ -60,6 +61,7 @@ function initializeKeycloak(keycloak: KeycloakService) {
     MatCardModule,
     MatButtonModule,
     FormsModule,
+    SharedModule, // Add the SharedModule here
   ],
   bootstrap: [AppComponent],
   providers: [

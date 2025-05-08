@@ -1,0 +1,72 @@
+<div class="notes-dialog-container">
+  <h2 mat-dialog-title>
+    <div class="dialog-title">
+      <div>
+        <mat-icon>note_add</mat-icon>
+        Notes for: <span class="current-route">{{ getRouteDisplayName(selectedRoute) }}</span>
+      </div>
+      <button mat-icon-button (click)="closeDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </h2>
+
+  <mat-dialog-content>
+    <div class="notes-layout">
+      <!-- Routes sidebar -->
+      <div class="routes-sidebar">
+        <div class="sidebar-header">
+          <mat-icon>directions</mat-icon>
+          Routes
+        </div>
+        <div
+          *ngFor="let note of allNotes"
+          class="route-item"
+          [class.active]="note.route === selectedRoute"
+          (click)="onRouteChange(note.route)">
+          <div class="route-name">{{ getRouteDisplayName(note.route) }}</div>
+          <div class="route-updated">{{ formatDate(note.lastUpdated) }}</div>
+        </div>
+
+        <!-- Current route if not in list -->
+        <div
+          *ngIf="isCurrentRouteNotInNotes()"
+          [class.active]="currentRoute === selectedRoute"
+          (click)="onRouteChange(currentRoute)">
+          <div class="route-name">{{ getRouteDisplayName(currentRoute) }}</div>
+          <div class="route-updated">Current Route</div>
+        </div>
+
+      </div>
+
+      <!-- Notes editor -->
+      <div class="notes-editor">
+        <div class="editor-header">
+          <div class="editor-title">
+            <mat-icon>edit</mat-icon>
+            Route: <span class="editor-route">{{ getRouteDisplayName(selectedRoute) }}</span>
+          </div>
+          <button
+            mat-button
+            color="warn"
+            [disabled]="!hasNote"
+            (click)="deleteCurrentNote()">
+            <mat-icon>delete</mat-icon>
+            Delete
+          </button>
+        </div>
+
+        <textarea
+          class="notes-textarea"
+          placeholder="Add your notes here..."
+          [(ngModel)]="noteText">
+        </textarea>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="closeDialog()">Close</button>
+    <button mat-raised-button color="primary" (click)="saveCurrentNote()">Save</button>
+  </mat-dialog-actions>
+</div>

@@ -106,7 +106,8 @@
               "buildTarget": "vabanq-erp:build:dev"
             },
             "development": {
-              "buildTarget": "vabanq-erp:build:development"
+              "buildTarget": "vabanq-erp:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
