@@ -1,0 +1,489 @@
+/* Dashboard Container */
+.dashboard-container {
+  space-y: 2rem;
+}
+
+/* Period Selector */
+.period-selector {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.period-buttons {
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.period-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-right: 1px solid #e5e7eb;
+}
+
+.period-button:last-child {
+  border-right: none;
+}
+
+.period-button:hover {
+  background: #f9fafb;
+}
+
+.period-button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.comparison-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #3b82f6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.metric-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.metric-badge.positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.metric-badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.metric-comparison {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Chart Section */
+.chart-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.chart-actions .export-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-actions .export-button:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.chart-placeholder {
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 2px dashed #e5e7eb;
+}
+
+.chart-mock {
+  text-align: center;
+}
+
+.chart-mock p {
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.mock-chart-bars {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  height: 100px;
+  justify-content: center;
+}
+
+.bar {
+  width: 20px;
+  background: linear-gradient(to top, #3b82f6, #60a5fa);
+  border-radius: 2px;
+  min-height: 20px;
+  animation: growUp 1s ease-out;
+}
+
+@keyframes growUp {
+  from { height: 0; }
+  to { height: var(--height, 50%); }
+}
+
+/* Cost Structure */
+.cost-structure {
+  margin-bottom: 2rem;
+}
+
+.cost-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.cost-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-button, .edit-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-button:hover, .edit-button:hover {
+  background: #f9fafb;
+}
+
+.cost-chart-placeholder {
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.pie-chart-mock {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #8884d8 0deg 90deg,
+    #82ca9d 90deg 162deg,
+    #ffc658 162deg 216deg,
+    #ff8042 216deg 288deg,
+    #0088fe 288deg 360deg
+  );
+  margin-bottom: 1rem;
+}
+
+.chart-legend {
+  width: 100%;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-label {
+  color: #374151;
+}
+
+.cost-footer {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.cost-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Fixed Costs Chart */
+.fixed-costs-chart {
+  height: 250px;
+  margin: 1rem 0;
+}
+
+.bar-chart-mock {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  justify-content: space-around;
+}
+
+.bar-item {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bar-label {
+  font-size: 0.875rem;
+  color: #374151;
+  text-align: right;
+}
+
+.bar-container {
+  background: #f3f4f6;
+  border-radius: 4px;
+  height: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease-out;
+}
+
+.bar-value {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Recent Invoices */
+.recent-invoices {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.recent-invoices .section-header {
+  padding: 1.5rem 1.5rem 0 1.5rem;
+}
+
+.view-all-button {
+  font-size: 0.875rem;
+  color: #3b82f6;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.view-all-button:hover {
+  color: #1d4ed8;
+}
+
+.invoices-table {
+  width: 100%;
+}
+
+.invoices-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.invoices-table th {
+  text-align: left;
+  padding: 1rem 1.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.invoices-table td {
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.invoices-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.invoice-id {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-overdue {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cost-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .period-selector {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .comparison-toggle {
+    justify-content: center;
+  }
+}

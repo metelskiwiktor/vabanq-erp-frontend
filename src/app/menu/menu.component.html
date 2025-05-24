@@ -71,6 +71,24 @@
       </li>
     </ul>
 
+    <li class="category">
+      <a routerLink="/accounting/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <i class="bx bx-cube"></i>
+        <span class="links_name">Księgowość</span>
+      </a>
+      <span class="tooltip">Księgowość</span>
+    </li>
+
+    <ul *ngIf="subcategories['accounting']" class="subcategories">
+      <li>
+        <a routerLink="/accounting/invoices" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bx bxs-plus-circle"></i>
+          <span class="links_name">Faktury</span>
+        </a>
+        <span class="tooltip">Faktury</span>
+      </li>
+    </ul>
+
     <li>
       <a routerLink="/settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <i class="bx bx-cog"></i>

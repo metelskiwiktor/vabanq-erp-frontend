@@ -26,7 +26,8 @@ export class MenuComponent implements OnInit {
   // }
 
   subcategories: { [key: string]: boolean } = {
-    items: true
+    items: true,
+    accounting: true,
   };
 
   toggleSubcategories(category: string): void {

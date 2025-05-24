@@ -13,6 +13,9 @@ import {
 } from "./menu/product-materials-wms-table/product-materials-wms-table.component";
 import {DashboardComponent} from "./menu/dashboard/dashboard.component";
 import {OrdersComponent} from "./menu/orders/orders.component";
+import {AccountingComponent} from "./menu/accounting/accounting.component";
+import {AccountingDashboardComponent} from "./menu/accounting/accounting-dashboard/accounting-dashboard.component";
+import {AccountingInvoicesComponent} from "./menu/accounting/accounting-invoices/accounting-invoices.component";
 
 
 const routes: Routes = [
@@ -25,6 +28,8 @@ const routes: Routes = [
   { path: 'orders', component: OrdersComponent, canActivate: [AuthGuard] },
   { path: 'offers', component: AllegroSynchronizedComponent, canActivate: [AuthGuard] },
   { path: 'wms', component: ProductMaterialsWmsTableComponent, canActivate: [AuthGuard] },
+  { path: 'accounting/dashboard', component: AccountingDashboardComponent, canActivate: [AuthGuard] },
+  { path: 'accounting/invoices', component: AccountingInvoicesComponent, canActivate: [AuthGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
   // { path: 'login', component: LoginComponent }, // Nie wymagamy zalogowania się na stronie logowania
   { path: '**', redirectTo: '' },

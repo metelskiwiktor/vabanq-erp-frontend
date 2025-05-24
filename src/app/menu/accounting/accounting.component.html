@@ -1,0 +1,75 @@
+<div class="accounting-container">
+  <!-- Top Navigation Bar -->
+  <header class="accounting-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="main-title">Panel Księgowości</h1>
+      </div>
+      <div class="header-right">
+        <span class="current-period">Maj 2023</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <button
+        class="tab-button"
+        [class.active]="activeTab === 'dashboard'"
+        (click)="setActiveTab('dashboard')">
+        Dashboard
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="activeTab === 'invoices'"
+        (click)="setActiveTab('invoices')">
+        Faktury
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="activeTab === 'expenses'"
+        (click)="setActiveTab('expenses')">
+        Koszty
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="activeTab === 'taxes'"
+        (click)="setActiveTab('taxes')">
+        Podatki i VAT
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="activeTab === 'reports'"
+        (click)="setActiveTab('reports')">
+        Raporty
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Dashboard Tab -->
+      <app-accounting-dashboard *ngIf="activeTab === 'dashboard'"></app-accounting-dashboard>
+
+      <!-- Invoices Tab -->
+      <app-accounting-invoices *ngIf="activeTab === 'invoices'"></app-accounting-invoices>
+
+      <!-- Placeholder tabs for future implementation -->
+      <div *ngIf="activeTab === 'expenses'" class="placeholder-content">
+        <h2>Zarządzanie kosztami</h2>
+        <p>Tutaj będzie panel zarządzania kosztami stałymi i zmiennymi.</p>
+      </div>
+
+      <div *ngIf="activeTab === 'taxes'" class="placeholder-content">
+        <h2>Podatki i VAT</h2>
+        <p>Tutaj będzie panel zarządzania podatkami i VAT.</p>
+      </div>
+
+      <div *ngIf="activeTab === 'reports'" class="placeholder-content">
+        <h2>Raporty finansowe</h2>
+        <p>Tutaj będzie panel generowania raportów finansowych.</p>
+      </div>
+    </div>
+  </main>
+</div>

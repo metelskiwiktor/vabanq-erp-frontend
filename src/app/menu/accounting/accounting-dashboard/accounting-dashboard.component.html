@@ -1,0 +1,223 @@
+<div class="dashboard-container">
+  <!-- Time Period Selector -->
+  <div class="period-selector">
+    <div class="period-buttons">
+      <button
+        class="period-button"
+        [class.active]="activePeriod === '7d'"
+        (click)="setActivePeriod('7d')">
+        7 dni
+      </button>
+      <button
+        class="period-button"
+        [class.active]="activePeriod === '30d'"
+        (click)="setActivePeriod('30d')">
+        30 dni
+      </button>
+      <button
+        class="period-button"
+        [class.active]="activePeriod === '90d'"
+        (click)="setActivePeriod('90d')">
+        90 dni
+      </button>
+    </div>
+    <div class="comparison-toggle">
+      <span class="toggle-label">Porównaj z poprzednim okresem</span>
+      <label class="toggle-switch">
+        <input type="checkbox" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Key Metrics Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <div class="metric-info">
+          <p class="metric-label">Przychód (brutto)</p>
+          <h3 class="metric-value">{{ formatCurrency(totalRevenue) }}</h3>
+        </div>
+        <span class="metric-badge positive">
+          +{{ ((totalRevenue / totalPreviousRevenue - 1) * 100).toFixed(0) }}%
+        </span>
+      </div>
+      <div class="metric-footer">
+        <p class="metric-comparison">vs. poprzedni okres: {{ formatCurrency(totalPreviousRevenue) }}</p>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <div class="metric-info">
+          <p class="metric-label">Zysk (netto)</p>
+          <h3 class="metric-value">{{ formatCurrency(totalProfit) }}</h3>
+        </div>
+        <span class="metric-badge positive">
+          +{{ ((totalProfit / (totalRevenue - totalCosts - totalFixedCosts) - 1) * 100).toFixed(0) }}%
+        </span>
+      </div>
+      <div class="metric-footer">
+        <p class="metric-comparison">Marża: {{ ((totalProfit / totalRevenue) * 100).toFixed(0) }}%</p>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <div class="metric-info">
+          <p class="metric-label">Liczba zamówień</p>
+          <h3 class="metric-value">{{ totalOrders }}</h3>
+        </div>
+        <span class="metric-badge positive">+12%</span>
+      </div>
+      <div class="metric-footer">
+        <p class="metric-comparison">Średnia wartość: {{ formatCurrency(totalRevenue / totalOrders) }}</p>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <div class="metric-info">
+          <p class="metric-label">Koszty całkowite</p>
+          <h3 class="metric-value">{{ formatCurrency(totalCosts + totalFixedCosts) }}</h3>
+        </div>
+        <span class="metric-badge warning">+5%</span>
+      </div>
+      <div class="metric-footer">
+        <p class="metric-comparison">% przychodów: {{ (((totalCosts + totalFixedCosts) / totalRevenue) * 100).toFixed(0) }}%</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue Chart Placeholder -->
+  <div class="chart-section">
+    <div class="section-header">
+      <h2 class="section-title">Przychód i zysk (30 dni)</h2>
+      <div class="chart-actions">
+        <button class="export-button">
+          <mat-icon>download</mat-icon>
+          Eksportuj
+        </button>
+      </div>
+    </div>
+    <div class="chart-placeholder">
+      <div class="chart-mock">
+        <p>📈 Tutaj będzie wykres przychodów i zysków</p>
+        <div class="mock-chart-bars">
+          <div class="bar" style="height: 60%"></div>
+          <div class="bar" style="height: 80%"></div>
+          <div class="bar" style="height: 45%"></div>
+          <div class="bar" style="height: 70%"></div>
+          <div class="bar" style="height: 90%"></div>
+          <div class="bar" style="height: 65%"></div>
+          <div class="bar" style="height: 85%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cost Structure -->
+  <div class="cost-structure">
+    <div class="cost-grid">
+      <!-- Cost Breakdown -->
+      <div class="cost-section">
+        <div class="section-header">
+          <h2 class="section-title">Struktura kosztów</h2>
+          <button
+            class="toggle-button"
+            (click)="toggleFixedCosts()">
+            {{ showFixedCosts ? 'Ukryj koszty stałe' : 'Pokaż koszty stałe' }}
+          </button>
+        </div>
+        <div class="cost-chart-placeholder">
+          <div class="pie-chart-mock">
+            <div class="pie-slice" style="--color: #8884d8; --percentage: 25%"></div>
+            <div class="pie-slice" style="--color: #82ca9d; --percentage: 20%"></div>
+            <div class="pie-slice" style="--color: #ffc658; --percentage: 15%"></div>
+            <div class="pie-slice" style="--color: #ff8042; --percentage: 20%"></div>
+            <div class="pie-slice" style="--color: #0088fe; --percentage: 20%"></div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-items">
+              <div *ngFor="let item of getCombinedCostData()" class="legend-item">
+                <div class="legend-color" [style.background-color]="item.color"></div>
+                <span class="legend-label">{{ item.name }}: {{ formatCurrency(item.value) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cost-footer">
+          <p class="cost-description">
+            {{ showFixedCosts ? 'Wyświetlanie wszystkich kosztów (stałe + zmienne)' : 'Wyświetlanie tylko kosztów zmiennych' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Fixed Costs -->
+      <div class="cost-section">
+        <div class="section-header">
+          <h2 class="section-title">Koszty stałe</h2>
+          <button class="edit-button">Edytuj</button>
+        </div>
+        <div class="fixed-costs-chart">
+          <div class="bar-chart-mock">
+            <div *ngFor="let cost of fixedCosts" class="bar-item">
+              <div class="bar-label">{{ cost.name }}</div>
+              <div class="bar-container">
+                <div
+                  class="bar-fill"
+                  [style.background-color]="cost.color"
+                  [style.width.%]="(cost.value / 15000) * 100">
+                </div>
+              </div>
+              <div class="bar-value">{{ formatCurrency(cost.value) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="cost-footer">
+          <p class="cost-description">
+            Udział w przychodach: {{ ((totalFixedCosts / totalRevenue) * 100).toFixed(0) }}%
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Invoices Preview -->
+  <div class="recent-invoices">
+    <div class="section-header">
+      <h2 class="section-title">Ostatnie faktury</h2>
+      <button
+        class="view-all-button"
+        (click)="navigateToInvoices()">
+        Zobacz wszystkie
+      </button>
+    </div>
+    <div class="invoices-table">
+      <table>
+        <thead>
+        <tr>
+          <th>Numer faktury</th>
+          <th>Klient</th>
+          <th>Kwota</th>
+          <th>Data</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let invoice of recentInvoices.slice(0, 5)">
+          <td class="invoice-id">{{ invoice.id }}</td>
+          <td>{{ invoice.customer }}</td>
+          <td>{{ formatCurrency(invoice.amount) }}</td>
+          <td>{{ invoice.date | date:'short' }}</td>
+          <td>
+              <span class="status-badge" [ngClass]="getStatusBadgeColor(invoice.status)">
+                {{ getStatusTranslation(invoice.status) }}
+              </span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

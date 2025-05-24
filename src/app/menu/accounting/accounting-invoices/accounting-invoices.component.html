@@ -1,0 +1,365 @@
+<div class="invoices-container">
+  <!-- Header -->
+  <div class="section-header">
+    <h2 class="section-title">Zarządzanie fakturami</h2>
+    <button class="create-button" (click)="createNewInvoice()">
+      <mat-icon>add</mat-icon>
+      Nowa faktura (Infakt)
+    </button>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filters-container">
+    <div class="main-filters">
+      <div class="search-container">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Szukaj faktur..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearchChange()"
+        />
+      </div>
+
+      <div class="filter-controls">
+        <div class="filter-group">
+          <span class="filter-label">Status:</span>
+          <select class="filter-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+            <option value="All">Wszystkie</option>
+            <option value="Paid">Zapłacone</option>
+            <option value="Pending">Oczekujące</option>
+            <option value="Overdue">Zaległe</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Źródło:</span>
+          <select class="filter-select" [(ngModel)]="selectedSource" (change)="onSourceChange()">
+            <option *ngFor="let option of sourceOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <button
+          class="advanced-filters-button"
+          (click)="toggleAdvancedFilters()">
+          <mat-icon>filter_list</mat-icon>
+          {{ showAdvancedFilters ? 'Ukryj filtry' : 'Więcej filtrów' }}
+        </button>
+
+        <button
+          *ngIf="hasActiveFilters()"
+          class="clear-filters-button"
+          (click)="resetFilters()">
+          <mat-icon>clear</mat-icon>
+          Wyczyść filtry
+        </button>
+      </div>
+    </div>
+
+    <!-- Advanced Filters -->
+    <div *ngIf="showAdvancedFilters" class="advanced-filters">
+      <div class="advanced-filters-grid">
+        <div class="filter-field">
+          <label class="field-label">Data od</label>
+          <input
+            type="date"
+            class="date-input"
+            [(ngModel)]="dateRange.from"
+            (change)="onDateRangeChange()"
+          />
+        </div>
+        <div class="filter-field">
+          <label class="field-label">Data do</label>
+          <input
+            type="date"
+            class="date-input"
+            [(ngModel)]="dateRange.to"
+            (change)="onDateRangeChange()"
+          />
+        </div>
+        <div class="filter-field">
+          <label class="field-label">Kwota od</label>
+          <input
+            type="number"
+            class="amount-input"
+            placeholder="0.00"
+            [(ngModel)]="amountRange.min"
+            (input)="onAmountRangeChange()"
+          />
+        </div>
+        <div class="filter-field">
+          <label class="field-label">Kwota do</label>
+          <input
+            type="number"
+            class="amount-input"
+            placeholder="0.00"
+            [(ngModel)]="amountRange.max"
+            (input)="onAmountRangeChange()"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Summary -->
+  <div class="filter-summary">
+    Wyświetlanie {{ filteredInvoices.length }} z {{ invoices.length }} faktur
+    <span *ngIf="selectedStatus !== 'All'">
+      • Status: {{ getStatusTranslation(selectedStatus) }}
+    </span>
+    <span *ngIf="selectedSource !== 'all'">
+      • Źródło: {{ getSourceDisplayName(selectedSource) }}
+    </span>
+    <span *ngIf="dateRange.from">
+      • Od: {{ dateRange.from | date:'short' }}
+    </span>
+    <span *ngIf="dateRange.to">
+      • Do: {{ dateRange.to | date:'short' }}
+    </span>
+    <span *ngIf="amountRange.min">
+      • Min: {{ formatCurrency(+amountRange.min) }}
+    </span>
+    <span *ngIf="amountRange.max">
+      • Max: {{ formatCurrency(+amountRange.max) }}
+    </span>
+  </div>
+
+  <!-- Invoice Table -->
+  <div class="invoices-table-container">
+    <table class="invoices-table">
+      <thead>
+      <tr>
+        <th>Numer faktury</th>
+        <th>Klient</th>
+        <th>Kwota</th>
+        <th>Data wystawienia</th>
+        <th>Status</th>
+        <th>Źródło</th>
+        <th>Akcje</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let invoice of filteredInvoices" class="invoice-row">
+        <td class="invoice-id">{{ invoice.id }}</td>
+        <td>{{ invoice.customer }}</td>
+        <td>{{ formatCurrency(invoice.amount) }}</td>
+        <td>{{ invoice.date | date:'short' }}</td>
+        <td>
+            <span class="status-badge" [ngClass]="getStatusBadgeColor(invoice.status)">
+              {{ getStatusTranslation(invoice.status) }}
+            </span>
+        </td>
+        <td>
+            <span class="source-badge" [ngClass]="getSourceBadgeColor(invoice.source)">
+              {{ getSourceDisplayName(invoice.source) }}
+            </span>
+        </td>
+        <td>
+          <div class="action-buttons">
+            <button
+              class="action-button view-button"
+              title="Podgląd faktury"
+              (click)="openInvoiceDetails(invoice)">
+              <mat-icon>visibility</mat-icon>
+            </button>
+
+            <button
+              *ngIf="invoice.status !== 'Paid'"
+              class="action-button pay-button"
+              title="Oznacz jako opłaconą"
+              (click)="openPaymentConfirmation(invoice)">
+              <mat-icon>credit_card</mat-icon>
+            </button>
+
+            <button
+              class="action-button download-button"
+              title="Pobierz fakturę"
+              (click)="downloadInvoice(invoice.id)">
+              <mat-icon>download</mat-icon>
+            </button>
+
+            <button
+              *ngIf="invoice.source.includes('allegro')"
+              class="action-button external-button"
+              title="Otwórz w {{ getSourceDisplayName(invoice.source) }}">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredInvoices.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">receipt_long</mat-icon>
+      <h3>Brak faktur</h3>
+      <p>Nie znaleziono faktur spełniających wybrane kryteria.</p>
+      <button *ngIf="hasActiveFilters()" class="clear-filters-button" (click)="resetFilters()">
+        Wyczyść filtry
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container">
+    <div class="pagination-info">
+      <p>Wyświetlanie <span class="bold">1</span> do <span class="bold">{{ filteredInvoices.length }}</span> z <span class="bold">{{ invoices.length }}</span> faktur</p>
+    </div>
+    <div class="pagination-controls">
+      <button class="pagination-button" disabled>
+        <mat-icon>chevron_left</mat-icon>
+        Poprzednia
+      </button>
+      <button class="pagination-button current">1</button>
+      <button class="pagination-button">2</button>
+      <button class="pagination-button">3</button>
+      <span class="pagination-dots">...</span>
+      <button class="pagination-button">
+        Następna
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Details Modal -->
+<div *ngIf="viewingInvoice" class="modal-overlay" (click)="closeInvoiceDetails()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-section">
+        <h3 class="modal-title">Faktura: {{ viewingInvoice.id }}</h3>
+        <span class="status-badge" [ngClass]="getStatusBadgeColor(viewingInvoice.status)">
+          {{ getStatusTranslation(viewingInvoice.status) }}
+        </span>
+      </div>
+      <button class="close-button" (click)="closeInvoiceDetails()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Invoice Info Grid -->
+      <div class="invoice-info-grid">
+        <div class="info-item">
+          <span class="info-label">Data wystawienia</span>
+          <span class="info-value">{{ viewingInvoice.date | date:'long' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Klient</span>
+          <span class="info-value">{{ viewingInvoice.customer }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Źródło</span>
+          <span class="source-badge" [ngClass]="getSourceBadgeColor(viewingInvoice.source)">
+            {{ getSourceDisplayName(viewingInvoice.source) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Payment Details -->
+      <div class="details-section">
+        <h4 class="section-title">Szczegóły płatności</h4>
+        <div class="details-table">
+          <div class="detail-row">
+            <span class="detail-label">Metoda płatności</span>
+            <span class="detail-value">{{ viewingInvoice.details.paymentMethod }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Termin płatności</span>
+            <span class="detail-value">{{ viewingInvoice.details.paymentDue | date:'long' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Całkowita kwota</span>
+            <span class="detail-value bold">{{ formatCurrency(viewingInvoice.amount) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="details-section">
+        <h4 class="section-title">Pozycje</h4>
+        <table class="items-table">
+          <thead>
+          <tr>
+            <th>Produkt</th>
+            <th>Ilość</th>
+            <th>Cena jedn.</th>
+            <th>Suma</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let item of viewingInvoice.details.items">
+            <td>{{ item.name }}</td>
+            <td class="center">{{ item.quantity }}</td>
+            <td class="right">{{ formatCurrency(item.price) }}</td>
+            <td class="right bold">{{ formatCurrency(item.total) }}</td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr class="total-row">
+            <td colspan="3" class="right bold">Suma</td>
+            <td class="right bold">{{ formatCurrency(viewingInvoice.amount) }}</td>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Notes -->
+      <div *ngIf="viewingInvoice.details.notes" class="details-section">
+        <h4 class="section-title">Uwagi</h4>
+        <p class="notes-text">{{ viewingInvoice.details.notes }}</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-button secondary" (click)="closeInvoiceDetails()">
+        Zamknij
+      </button>
+      <button class="modal-button primary" (click)="downloadInvoice(viewingInvoice.id)">
+        <mat-icon>download</mat-icon>
+        Pobierz PDF
+      </button>
+      <button
+        *ngIf="viewingInvoice.status !== 'Paid'"
+        class="modal-button success"
+        (click)="closeInvoiceDetails(); openPaymentConfirmation(viewingInvoice)">
+        <mat-icon>credit_card</mat-icon>
+        Oznacz jako opłaconą
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Confirmation Modal -->
+<div *ngIf="paymentConfirmation" class="modal-overlay" (click)="closePaymentConfirmation()">
+  <div class="modal-content small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="confirmation-icon">
+        <mat-icon>credit_card</mat-icon>
+      </div>
+      <div class="modal-title-section">
+        <h3 class="modal-title">Oznacz fakturę jako opłaconą</h3>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <p class="confirmation-text">
+        Czy chcesz oznaczyć fakturę <strong>{{ paymentConfirmation.id }}</strong>
+        na kwotę <strong>{{ formatCurrency(paymentConfirmation.amount) }}</strong> jako opłaconą?
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-button secondary" (click)="closePaymentConfirmation()">
+        Anuluj
+      </button>
+      <button class="modal-button success" (click)="markAsPaid()">
+        Tak, oznacz jako opłaconą
+      </button>
+    </div>
+  </div>
+</div>
