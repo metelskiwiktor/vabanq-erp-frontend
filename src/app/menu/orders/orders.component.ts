@@ -1,5 +1,5 @@
+// orders.component.ts - Updated to use backend API
 import { Component, inject, OnInit, TemplateRef } from '@angular/core';
-import { Order, InvoiceInfo } from './model/orders-model';
 import {
   trigger,
   state,
@@ -9,7 +9,8 @@ import {
 } from '@angular/animations';
 import { ProductService } from "../../utility/service/product.service";
 import { ToastService } from "../../utility/service/toast-service";
-import { InfaktService } from "../../utility/service/infakt.service";
+import {InfaktService, InvoiceResponse} from "../../utility/service/infakt.service";
+import {InvoiceInfo, Order} from "./model/orders-model";
 
 @Component({
   selector: 'app-orders',
@@ -43,7 +44,7 @@ export class OrdersComponent implements OnInit {
     'market',
     'status',
     'totalAmount',
-    'invoice' // Added invoice column
+    'invoice'
   ];
 
   allExpanded: boolean = false;
@@ -59,7 +60,6 @@ export class OrdersComponent implements OnInit {
     this.productService.getOrders(token).subscribe({
       next: (orders: Order[]) => {
         this.orders = orders.map(order => ({ ...order, isExpanded: false }));
-        // Check for existing invoices for each order
         this.fetchInvoicesForOrders();
         this.applyFilters();
         console.log('Fetched orders:', this.orders);
@@ -71,18 +71,37 @@ export class OrdersComponent implements OnInit {
   }
 
   fetchInvoicesForOrders(): void {
-    this.orders.forEach(order => {
-      this.infaktService.getInvoicesForOrder(order.orderId).subscribe(invoices => {
-        if (invoices && invoices.length > 0) {
-          order.invoices = invoices.map(inv => ({
-            invoiceId: inv.id,
-            invoiceNumber: inv.number,
-            invoiceStatus: inv.status,
-            invoiceUrl: inv.url,
-            createdAt: inv.createdAt
-          }));
-        }
-      });
+    const orderIds = this.orders.map(order => order.orderId);
+
+    this.infaktService.getInvoicesForOrders(orderIds).subscribe({
+      next: (invoices: InvoiceResponse[]) => {
+        // Mapuj faktury do zamówień
+        const invoiceMap = new Map<string, InvoiceResponse[]>();
+
+        invoices.forEach(invoice => {
+          if (!invoiceMap.has(invoice.orderId)) {
+            invoiceMap.set(invoice.orderId, []);
+          }
+          invoiceMap.get(invoice.orderId)!.push(invoice);
+        });
+
+        // Aktualizuj zamówienia o faktury
+        this.orders.forEach(order => {
+          const orderInvoices = invoiceMap.get(order.orderId) || [];
+          if (orderInvoices.length > 0) {
+            order.invoices = orderInvoices.map(inv => ({
+              invoiceId: inv.id,
+              invoiceNumber: inv.invoiceNumber,
+              invoiceStatus: inv.status.toLowerCase(),
+              invoiceUrl: inv.invoiceUrl,
+              createdAt: inv.createdAt
+            }));
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Failed to fetch invoices:', error);
+      }
     });
   }
 
@@ -124,22 +143,19 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  // Invoice generation methods
+  // Invoice generation methods - Updated to use backend API
   generateInvoice(order: Order, template: TemplateRef<any>): void {
-    // Prevent event propagation to avoid expanding/collapsing order details
     event?.stopPropagation();
 
-    // Set flag to show loading spinner
     order.isInvoiceGenerating = true;
 
     this.infaktService.generateInvoice(order).subscribe({
-      next: (response) => {
-        // Create invoice info and add to order
+      next: (response: InvoiceResponse) => {
         const invoiceInfo: InvoiceInfo = {
           invoiceId: response.id,
-          invoiceNumber: response.number,
-          invoiceStatus: response.status,
-          invoiceUrl: response.url,
+          invoiceNumber: response.invoiceNumber || 'Processing...',
+          invoiceStatus: response.status.toLowerCase(),
+          invoiceUrl: response.invoiceUrl || '',
           createdAt: response.createdAt
         };
 
@@ -150,9 +166,13 @@ export class OrdersComponent implements OnInit {
         order.invoices.push(invoiceInfo);
         order.isInvoiceGenerating = false;
 
-        // Show success message
-        this.toastSuccessMessage = `Faktura ${response.number} została wygenerowana pomyślnie.`;
+        this.toastSuccessMessage = `Faktura została zlecona do generowania. Status: ${this.getInvoiceStatusTranslation(response.status.toLowerCase())}`;
         this.showSuccess(template);
+
+        // Odśwież status faktury po chwili
+        setTimeout(() => {
+          this.refreshInvoiceStatus(order, invoiceInfo.invoiceId);
+        }, 5000);
       },
       error: (error) => {
         console.error('Failed to generate invoice:', error);
@@ -162,30 +182,30 @@ export class OrdersComponent implements OnInit {
           template: template,
           classname: 'bg-danger text-light',
           delay: 2000,
-          text: 'Nie udało się wygenerować faktury. Spróbuj ponownie.',
+          text: 'Nie udało się zlecić generowania faktury. Spróbuj ponownie.',
         });
       }
     });
   }
 
-  sendInvoiceEmail(order: Order, invoiceId: string, template: TemplateRef<any>): void {
-    event?.stopPropagation();
-
-    this.infaktService.sendInvoiceEmail(invoiceId, order.buyer.email).subscribe({
-      next: (success) => {
-        if (success) {
-          this.toastSuccessMessage = `Faktura została wysłana na adres ${order.buyer.email}.`;
-          this.showSuccess(template);
+  refreshInvoiceStatus(order: Order, invoiceId: string): void {
+    this.infaktService.getInvoiceForOrder(order.orderId).subscribe({
+      next: (invoice: InvoiceResponse | null) => {
+        if (invoice && order.invoices) {
+          const invoiceIndex = order.invoices.findIndex(inv => inv.invoiceId === invoiceId);
+          if (invoiceIndex >= 0) {
+            order.invoices[invoiceIndex] = {
+              invoiceId: invoice.id,
+              invoiceNumber: invoice.invoiceNumber || 'Processing...',
+              invoiceStatus: invoice.status.toLowerCase(),
+              invoiceUrl: invoice.invoiceUrl || '',
+              createdAt: invoice.createdAt
+            };
+          }
         }
       },
       error: (error) => {
-        console.error('Failed to send invoice email:', error);
-        this.toastService.show({
-          template: template,
-          classname: 'bg-danger text-light',
-          delay: 2000,
-          text: 'Nie udało się wysłać faktury. Spróbuj ponownie.',
-        });
+        console.error('Failed to refresh invoice status:', error);
       }
     });
   }
@@ -193,14 +213,18 @@ export class OrdersComponent implements OnInit {
   downloadInvoicePdf(invoiceId: string, invoiceNumber: string): void {
     event?.stopPropagation();
 
-    this.infaktService.getInvoicePdfUrl(invoiceId).subscribe(url => {
-      // Create an anchor element and trigger download
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Faktura_${invoiceNumber.replace('/', '_')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    this.infaktService.getInvoicePdfUrl(invoiceId).subscribe({
+      next: (url: string) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Faktura_${invoiceNumber.replace('/', '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      },
+      error: (error) => {
+        console.error('Failed to get PDF URL:', error);
+      }
     });
   }
 
@@ -239,7 +263,6 @@ export class OrdersComponent implements OnInit {
     this.filterDateTo = null;
     this.filterHasInvoice = false;
 
-    // Zresetuj elementy formularza
     const statusSelect = document.querySelector('.filter-select') as HTMLSelectElement;
     if (statusSelect) statusSelect.value = '';
 
@@ -257,7 +280,6 @@ export class OrdersComponent implements OnInit {
 
   applyFilters(): void {
     this.filteredOrders = this.orders.filter(order => {
-      // Filtrowanie po tekście
       if (this.filterText) {
         const searchText = this.filterText.toLowerCase();
         const orderIdMatch = order.orderId.toLowerCase().includes(searchText);
@@ -272,17 +294,14 @@ export class OrdersComponent implements OnInit {
         }
       }
 
-      // Filtrowanie po statusie
       if (this.filterStatus && order.status !== this.filterStatus) {
         return false;
       }
 
-      // Filtrowanie po fakturach
       if (this.filterHasInvoice && (!order.invoices || order.invoices.length === 0)) {
         return false;
       }
 
-      // Filtrowanie po dacie od
       if (this.filterDateFrom) {
         const saleDate = new Date(order.saleDate);
         if (saleDate < this.filterDateFrom) {
@@ -290,7 +309,6 @@ export class OrdersComponent implements OnInit {
         }
       }
 
-      // Filtrowanie po dacie do
       if (this.filterDateTo) {
         const saleDate = new Date(order.saleDate);
         const endOfDay = new Date(this.filterDateTo);
@@ -334,11 +352,13 @@ export class OrdersComponent implements OnInit {
   // Metoda do tłumaczenia statusów faktury na język polski
   getInvoiceStatusTranslation(status: string): string {
     const statusMap: { [key: string]: string } = {
+      'processing': 'Przetwarzanie',
       'draft': 'Szkic',
       'issued': 'Wystawiona',
       'sent': 'Wysłana',
       'paid': 'Opłacona',
-      'partial': 'Częściowo opłacona'
+      'partial': 'Częściowo opłacona',
+      'error': 'Błąd'
     };
 
     return statusMap[status] || status;

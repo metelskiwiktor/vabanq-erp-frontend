@@ -43,12 +43,13 @@ export interface Order {
   orderId: string;
   market: string;
   status: string;
-  saleDate: string; // ISO date string
+  saleDate: string;
   buyer: BuyerOrder;
   delivery: DeliveryOrder;
   products: ProductOrder[];
   totalAmount: number;
+  sellerId: string;
   isExpanded?: boolean;
-  invoices?: InvoiceInfo[]; // Added invoice information
+  invoices?: InvoiceInfo[];
   isInvoiceGenerating?: boolean;
 }
