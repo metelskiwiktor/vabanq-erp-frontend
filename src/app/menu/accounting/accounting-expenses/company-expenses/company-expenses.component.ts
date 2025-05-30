@@ -15,7 +15,7 @@ export class CompanyExpensesComponent implements OnInit, OnChanges {
 
   activeSubTab: string = 'fixed';
   searchQuery: string = '';
-  showGross: boolean = true;
+  showGross: boolean = false; // Zmienione na false - domyślnie netto
 
   constructor() { }
 
@@ -41,6 +41,7 @@ export class CompanyExpensesComponent implements OnInit, OnChanges {
 
   toggleGross(): void {
     this.showGross = !this.showGross;
+    console.log('Company expenses - Gross display toggled to:', this.showGross);
   }
 
   onSearchChange(event: any): void {

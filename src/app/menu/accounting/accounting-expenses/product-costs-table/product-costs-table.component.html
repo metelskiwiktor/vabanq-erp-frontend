@@ -1,172 +1,165 @@
-<!-- src/app/menu/accounting/accounting-expenses/product-costs-table/product-costs-table.component.html -->
-<div class="table-container">
-  <!-- Loading indicator -->
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-icon class="loading-spinner">refresh</mat-icon>
-    <p>Ładowanie kosztów produktów...</p>
-  </div>
+<mat-table [dataSource]="products" class="products-table">
+  <ng-container matColumnDef="offerName">
+    <mat-header-cell *matHeaderCellDef>Nazwa oferty</mat-header-cell>
+    <mat-cell *matCellDef="let product" class="offer-name">
+      <div class="offer-info">
+        <a [href]="'https://allegro.pl.allegrosandbox.pl/oferta/' + product.offerId"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="product-link">
+          {{ product.offerName }}
+        </a>
+      </div>
+    </mat-cell>
+  </ng-container>
 
-  <!-- Empty state -->
-  <div *ngIf="!isLoading && products.length === 0" class="empty-state">
-    <mat-icon>inventory</mat-icon>
-    <h3>Brak danych o kosztach produktów</h3>
-    <p>
-      <span *ngIf="searchQuery; else noProducts">
-        Nie znaleziono produktów pasujących do frazy: "{{ searchQuery }}"
-      </span>
-      <ng-template #noProducts>
-        Nie znaleziono produktów z danymi kosztów.
-        Sprawdź, czy oferty Allegro mają przypisane produkty.
-      </ng-template>
-    </p>
-  </div>
+  <ng-container matColumnDef="name">
+    <mat-header-cell *matHeaderCellDef>Produkt</mat-header-cell>
+    <mat-cell *matCellDef="let product" class="product-name">
+      <div class="product-info">
+        <span class="name">{{ product.productName }}</span>
+      </div>
+    </mat-cell>
+  </ng-container>
 
-  <!-- Products table -->
-  <div *ngIf="!isLoading && products.length > 0">
-    <mat-table [dataSource]="products" class="products-table">
-      <ng-container matColumnDef="name">
-        <mat-header-cell *matHeaderCellDef>Produkt</mat-header-cell>
-        <mat-cell *matCellDef="let product" class="product-name">
-          <div class="product-info">
-            <span class="name">{{ product.productName }}</span>
-            <small class="ean">EAN: {{ product.ean }}</small>
-          </div>
-        </mat-cell>
-      </ng-container>
+  <ng-container matColumnDef="ean">
+    <mat-header-cell *matHeaderCellDef>EAN</mat-header-cell>
+    <mat-cell *matCellDef="let product">
+      <span class="ean-code">{{ product.ean }}</span>
+    </mat-cell>
+  </ng-container>
 
-      <ng-container matColumnDef="materialCost">
-        <mat-header-cell *matHeaderCellDef>
-          Materiały {{ showGross ? '(brutto)' : '(netto)' }}
-        </mat-header-cell>
-        <mat-cell *matCellDef="let product">
-          {{ formatCurrency(getMaterialCost(product)) }}
-        </mat-cell>
-      </ng-container>
+  <ng-container matColumnDef="materialCost">
+    <mat-header-cell *matHeaderCellDef>
+      Materiały {{ showGross ? '(brutto)' : '(netto)' }}
+    </mat-header-cell>
+    <mat-cell *matCellDef="let product">
+      {{ formatCurrency(getMaterialCost(product)) }}
+    </mat-cell>
+  </ng-container>
 
-      <ng-container matColumnDef="powerCost">
-        <mat-header-cell *matHeaderCellDef>
-          Prąd {{ showGross ? '(brutto)' : '(netto)' }}
-        </mat-header-cell>
-        <mat-cell *matCellDef="let product">
-          {{ formatCurrency(getPowerCost(product)) }}
-        </mat-cell>
-      </ng-container>
+  <ng-container matColumnDef="powerCost">
+    <mat-header-cell *matHeaderCellDef>
+      Prąd {{ showGross ? '(brutto)' : '(netto)' }}
+    </mat-header-cell>
+    <mat-cell *matCellDef="let product">
+      {{ formatCurrency(getPowerCost(product)) }}
+    </mat-cell>
+  </ng-container>
 
-      <ng-container matColumnDef="packagingCost">
-        <mat-header-cell *matHeaderCellDef>
-          Opakowanie {{ showGross ? '(brutto)' : '(netto)' }}
-        </mat-header-cell>
-        <mat-cell *matCellDef="let product">
-          {{ formatCurrency(getPackagingCost(product)) }}
-        </mat-cell>
-      </ng-container>
+  <ng-container matColumnDef="packagingCost">
+    <mat-header-cell *matHeaderCellDef>
+      Opakowanie {{ showGross ? '(brutto)' : '(netto)' }}
+    </mat-header-cell>
+    <mat-cell *matCellDef="let product">
+      {{ formatCurrency(getPackagingCost(product)) }}
+    </mat-cell>
+  </ng-container>
 
-      <ng-container matColumnDef="laborCost">
-        <mat-header-cell *matHeaderCellDef>
-          Robocizna {{ showGross ? '(brutto)' : '(netto)' }}
-        </mat-header-cell>
-        <mat-cell *matCellDef="let product">
-          {{ formatCurrency(getLaborCost(product)) }}
-        </mat-cell>
-      </ng-container>
+  <ng-container matColumnDef="laborCost">
+    <mat-header-cell *matHeaderCellDef>
+      Robocizna {{ showGross ? '(brutto)' : '(netto)' }}
+    </mat-header-cell>
+    <mat-cell *matCellDef="let product">
+      {{ formatCurrency(getLaborCost(product)) }}
+    </mat-cell>
+  </ng-container>
 
-      <ng-container matColumnDef="totalCost">
-        <mat-header-cell *matHeaderCellDef>
-          Suma kosztów {{ showGross ? '(brutto)' : '(netto)' }}
-        </mat-header-cell>
-        <mat-cell *matCellDef="let product" class="total-cost">
-          {{ formatCurrency(getTotalCost(product)) }}
-        </mat-cell>
-      </ng-container>
+  <ng-container matColumnDef="totalCost">
+    <mat-header-cell *matHeaderCellDef>
+      Suma kosztów {{ showGross ? '(brutto)' : '(netto)' }}
+    </mat-header-cell>
+    <mat-cell *matCellDef="let product" class="total-cost">
+      {{ formatCurrency(getTotalCost(product)) }}
+    </mat-cell>
+  </ng-container>
 
-      <ng-container matColumnDef="retailPrice">
-        <mat-header-cell *matHeaderCellDef>
-          Cena sprzedaży {{ showGross ? '(brutto)' : '(netto)' }}
-        </mat-header-cell>
-        <mat-cell *matCellDef="let product" class="retail-price">
-          {{ formatCurrency(getRetailPrice(product)) }}
-        </mat-cell>
-      </ng-container>
+  <ng-container matColumnDef="retailPrice">
+    <mat-header-cell *matHeaderCellDef>
+      Cena sprzedaży {{ showGross ? '(brutto)' : '(netto)' }}
+    </mat-header-cell>
+    <mat-cell *matCellDef="let product" class="retail-price">
+      {{ formatCurrency(getRetailPrice(product)) }}
+    </mat-cell>
+  </ng-container>
 
-      <ng-container matColumnDef="margin">
-        <mat-header-cell *matHeaderCellDef>Marża</mat-header-cell>
-        <mat-cell *matCellDef="let product">
+  <ng-container matColumnDef="margin">
+    <mat-header-cell *matHeaderCellDef>Marża</mat-header-cell>
+    <mat-cell *matCellDef="let product">
           <span class="margin-badge" [ngClass]="getMarginClass(product.margin)">
             {{ product.margin.toFixed(2) }}%
           </span>
-        </mat-cell>
-      </ng-container>
+    </mat-cell>
+  </ng-container>
 
-      <mat-header-row *matHeaderRowDef="['name', 'materialCost', 'powerCost', 'packagingCost', 'laborCost', 'totalCost', 'retailPrice', 'margin']"></mat-header-row>
-      <mat-row *matRowDef="let row; columns: ['name', 'materialCost', 'powerCost', 'packagingCost', 'laborCost', 'totalCost', 'retailPrice', 'margin']"></mat-row>
-    </mat-table>
+  <mat-header-row *matHeaderRowDef="['offerName', 'name', 'ean', 'materialCost', 'powerCost', 'packagingCost', 'laborCost', 'totalCost', 'retailPrice', 'margin']"></mat-header-row>
+  <mat-row *matRowDef="let row; columns: ['offerName', 'name', 'ean', 'materialCost', 'powerCost', 'packagingCost', 'laborCost', 'totalCost', 'retailPrice', 'margin']"></mat-row>
+</mat-table>
 
-    <!-- Table summary -->
-    <div class="table-summary">
-      <div class="summary-row">
+<!-- Table summary -->
+<div class="table-summary">
+  <div class="summary-row">
         <span class="summary-label">
           Suma kosztów wszystkich produktów ({{ products.length }} pozycji):
         </span>
-        <span class="summary-value">
+    <span class="summary-value">
           {{ formatCurrency(getSummaryTotalCost()) }}
         </span>
-      </div>
+  </div>
 
-      <div class="summary-row">
+  <div class="summary-row">
         <span class="summary-label">
           Suma wartości sprzedaży:
         </span>
-        <span class="summary-value">
+    <span class="summary-value">
           {{ formatCurrency(getSummaryRetailValue()) }}
         </span>
-      </div>
+  </div>
 
-      <div *ngIf="summary" class="summary-row">
+  <div *ngIf="summary" class="summary-row">
         <span class="summary-label">
           Średnia marża:
         </span>
-        <span class="summary-value">
+    <span class="summary-value">
           {{ summary.averageMargin.toFixed(2) }}%
         </span>
+  </div>
+</div>
+
+<!-- Detailed breakdown -->
+<div *ngIf="summary" class="category-breakdown">
+  <h4>Szczegółowy podział kosztów</h4>
+  <div class="category-grid">
+    <div class="category-item">
+      <div class="category-name">Materiały</div>
+      <div class="category-amount">
+        {{ formatCurrency(showGross ? summary.grossTotalMaterialCost : summary.totalMaterialCost) }}
       </div>
+      <div class="category-count">{{ summary.totalProducts }} produktów</div>
     </div>
 
-    <!-- Detailed breakdown -->
-    <div *ngIf="summary" class="category-breakdown">
-      <h4>Szczegółowy podział kosztów</h4>
-      <div class="category-grid">
-        <div class="category-item">
-          <div class="category-name">Materiały</div>
-          <div class="category-amount">
-            {{ formatCurrency(showGross ? summary.grossTotalMaterialCost : summary.totalMaterialCost) }}
-          </div>
-          <div class="category-count">{{ summary.totalProducts }} produktów</div>
-        </div>
-
-        <div class="category-item">
-          <div class="category-name">Energia elektryczna</div>
-          <div class="category-amount">
-            {{ formatCurrency(showGross ? summary.grossTotalPowerCost : summary.totalPowerCost) }}
-          </div>
-          <div class="category-count">{{ summary.totalProducts }} produktów</div>
-        </div>
-
-        <div class="category-item">
-          <div class="category-name">Opakowania</div>
-          <div class="category-amount">
-            {{ formatCurrency(showGross ? summary.grossTotalPackagingCost : summary.totalPackagingCost) }}
-          </div>
-          <div class="category-count">{{ summary.totalProducts }} produktów</div>
-        </div>
-
-        <div class="category-item">
-          <div class="category-name">Robocizna</div>
-          <div class="category-amount">
-            {{ formatCurrency(showGross ? summary.grossTotalLaborCost : summary.totalLaborCost) }}
-          </div>
-          <div class="category-count">{{ summary.totalProducts }} produktów</div>
-        </div>
+    <div class="category-item">
+      <div class="category-name">Energia elektryczna</div>
+      <div class="category-amount">
+        {{ formatCurrency(showGross ? summary.grossTotalPowerCost : summary.totalPowerCost) }}
       </div>
+      <div class="category-count">{{ summary.totalProducts }} produktów</div>
+    </div>
+
+    <div class="category-item">
+      <div class="category-name">Opakowania</div>
+      <div class="category-amount">
+        {{ formatCurrency(showGross ? summary.grossTotalPackagingCost : summary.totalPackagingCost) }}
+      </div>
+      <div class="category-count">{{ summary.totalProducts }} produktów</div>
+    </div>
+
+    <div class="category-item">
+      <div class="category-name">Robocizna</div>
+      <div class="category-amount">
+        {{ formatCurrency(showGross ? summary.grossTotalLaborCost : summary.totalLaborCost) }}
+      </div>
+      <div class="category-count">{{ summary.totalProducts }} produktów</div>
     </div>
   </div>
 </div>

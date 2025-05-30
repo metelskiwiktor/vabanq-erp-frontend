@@ -15,7 +15,7 @@ export class ProductExpensesComponent implements OnInit, OnChanges {
 
   productSubTab: string = 'products';
   searchQuery: string = '';
-  showGross: boolean = true;
+  showGross: boolean = false; // Zmienione na false - domyślnie netto
 
   constructor() {
   }
@@ -42,6 +42,7 @@ export class ProductExpensesComponent implements OnInit, OnChanges {
 
   toggleGross(): void {
     this.showGross = !this.showGross;
+    console.log('Gross display toggled to:', this.showGross);
   }
 
   onSearchChange(event: any): void {
