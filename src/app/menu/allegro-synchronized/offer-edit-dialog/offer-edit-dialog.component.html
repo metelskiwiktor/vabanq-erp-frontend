@@ -3,6 +3,17 @@
 <mat-dialog-content>
 
   <div style="margin-bottom: 10px;">
+    <label>Opakowanie:</label>
+    <ng-select
+      [items]="packagingOptions"
+      bindLabel="name"
+      [clearable]="true"
+      placeholder="Wybierz opakowanie"
+      [(ngModel)]="selectedPackaging">
+    </ng-select>
+  </div>
+
+  <div style="margin-bottom: 10px;">
     <label>Zarządzaj produktami:</label>
     <ng-select
       [items]="allProducts"

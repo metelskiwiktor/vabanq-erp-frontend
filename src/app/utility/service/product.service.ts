@@ -199,10 +199,10 @@ export class ProductService {
     });
   }
 
-  updateOfferAssignment(offerId: string, requests: any[]) {
+  updateOfferAssignment(offerId: string, requests: any[], packaging?: { id: string, name: string }) {
     return this.http.post<void>(
       `${this.apiAllegroUrl}/${offerId}/update-assignment`,
-      requests
+      { products: requests, packaging: packaging }
     );
   }
 

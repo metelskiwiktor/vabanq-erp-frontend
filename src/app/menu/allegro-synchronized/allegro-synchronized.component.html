@@ -54,6 +54,11 @@
     <td mat-cell *matCellDef="let offer"> {{ offer.ean }} </td>
   </ng-container>
 
+  <ng-container matColumnDef="packaging">
+    <th mat-header-cell *matHeaderCellDef> Opakowanie </th>
+    <td mat-cell *matCellDef="let offer"> {{ offer.packaging?.name || '-' }} </td>
+  </ng-container>
+
   <ng-container matColumnDef="auctionStatus">
     <th mat-header-cell *matHeaderCellDef> Status aukcji </th>
     <td mat-cell *matCellDef="let offer"> {{ offer.auctionStatus }} </td>

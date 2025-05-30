@@ -16,6 +16,10 @@ export interface Offer {
   price: number;
   allegroQuantity: string;
   ean: string;
+  packaging?: {
+    id: string;
+    name: string;
+  };
   products?: {
     productId: string;
     productName: string;
@@ -42,6 +46,7 @@ export class AllegroSynchronizedComponent implements OnInit {
     'price',
     'allegroQuantity',
     'ean',
+    'packaging',
     'auctionStatus',
     'actions'
   ];
@@ -72,6 +77,7 @@ export class AllegroSynchronizedComponent implements OnInit {
         allegroQuantity: item.availableStock + "/" + (item.availableStock + item.soldStock) || "?",
         ean: item.ean || '?',
         auctionStatus: item.auctionStatus || '?',
+        packaging: item.packaging || null,
         products: item.products
       }));
     });

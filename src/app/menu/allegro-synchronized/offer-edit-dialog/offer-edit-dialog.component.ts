@@ -2,6 +2,7 @@ import {Component, Inject, OnInit} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { ProductService } from "../../../utility/service/product.service";
 import {MatTableDataSource} from "@angular/material/table";
+import { PackagingAccessoryResponse } from "../../../utility/model/request/add-product-request";
 
 interface ProductQuantityRequest {
   productId: string;
@@ -25,6 +26,8 @@ export class OfferEditDialogComponent implements OnInit {
   assignedItems = new MatTableDataSource<ProductItem>([]);
   selectedProducts: ProductItem[] = [];
   allProducts: ProductItem[] = [];
+  packagingOptions: PackagingAccessoryResponse[] = [];
+  selectedPackaging: PackagingAccessoryResponse | null = null;
   displayedColumns: string[] = ['name', 'quantity', 'actions'];
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -43,6 +46,17 @@ export class OfferEditDialogComponent implements OnInit {
         ean: p.ean,
         quantity: 1
       }));
+    });
+
+    // Fetch packaging options
+    this.productService.getMaterials().subscribe(materials => {
+      this.packagingOptions = materials.packages;
+
+      // Set selected packaging if it exists in the offer
+      if (this.data.offer.packaging && this.data.offer.packaging.id) {
+        const packagingId = this.data.offer.packaging.id;
+        this.selectedPackaging = this.packagingOptions.find(p => p.id === packagingId) || null;
+      }
     });
 
     const existing = this.data.offer.products || [];
@@ -96,7 +110,17 @@ export class OfferEditDialogComponent implements OnInit {
       productId: item.id,
       quantity: item.quantity
     }));
-    this.productService.updateOfferAssignment(this.offerId, body).subscribe(() => {
+
+    // Prepare packaging data if selected
+    let packagingData: { id: string, name: string } | undefined = undefined;
+    if (this.selectedPackaging) {
+      packagingData = {
+        id: this.selectedPackaging.id,
+        name: this.selectedPackaging.name
+      };
+    }
+
+    this.productService.updateOfferAssignment(this.offerId, body, packagingData).subscribe(() => {
       this.dialogRef.close(true);
     });
   }
