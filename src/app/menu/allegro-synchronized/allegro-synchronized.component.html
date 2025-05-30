@@ -55,8 +55,18 @@
   </ng-container>
 
   <ng-container matColumnDef="packaging">
-    <th mat-header-cell *matHeaderCellDef> Opakowanie </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.packaging?.name || '-' }} </td>
+    <th mat-header-cell *matHeaderCellDef> Opakowania </th>
+    <td mat-cell *matCellDef="let offer">
+      <span *ngIf="offer.packagings && offer.packagings.length > 0">
+        <span *ngFor="let pkg of offer.packagings; let last = last">
+          {{ pkg.packagingName }} ({{ pkg.quantity }}){{ !last ? ', ' : '' }}
+        </span>
+      </span>
+      <span *ngIf="(!offer.packagings || offer.packagings.length === 0) && offer.packaging?.name">
+        {{ offer.packaging.name }} (1)
+      </span>
+      <span *ngIf="(!offer.packagings || offer.packagings.length === 0) && !offer.packaging?.name">-</span>
+    </td>
   </ng-container>
 
   <ng-container matColumnDef="auctionStatus">

@@ -117,7 +117,7 @@ export class ProductMaterialsWmsTableComponent implements OnInit, AfterViewInit 
         name: p.name,
         wms: p.wms,
         fullObject: p,
-        originalWms: {...p.wms} // store original values
+        originalWms: {...p.wms}
       }));
 
       this.productDataSource.data = productItems;

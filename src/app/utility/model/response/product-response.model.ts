@@ -13,6 +13,7 @@ export interface ProductResponse {
   preview: ProductFile;
   files: ProductFile[];
   wms: Wms;
+  laborCost: string;
 }
 
 export interface Wms {

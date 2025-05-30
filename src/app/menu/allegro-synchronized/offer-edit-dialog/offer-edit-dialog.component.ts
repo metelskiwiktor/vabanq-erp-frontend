@@ -9,10 +9,21 @@ interface ProductQuantityRequest {
   quantity: number;
 }
 
+interface PackagingQuantityRequest {
+  packagingId: string;
+  quantity: number;
+}
+
 interface ProductItem {
   id: string;
   name: string;
   ean: string;
+  quantity: number;
+}
+
+interface PackagingItem {
+  id: string;
+  name: string;
   quantity: number;
 }
 
@@ -26,9 +37,15 @@ export class OfferEditDialogComponent implements OnInit {
   assignedItems = new MatTableDataSource<ProductItem>([]);
   selectedProducts: ProductItem[] = [];
   allProducts: ProductItem[] = [];
+
+  // Packaging related properties
   packagingOptions: PackagingAccessoryResponse[] = [];
-  selectedPackaging: PackagingAccessoryResponse | null = null;
+  selectedPackagings: PackagingItem[] = [];
+  assignedPackagings = new MatTableDataSource<PackagingItem>([]);
+
+  // Table columns
   displayedColumns: string[] = ['name', 'quantity', 'actions'];
+  packagingDisplayedColumns: string[] = ['name', 'quantity', 'actions'];
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     private dialogRef: MatDialogRef<OfferEditDialogComponent>,
@@ -52,10 +69,28 @@ export class OfferEditDialogComponent implements OnInit {
     this.productService.getMaterials().subscribe(materials => {
       this.packagingOptions = materials.packages;
 
-      // Set selected packaging if it exists in the offer
-      if (this.data.offer.packaging && this.data.offer.packaging.id) {
-        const packagingId = this.data.offer.packaging.id;
-        this.selectedPackaging = this.packagingOptions.find(p => p.id === packagingId) || null;
+      // Initialize packaging items if they exist in the offer
+      if (this.data.offer.packagings && this.data.offer.packagings.length > 0) {
+        // Map existing packagings to PackagingItem format
+        const assignedPackagingData = this.data.offer.packagings.map((p: any) => ({
+          id: p.packagingId,
+          name: p.packagingName,
+          quantity: p.quantity
+        }));
+
+        this.assignedPackagings.data = assignedPackagingData;
+        this.selectedPackagings = [...assignedPackagingData];
+      }
+      // For backward compatibility - handle single packaging
+      else if (this.data.offer.packaging && this.data.offer.packaging.id) {
+        const packagingItem: PackagingItem = {
+          id: this.data.offer.packaging.id,
+          name: this.data.offer.packaging.name,
+          quantity: 1
+        };
+
+        this.assignedPackagings.data = [packagingItem];
+        this.selectedPackagings = [packagingItem];
       }
     });
 
@@ -90,11 +125,33 @@ export class OfferEditDialogComponent implements OnInit {
     );
   }
 
+  onPackagingChange(selected: PackagingItem[]) {
+    // Synchronize selected packagings with assignedPackagings
+    const selectedIds = selected.map(p => p.id);
+
+    // Add new items to assignedPackagings
+    selected.forEach(item => {
+      if (!this.assignedPackagings.data.find(p => p.id === item.id)) {
+        this.assignedPackagings.data = [
+          ...this.assignedPackagings.data,
+          { ...item, quantity: item.quantity || 1 }
+        ];
+      }
+    });
+
+    this.assignedPackagings.data = this.assignedPackagings.data.filter(item =>
+      selectedIds.includes(item.id)
+    );
+  }
 
   removeItem(row: ProductItem) {
     this.assignedItems.data = this.assignedItems.data.filter(item => item.id !== row.id);
-
     this.selectedProducts = this.selectedProducts.filter(item => item.id !== row.id);
+  }
+
+  removePackaging(row: PackagingItem) {
+    this.assignedPackagings.data = this.assignedPackagings.data.filter(item => item.id !== row.id);
+    this.selectedPackagings = this.selectedPackagings.filter(item => item.id !== row.id);
   }
 
   addQuantity(row: ProductItem) {
@@ -105,22 +162,28 @@ export class OfferEditDialogComponent implements OnInit {
     if (row.quantity > 1) row.quantity--;
   }
 
+  addPackagingQuantity(row: PackagingItem) {
+    row.quantity++;
+  }
+
+  subtractPackagingQuantity(row: PackagingItem) {
+    if (row.quantity > 1) row.quantity--;
+  }
+
   onSave() {
-    const body: ProductQuantityRequest[] = this.assignedItems.data.map(item => ({
+    // Prepare product data
+    const productBody: ProductQuantityRequest[] = this.assignedItems.data.map(item => ({
       productId: item.id,
       quantity: item.quantity
     }));
 
-    // Prepare packaging data if selected
-    let packagingData: { id: string, name: string } | undefined = undefined;
-    if (this.selectedPackaging) {
-      packagingData = {
-        id: this.selectedPackaging.id,
-        name: this.selectedPackaging.name
-      };
-    }
+    // Prepare packaging data
+    const packagingBody: PackagingQuantityRequest[] = this.assignedPackagings.data.map(item => ({
+      packagingId: item.id,
+      quantity: item.quantity
+    }));
 
-    this.productService.updateOfferAssignment(this.offerId, body, packagingData).subscribe(() => {
+    this.productService.updateOfferAssignment(this.offerId, productBody, packagingBody).subscribe(() => {
       this.dialogRef.close(true);
     });
   }

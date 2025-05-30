@@ -2,17 +2,53 @@
 
 <mat-dialog-content>
 
+  <!-- Packaging Section -->
+  <h2>Opakowania</h2>
   <div style="margin-bottom: 10px;">
-    <label>Opakowanie:</label>
+    <label>Zarządzaj opakowaniami:</label>
     <ng-select
       [items]="packagingOptions"
       bindLabel="name"
-      [clearable]="true"
-      placeholder="Wybierz opakowanie"
-      [(ngModel)]="selectedPackaging">
+      [multiple]="true"
+      [(ngModel)]="selectedPackagings"
+      (ngModelChange)="onPackagingChange($event)">
     </ng-select>
   </div>
 
+  <table mat-table [dataSource]="assignedPackagings" class="mat-elevation-z8" style="margin-bottom: 20px;">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef> Opakowanie </th>
+      <td mat-cell *matCellDef="let row"> {{ row.name }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="quantity">
+      <th mat-header-cell *matHeaderCellDef> Ilość </th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.quantity }}
+        <button mat-icon-button (click)="addPackagingQuantity(row)">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-icon-button (click)="subtractPackagingQuantity(row)">
+          <mat-icon>remove</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef> Usuń </th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button color="warn" (click)="removePackaging(row)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="packagingDisplayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: packagingDisplayedColumns;"></tr>
+  </table>
+
+  <!-- Products Section -->
+  <h2>Produkty</h2>
   <div style="margin-bottom: 10px;">
     <label>Zarządzaj produktami:</label>
     <ng-select

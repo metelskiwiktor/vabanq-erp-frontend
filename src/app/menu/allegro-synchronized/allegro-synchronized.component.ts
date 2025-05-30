@@ -16,10 +16,17 @@ export interface Offer {
   price: number;
   allegroQuantity: string;
   ean: string;
+  // For backward compatibility
   packaging?: {
     id: string;
     name: string;
   };
+  // New field for multiple packagings
+  packagings?: {
+    packagingId: string;
+    packagingName: string;
+    quantity: number;
+  }[];
   products?: {
     productId: string;
     productName: string;
@@ -77,7 +84,9 @@ export class AllegroSynchronizedComponent implements OnInit {
         allegroQuantity: item.availableStock + "/" + (item.availableStock + item.soldStock) || "?",
         ean: item.ean || '?',
         auctionStatus: item.auctionStatus || '?',
+        // Handle both single packaging and multiple packagings
         packaging: item.packaging || null,
+        packagings: item.packagings || [],
         products: item.products
       }));
     });
