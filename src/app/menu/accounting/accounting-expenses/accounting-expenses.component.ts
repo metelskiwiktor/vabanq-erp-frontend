@@ -22,16 +22,17 @@ import {MatOption} from "@angular/material/core";
 import {MatDialog, MatDialogModule} from "@angular/material/dialog";
 import {MatDialogRef, MAT_DIALOG_DATA} from "@angular/material/dialog";
 import {Inject} from "@angular/core";
-
-interface FixedExpense {
-  id: number;
-  category: string;
-  name: string;
-  amount: number; // netto
-  month: string;
-  lastUpdated: string;
-  isRecurring: boolean; // czy ma się powtarzać w nowych miesiącach
-}
+import {
+  FixedExpenseService,
+  FixedExpenseResponse,
+  CreateFixedExpenseRequest,
+  UpdateFixedExpenseRequest,
+  DeleteFixedExpenseRequest,
+  ExpenseSummaryResponse
+} from '../../../utility/service/fixed-expense.service';
+import {catchError, finalize} from 'rxjs/operators';
+import {of} from 'rxjs';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 interface VariableExpense {
   id: number;
@@ -95,7 +96,7 @@ interface MonthYear {
 
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Kwota netto (PLN)</mat-label>
-        <input matInput type="number" step="0.01" [(ngModel)]="expense.amount"
+        <input matInput type="number" step="0.01" [(ngModel)]="expense.netAmount"
                (input)="calculateGross()" placeholder="0.00">
       </mat-form-field>
 
@@ -118,6 +119,12 @@ interface MonthYear {
 
       <!-- Dla wydatków stałych -->
       <div *ngIf="data.type === 'fixed'">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Opis (opcjonalny)</mat-label>
+          <textarea matInput [(ngModel)]="expense.description"
+                    placeholder="Dodatkowe informacje o wydatku"></textarea>
+        </mat-form-field>
+
         <mat-checkbox [(ngModel)]="expense.isRecurring" class="recurring-checkbox">
           Wydatek cykliczny (powtarzaj w nowych miesiącach)
         </mat-checkbox>
@@ -155,10 +162,11 @@ export class ExpenseDialogComponent {
   expense: any = {
     category: '',
     name: '',
-    amount: 0,
+    netAmount: 0,
     date: new Date().toISOString().split('T')[0],
     supplier: '',
-    isRecurring: true
+    isRecurring: true,
+    description: ''
   };
 
   constructor(
@@ -171,6 +179,10 @@ export class ExpenseDialogComponent {
         // Ensure date is in correct format for input[type="date"]
         this.expense.date = new Date(this.expense.date).toISOString().split('T')[0];
       }
+      // Convert netAmount to string for form binding if it's from backend
+      if (typeof this.expense.netAmount === 'number') {
+        this.expense.netAmount = this.expense.netAmount.toString();
+      }
     }
   }
 
@@ -179,7 +191,8 @@ export class ExpenseDialogComponent {
   }
 
   getGrossAmount(): number {
-    return this.expense.amount * 1.23;
+    const netAmount = parseFloat(this.expense.netAmount) || 0;
+    return netAmount * 1.23;
   }
 
   formatCurrency(value: number): string {
@@ -190,7 +203,7 @@ export class ExpenseDialogComponent {
   }
 
   isFormValid(): boolean {
-    if (!this.expense.category || !this.expense.name || !this.expense.amount) {
+    if (!this.expense.category || !this.expense.name || !this.expense.netAmount) {
       return false;
     }
 
@@ -282,10 +295,11 @@ export class AccountingExpensesComponent implements OnInit {
   productSubTab: string = 'products';
   searchQuery: string = '';
   showGross: boolean = true;
+  isLoading: boolean = false;
 
   // Date selection properties
-  selectedMonth: number = 6; // June
-  selectedYear: number = 2023;
+  selectedMonth: number = new Date().getMonth() + 1;
+  selectedYear: number = new Date().getFullYear();
   currentMonth: string = '';
 
   // Available months and years
@@ -306,15 +320,11 @@ export class AccountingExpensesComponent implements OnInit {
 
   years: number[] = [];
 
-  // Updated sample data with netto amounts and recurring flags
-  fixedExpenses: FixedExpense[] = [
-    { id: 1, category: 'Biuro', name: 'Czynsz', amount: 2033, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
-    { id: 2, category: 'Biuro', name: 'Internet', amount: 122, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
-    { id: 3, category: 'Opłaty', name: 'Księgowość', amount: 285, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
-    { id: 4, category: 'Biuro', name: 'Prąd', amount: 341, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
-    { id: 5, category: 'Biuro', name: 'Ogrzewanie', amount: 244, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true }
-  ];
+  // Backend data
+  fixedExpenses: FixedExpenseResponse[] = [];
+  expenseSummary: ExpenseSummaryResponse | null = null;
 
+  // Mock data for tabs not yet implemented
   variableExpenses: VariableExpense[] = [
     { id: 6, category: 'Materiały', name: 'Filament PLA czarny', amount: 122, date: '2023-06-05', supplier: 'FilamentWorld' },
     { id: 7, category: 'Materiały', name: 'Filament PETG transparent', amount: 146, date: '2023-06-05', supplier: 'FilamentWorld' },
@@ -381,13 +391,16 @@ export class AccountingExpensesComponent implements OnInit {
     }
   ];
 
-  private nextId = 100; // For generating new IDs
-
-  constructor(private dialog: MatDialog) { }
+  constructor(
+    private dialog: MatDialog,
+    private fixedExpenseService: FixedExpenseService,
+    private snackBar: MatSnackBar
+  ) { }
 
   ngOnInit(): void {
     this.initializeYears();
     this.updateCurrentMonth();
+    this.loadExpensesForCurrentMonth();
   }
 
   private initializeYears(): void {
@@ -402,9 +415,40 @@ export class AccountingExpensesComponent implements OnInit {
     this.currentMonth = `${monthName} ${this.selectedYear}`;
   }
 
+  private loadExpensesForCurrentMonth(): void {
+    this.isLoading = true;
+
+    this.fixedExpenseService.getExpensesForMonth(this.selectedMonth, this.selectedYear)
+      .pipe(
+        catchError(error => {
+          console.error('Error loading expenses:', error);
+          this.showErrorMessage('Błąd podczas ładowania wydatków');
+          return of([]);
+        }),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe(expenses => {
+        this.fixedExpenses = expenses;
+        this.loadExpenseSummary();
+      });
+  }
+
+  private loadExpenseSummary(): void {
+    this.fixedExpenseService.getExpenseSummary(this.selectedMonth, this.selectedYear)
+      .pipe(
+        catchError(error => {
+          console.error('Error loading expense summary:', error);
+          return of(null);
+        })
+      )
+      .subscribe(summary => {
+        this.expenseSummary = summary;
+      });
+  }
+
   onMonthYearChange(): void {
     this.updateCurrentMonth();
-    console.log(`Loading data for ${this.currentMonth}`);
+    this.loadExpensesForCurrentMonth();
   }
 
   setActiveTab(tab: string): void {
@@ -431,9 +475,19 @@ export class AccountingExpensesComponent implements OnInit {
     }).format(adjustedValue);
   }
 
+  formatCurrencyFromBackend(expense: FixedExpenseResponse): string {
+    const value = this.showGross ? expense.grossAmount : expense.netAmount;
+    return new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: 'PLN'
+    }).format(value);
+  }
+
   getFixedExpensesTotal(): number {
-    const total = this.fixedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    return this.showGross ? total * 1.23 : total;
+    if (!this.expenseSummary) {
+      return 0;
+    }
+    return this.showGross ? this.expenseSummary.totalGrossAmount : this.expenseSummary.totalNetAmount;
   }
 
   getVariableExpensesTotal(): number {
@@ -463,36 +517,52 @@ export class AccountingExpensesComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        const newExpense = {
-          ...result,
-          id: this.nextId++,
-          month: this.currentMonth,
-          lastUpdated: new Date().toISOString().split('T')[0]
-        };
-
-        if (expenseType === 'fixed') {
-          this.fixedExpenses.push(newExpense);
-        } else {
-          this.variableExpenses.push(newExpense);
-        }
-
-        console.log('Dodano nowy wydatek:', newExpense);
+      if (result && expenseType === 'fixed') {
+        this.createFixedExpense(result);
+      } else if (result && expenseType === 'variable') {
+        // TODO: Implement variable expense creation when backend is ready
+        this.showInfoMessage('Koszty zmienne będą dostępne wkrótce');
       }
     });
   }
 
-  editExpense(id: number): void {
-    const isFixed = this.activeSubTab === 'fixed';
-    const expenses = isFixed ? this.fixedExpenses : this.variableExpenses;
-    const expense = expenses.find(e => e.id === id);
+  private createFixedExpense(expenseData: any): void {
+    const request: CreateFixedExpenseRequest = {
+      name: expenseData.name,
+      category: expenseData.category,
+      netAmount: expenseData.netAmount.toString(),
+      month: this.selectedMonth,
+      year: this.selectedYear,
+      isRecurring: expenseData.isRecurring,
+      description: expenseData.description || ''
+    };
 
+    this.isLoading = true;
+    this.fixedExpenseService.createFixedExpense(request)
+      .pipe(
+        catchError(error => {
+          console.error('Error creating expense:', error);
+          this.showErrorMessage('Błąd podczas tworzenia wydatku');
+          return of(null);
+        }),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe(expense => {
+        if (expense) {
+          this.showSuccessMessage('Wydatek został utworzony');
+          this.loadExpensesForCurrentMonth();
+        }
+      });
+  }
+
+  editExpense(id: string): void {
+    const expense = this.fixedExpenses.find(e => e.id === id);
     if (!expense) return;
 
     const dialogRef = this.dialog.open(ExpenseDialogComponent, {
       width: '500px',
       data: {
-        type: isFixed ? 'fixed' : 'variable',
+        type: 'fixed',
         isEdit: true,
         expense: { ...expense }
       }
@@ -500,52 +570,76 @@ export class AccountingExpensesComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        const index = expenses.findIndex(e => e.id === id);
-        if (index !== -1) {
-          expenses[index] = {
-            ...expenses[index],
-            ...result,
-            lastUpdated: new Date().toISOString().split('T')[0]
-          };
-          console.log('Zaktualizowano wydatek:', expenses[index]);
-        }
+        this.updateFixedExpense(id, result);
       }
     });
   }
 
-  deleteExpense(id: number): void {
-    const isFixed = this.activeSubTab === 'fixed';
-    const expenses = isFixed ? this.fixedExpenses : this.variableExpenses;
-    const expense = expenses.find(e => e.id === id);
+  private updateFixedExpense(id: string, expenseData: any): void {
+    const request: UpdateFixedExpenseRequest = {
+      name: expenseData.name,
+      category: expenseData.category,
+      netAmount: expenseData.netAmount.toString(),
+      isRecurring: expenseData.isRecurring,
+      description: expenseData.description || ''
+    };
 
+    this.isLoading = true;
+    this.fixedExpenseService.updateFixedExpense(id, request)
+      .pipe(
+        catchError(error => {
+          console.error('Error updating expense:', error);
+          this.showErrorMessage('Błąd podczas aktualizacji wydatku');
+          return of(null);
+        }),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe(expense => {
+        if (expense) {
+          this.showSuccessMessage('Wydatek został zaktualizowany');
+          this.loadExpensesForCurrentMonth();
+        }
+      });
+  }
+
+  deleteExpense(id: string): void {
+    const expense = this.fixedExpenses.find(e => e.id === id);
     if (!expense) return;
 
     const dialogRef = this.dialog.open(DeleteConfirmationDialogComponent, {
       width: '450px',
       data: {
-        type: isFixed ? 'fixed' : 'variable',
+        type: 'fixed',
         expenseName: expense.name
       }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result?.confirmed) {
-        const index = expenses.findIndex(e => e.id === id);
-        if (index !== -1) {
-          if (isFixed && result.applyToFutureMonths) {
-            // Mark as non-recurring to exclude from future months
-            // @ts-ignore
-            expenses[index].isRecurring = false;
-            console.log('Wydatek oznaczony jako niepowtarzający się:', expense.name);
-          }
-
-          // Remove from current month
-          expenses.splice(index, 1);
-          console.log('Usunięto wydatek:', expense.name,
-            result.applyToFutureMonths ? '(również z przyszłych miesięcy)' : '(tylko z bieżącego miesiąca)');
-        }
+        this.deleteFixedExpense(id, result.applyToFutureMonths);
       }
     });
+  }
+
+  private deleteFixedExpense(id: string, applyToFutureMonths: boolean): void {
+    const request: DeleteFixedExpenseRequest = {
+      applyToFutureMonths: applyToFutureMonths
+    };
+
+    this.isLoading = true;
+    this.fixedExpenseService.deleteFixedExpense(id, request)
+      .pipe(
+        catchError(error => {
+          console.error('Error deleting expense:', error);
+          this.showErrorMessage('Błąd podczas usuwania wydatku');
+          return of(null);
+        }),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe(() => {
+        this.showSuccessMessage('Wydatek został usunięty');
+        this.loadExpensesForCurrentMonth();
+      });
   }
 
   onSearchChange(event: any): void {
@@ -579,5 +673,27 @@ export class AccountingExpensesComponent implements OnInit {
     this.selectedMonth = now.getMonth() + 1;
     this.selectedYear = now.getFullYear();
     this.onMonthYearChange();
+  }
+
+  // Utility methods for notifications
+  private showSuccessMessage(message: string): void {
+    this.snackBar.open(message, 'Zamknij', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  private showErrorMessage(message: string): void {
+    this.snackBar.open(message, 'Zamknij', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  private showInfoMessage(message: string): void {
+    this.snackBar.open(message, 'Zamknij', {
+      duration: 3000,
+      panelClass: ['info-snackbar']
+    });
   }
 }
