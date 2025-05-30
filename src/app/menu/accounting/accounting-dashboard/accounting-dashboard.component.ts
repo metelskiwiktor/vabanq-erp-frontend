@@ -29,13 +29,6 @@ interface MockInvoice {
 
 @Component({
   selector: 'app-accounting-dashboard',
-  standalone: true,
-  imports: [
-    NgClass,
-    MatIcon,
-    DatePipe,
-    NgForOf
-  ],
   templateUrl: './accounting-dashboard.component.html',
   styleUrl: './accounting-dashboard.component.css'
 })

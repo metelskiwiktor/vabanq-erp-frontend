@@ -5,12 +5,6 @@ import {NgIf} from "@angular/common";
 
 @Component({
   selector: 'app-accounting',
-  standalone: true,
-  imports: [
-    AccountingDashboardComponent,
-    AccountingInvoicesComponent,
-    NgIf
-  ],
   templateUrl: './accounting.component.html',
   styleUrl: './accounting.component.css'
 })

@@ -18,18 +18,8 @@ interface MockInvoice {
   };
 }
 
-
 @Component({
   selector: 'app-accounting-invoices',
-  standalone: true,
-  imports: [
-    MatIcon,
-    NgIf,
-    DatePipe,
-    NgClass,
-    FormsModule,
-    NgForOf
-  ],
   templateUrl: './accounting-invoices.component.html',
   styleUrl: './accounting-invoices.component.css'
 })
