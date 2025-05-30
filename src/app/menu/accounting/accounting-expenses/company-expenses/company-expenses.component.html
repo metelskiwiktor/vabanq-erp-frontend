@@ -1,0 +1,63 @@
+<!-- src/app/menu/accounting/accounting-expenses/company-expenses/company-expenses.component.html -->
+<!-- Podzakładki kosztów stałych/zmiennych -->
+<div class="sub-tab-navigation">
+  <button
+    class="sub-tab-button"
+    [class.active]="activeSubTab === 'fixed'"
+    (click)="setActiveSubTab('fixed')">
+    Koszty stałe (cykliczne)
+  </button>
+  <button
+    class="sub-tab-button"
+    [class.active]="activeSubTab === 'variable'"
+    (click)="setActiveSubTab('variable')">
+    Koszty zmienne
+  </button>
+</div>
+
+<div class="content-padding">
+  <!-- Filtrowanie i wyszukiwanie -->
+  <div class="filter-controls">
+    <div class="search-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Szukaj wydatków...</mat-label>
+        <input matInput
+               placeholder="Szukaj wydatków..."
+               [(ngModel)]="searchQuery"
+               (input)="onSearchChange($event)">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-options">
+      <mat-checkbox
+        [(ngModel)]="showGross"
+        (change)="toggleGross()"
+        class="gross-checkbox">
+        Kwoty brutto
+      </mat-checkbox>
+    </div>
+  </div>
+
+  <!-- Koszty stałe -->
+  <div *ngIf="activeSubTab === 'fixed'">
+    <app-fixed-expenses
+      [selectedMonth]="selectedMonth"
+      [selectedYear]="selectedYear"
+      [currentMonth]="currentMonth"
+      [searchQuery]="searchQuery"
+      [showGross]="showGross">
+    </app-fixed-expenses>
+  </div>
+
+  <!-- Koszty zmienne -->
+  <div *ngIf="activeSubTab === 'variable'">
+    <app-variable-expenses
+      [selectedMonth]="selectedMonth"
+      [selectedYear]="selectedYear"
+      [currentMonth]="currentMonth"
+      [searchQuery]="searchQuery"
+      [showGross]="showGross">
+    </app-variable-expenses>
+  </div>
+</div>

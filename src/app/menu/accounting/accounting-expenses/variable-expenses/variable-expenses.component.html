@@ -1,0 +1,65 @@
+<!-- src/app/menu/accounting/accounting-expenses/variable-expenses/variable-expenses.component.html -->
+<div class="table-container">
+  <div class="coming-soon">
+    <mat-icon>construction</mat-icon>
+    <h3>Koszty zmienne - w przygotowaniu</h3>
+    <p>Funkcjonalność kosztów zmiennych będzie dostępna wkrótce.</p>
+  </div>
+
+  <!-- Temporary mock table -->
+  <mat-table [dataSource]="variableExpenses" class="expenses-table mock-table">
+    <ng-container matColumnDef="category">
+      <mat-header-cell *matHeaderCellDef>Kategoria</mat-header-cell>
+      <mat-cell *matCellDef="let expense">{{ expense.category }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
+      <mat-cell *matCellDef="let expense" class="expense-name">{{ expense.name }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="amount">
+      <mat-header-cell *matHeaderCellDef>Kwota {{ showGross ? 'brutto' : 'netto' }}</mat-header-cell>
+      <mat-cell *matCellDef="let expense">{{ formatCurrency(expense.amount) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="date">
+      <mat-header-cell *matHeaderCellDef>Data</mat-header-cell>
+      <mat-cell *matCellDef="let expense">{{ expense.date }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="supplier">
+      <mat-header-cell *matHeaderCellDef>Dostawca</mat-header-cell>
+      <mat-cell *matCellDef="let expense">{{ expense.supplier }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
+      <mat-cell *matCellDef="let expense">
+        <button mat-icon-button
+                color="primary"
+                disabled
+                matTooltip="Niedostępne">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button
+                color="warn"
+                disabled
+                matTooltip="Niedostępne">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: ['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-row>
+  </mat-table>
+
+  <!-- Suma poza tabelą -->
+  <div class="table-summary">
+    <div class="summary-row">
+      <span class="summary-label">Suma kosztów zmiennych (dane testowe):</span>
+      <span class="summary-value">{{ formatCurrency(getVariableExpensesTotal()) }}</span>
+    </div>
+  </div>
+</div>

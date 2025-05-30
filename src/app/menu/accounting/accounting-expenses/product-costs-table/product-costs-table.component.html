@@ -1,0 +1,56 @@
+<!-- src/app/menu/accounting/accounting-expenses/product-costs-table/product-costs-table.component.html -->
+<div class="table-container">
+  <mat-table [dataSource]="products" class="products-table">
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef>Produkt</mat-header-cell>
+      <mat-cell *matCellDef="let product" class="product-name">{{ product.name }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="ean">
+      <mat-header-cell *matHeaderCellDef>EAN</mat-header-cell>
+      <mat-cell *matCellDef="let product">{{ product.ean }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="materialCost">
+      <mat-header-cell *matHeaderCellDef>Materiały</mat-header-cell>
+      <mat-cell *matCellDef="let product">{{ formatCurrency(product.materialCost) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="powerCost">
+      <mat-header-cell *matHeaderCellDef>Prąd</mat-header-cell>
+      <mat-cell *matCellDef="let product">{{ formatCurrency(product.powerCost) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="packagingCost">
+      <mat-header-cell *matHeaderCellDef>Opakowanie</mat-header-cell>
+      <mat-cell *matCellDef="let product">{{ formatCurrency(product.packagingCost) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="laborCost">
+      <mat-header-cell *matHeaderCellDef>Robocizna</mat-header-cell>
+      <mat-cell *matCellDef="let product">{{ formatCurrency(product.laborCost) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="totalCost">
+      <mat-header-cell *matHeaderCellDef>Suma kosztów</mat-header-cell>
+      <mat-cell *matCellDef="let product" class="total-cost">{{ formatCurrency(product.totalCost) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="retailPrice">
+      <mat-header-cell *matHeaderCellDef>Cena sprzedaży</mat-header-cell>
+      <mat-cell *matCellDef="let product" class="retail-price">{{ formatCurrency(product.retailPrice) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="margin">
+      <mat-header-cell *matHeaderCellDef>Marża</mat-header-cell>
+      <mat-cell *matCellDef="let product">
+        <span class="margin-badge" [ngClass]="getMarginClass(product.margin)">
+          {{ product.margin.toFixed(2) }}%
+        </span>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="['name', 'ean', 'materialCost', 'powerCost', 'packagingCost', 'laborCost', 'totalCost', 'retailPrice', 'margin']"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: ['name', 'ean', 'materialCost', 'powerCost', 'packagingCost', 'laborCost', 'totalCost', 'retailPrice', 'margin']"></mat-row>
+  </mat-table>
+</div>

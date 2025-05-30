@@ -1,0 +1,36 @@
+<!-- src/app/menu/accounting/accounting-expenses/offer-costs-table/offer-costs-table.component.html -->
+<div class="table-container">
+  <mat-table [dataSource]="offers" class="offers-table">
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef>Nazwa zestawu</mat-header-cell>
+      <mat-cell *matCellDef="let offer" class="offer-name">{{ offer.name }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="productsIncluded">
+      <mat-header-cell *matHeaderCellDef>Produkty w zestawie</mat-header-cell>
+      <mat-cell *matCellDef="let offer" class="products-included">{{ offer.productsIncluded }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="totalCost">
+      <mat-header-cell *matHeaderCellDef>Koszt całkowity</mat-header-cell>
+      <mat-cell *matCellDef="let offer">{{ formatCurrency(offer.totalCost) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="offerPrice">
+      <mat-header-cell *matHeaderCellDef>Cena zestawu</mat-header-cell>
+      <mat-cell *matCellDef="let offer" class="offer-price">{{ formatCurrency(offer.offerPrice) }}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="margin">
+      <mat-header-cell *matHeaderCellDef>Marża</mat-header-cell>
+      <mat-cell *matCellDef="let offer">
+        <span class="margin-badge" [ngClass]="getMarginClass(offer.margin)">
+          {{ offer.margin.toFixed(2) }}%
+        </span>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="['name', 'productsIncluded', 'totalCost', 'offerPrice', 'margin']"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: ['name', 'productsIncluded', 'totalCost', 'offerPrice', 'margin']"></mat-row>
+  </mat-table>
+</div>
