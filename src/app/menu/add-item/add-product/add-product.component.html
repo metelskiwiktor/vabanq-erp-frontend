@@ -16,9 +16,30 @@
                  [(ngModel)]="addProductRequest.name" #name="ngModel" placeholder="Nazwa produktu">
         </div>
         <div class="form-group">
-          <h2><label for="duration">Czas trwania druku</label></h2>
-          <input type="text" autocomplete="off" class="form-control" id="duration" name="duration"
-                 [disabled]="isViewMode" mask="00:00" [(ngModel)]="duration" placeholder="HH:MM">
+          <div class="row">
+            <div class="col-md-6">
+              <h2><label for="duration">Czas trwania druku</label></h2>
+              <input type="text" autocomplete="off" class="form-control" id="duration" name="duration"
+                     [disabled]="isViewMode" mask="00:00" [(ngModel)]="duration" placeholder="HH:MM">
+            </div>
+            <div class="col-md-6">
+              <h2><label for="laborCost">Koszt robocizny</label></h2>
+              <div class="input-group mb-3">
+                <input
+                  type="text"
+                  id="laborCost"
+                  name="laborCost"
+                  [(ngModel)]="addProductRequest.laborCost"
+                  class="form-control"
+                  autocomplete="off"
+                  [disabled]="isViewMode"
+                  mask="separator.2"
+                  thousandSeparator=""
+                />
+                <span class="input-group-text">zł</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <h2><label for="description">Opis</label></h2>

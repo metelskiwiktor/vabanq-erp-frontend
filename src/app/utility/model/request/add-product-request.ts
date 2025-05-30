@@ -11,6 +11,7 @@ export class AddProductRequest {
   description: string = '';  // Dodajemy pole opisu,
   tags: string[] = [];
   eanName: string = '';
+  laborCost: any;
 }
 
 export class AddMaterialRequest {

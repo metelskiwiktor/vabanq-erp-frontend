@@ -1,88 +1,122 @@
 // src/app/menu/accounting/accounting-expenses/product-costs-table/product-costs-table.component.ts
-import {Component, Input, OnInit} from '@angular/core';
-
-interface Product {
-  id: number;
-  name: string;
-  ean: string;
-  materialCost: number;
-  powerCost: number;
-  packagingCost: number;
-  laborCost: number;
-  totalCost: number;
-  retailPrice: number;
-  margin: number;
-}
+import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
+import { Subject, takeUntil, finalize } from 'rxjs';
+import { ProductCostService, ProductCostResponse, ProductCostSummaryResponse } from '../../../../utility/service/product-cost.service';
 
 @Component({
   selector: 'app-product-costs-table',
   templateUrl: './product-costs-table.component.html',
   styleUrls: [
     './product-costs-table.component.css',
-    '../shared/expenses-shared.styles.css']
+    '../shared/expenses-shared.styles.css'
+  ]
 })
-export class ProductCostsTableComponent implements OnInit {
+export class ProductCostsTableComponent implements OnInit, OnChanges, OnDestroy {
   @Input() searchQuery!: string;
   @Input() showGross!: boolean;
 
-  // Mock data for products
-  products: Product[] = [
-    {
-      id: 1,
-      name: 'Znacznik magnetyczny',
-      ean: '5901234123457',
-      materialCost: 6.65,
-      powerCost: 0.40,
-      packagingCost: 1.20,
-      laborCost: 6.25,
-      totalCost: 14.50,
-      retailPrice: 29.99,
-      margin: 51.65
-    },
-    {
-      id: 2,
-      name: 'Organizer na biurko',
-      ean: '5901234123458',
-      materialCost: 22.35,
-      powerCost: 0.96,
-      packagingCost: 2.50,
-      laborCost: 12.50,
-      totalCost: 38.31,
-      retailPrice: 59.99,
-      margin: 36.14
-    },
-    {
-      id: 3,
-      name: 'Uchwyt na słuchawki',
-      ean: '5901234123459',
-      materialCost: 17.80,
-      powerCost: 0.64,
-      packagingCost: 1.80,
-      laborCost: 8.75,
-      totalCost: 28.99,
-      retailPrice: 49.99,
-      margin: 42.01
-    }
-  ];
+  products: ProductCostResponse[] = [];
+  isLoading: boolean = false;
+  summary: ProductCostSummaryResponse | null = null;
 
-  constructor() {
-  }
+  private destroy$ = new Subject<void>();
+
+  constructor(private productCostService: ProductCostService) {}
 
   ngOnInit(): void {
-    // Component initialization
+    this.loadProductCosts();
+    this.loadSummary();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['searchQuery']) {
+      this.loadProductCosts();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadProductCosts(): void {
+    this.isLoading = true;
+
+    this.productCostService.getProductCosts(this.searchQuery)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe({
+        next: (products) => {
+          this.products = products;
+          console.log(`Loaded ${products.length} product costs`);
+        },
+        error: (error) => {
+          console.error('Error loading product costs:', error);
+          this.products = [];
+        }
+      });
+  }
+
+  private loadSummary(): void {
+    this.productCostService.getProductCostsSummary()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (summary) => {
+          this.summary = summary;
+        },
+        error: (error) => {
+          console.error('Error loading product costs summary:', error);
+          this.summary = null;
+        }
+      });
   }
 
   formatCurrency(value: number): string {
-    const adjustedValue = this.showGross ? value * 1.23 : value;
     return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: 'PLN'
-    }).format(adjustedValue);
+    }).format(value);
   }
 
   getMarginClass(margin: number): string {
     if (margin > 45) return 'margin-high';
     if (margin > 30) return 'margin-medium';
     return 'margin-low';
+  }
+
+  getMaterialCost(product: ProductCostResponse): number {
+    return this.showGross ? product.grossMaterialCost : product.materialCost;
+  }
+
+  getPowerCost(product: ProductCostResponse): number {
+    return this.showGross ? product.grossPowerCost : product.powerCost;
+  }
+
+  getPackagingCost(product: ProductCostResponse): number {
+    return this.showGross ? product.grossPackagingCost : product.packagingCost;
+  }
+
+  getLaborCost(product: ProductCostResponse): number {
+    return this.showGross ? product.grossLaborCost : product.laborCost;
+  }
+
+  getTotalCost(product: ProductCostResponse): number {
+    return this.showGross ? product.grossTotalCost : product.totalCost;
+  }
+
+  getRetailPrice(product: ProductCostResponse): number {
+    return this.showGross ? product.grossRetailPrice : product.retailPrice;
+  }
+
+  getSummaryTotalCost(): number {
+    if (!this.summary) return 0;
+    return this.showGross ? this.summary.grossTotalCost : this.summary.totalCost;
+  }
+
+  getSummaryRetailValue(): number {
+    if (!this.summary) return 0;
+    return this.showGross ? this.summary.grossTotalRetailValue : this.summary.totalRetailValue;
   }
 }
