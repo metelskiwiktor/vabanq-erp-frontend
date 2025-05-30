@@ -89,6 +89,16 @@
       </li>
     </ul>
 
+    <ul *ngIf="subcategories['accounting']" class="subcategories">
+      <li>
+        <a routerLink="/accounting/expenses" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bx bxs-plus-circle"></i>
+          <span class="links_name">Wydatki</span>
+        </a>
+        <span class="tooltip">Wydatki</span>
+      </li>
+    </ul>
+
     <li>
       <a routerLink="/settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <i class="bx bx-cog"></i>

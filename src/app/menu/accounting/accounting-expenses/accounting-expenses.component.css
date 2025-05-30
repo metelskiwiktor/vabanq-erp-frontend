@@ -1,0 +1,414 @@
+/* src/app/menu/accounting/accounting-expenses.component.css */
+
+.accounting-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Header */
+.header {
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.current-month {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Main content */
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+/* Tab navigation */
+.tab-navigation {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 24px;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #333;
+}
+
+.tab-button.active {
+  color: #1976d2;
+  border-bottom-color: #1976d2;
+}
+
+/* Content card */
+.content-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Sub-tab navigation */
+.sub-tab-navigation {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sub-tab-button {
+  background: none;
+  border: none;
+  padding: 16px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.sub-tab-button:hover {
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.sub-tab-button.active {
+  color: #1976d2;
+  border-bottom-color: #1976d2;
+}
+
+.content-padding {
+  padding: 16px;
+}
+
+/* Filter controls */
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.search-container {
+  flex-grow: 1;
+  max-width: 400px;
+}
+
+.search-field {
+  width: 100%;
+}
+
+.filter-options {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gross-checkbox {
+  margin: 0;
+}
+
+.add-button {
+  margin-left: auto;
+}
+
+/* Tables */
+.table-container {
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.expenses-table,
+.products-table,
+.offers-table {
+  width: 100%;
+}
+
+.expenses-table .mat-mdc-header-cell,
+.products-table .mat-mdc-header-cell,
+.offers-table .mat-mdc-header-cell {
+  background-color: #f5f5f5;
+  font-weight: 500;
+  color: #666;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.expenses-table .mat-mdc-row:hover,
+.products-table .mat-mdc-row:hover,
+.offers-table .mat-mdc-row:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.expense-name,
+.product-name,
+.offer-name {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.total-cost,
+.retail-price,
+.offer-price {
+  font-weight: 500;
+}
+
+.retail-price,
+.offer-price {
+  color: #2e7d32;
+}
+
+.products-included {
+  font-size: 14px;
+  color: #666;
+  max-width: 300px;
+  white-space: normal;
+}
+
+/* Table summary */
+.table-summary {
+  background-color: #f5f5f5;
+  border-top: 2px solid #e0e0e0;
+  padding: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-label {
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 16px;
+}
+
+.summary-value {
+  font-weight: bold;
+  color: #1a1a1a;
+  font-size: 18px;
+}
+
+/* Margin badges */
+.margin-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.margin-high {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.margin-medium {
+  background-color: #fff8e1;
+  color: #f57f17;
+}
+
+.margin-low {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Summary section */
+.summary-section {
+  margin-top: 24px;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  padding: 16px;
+}
+
+.summary-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.summary-card .mat-mdc-card-header {
+  padding-bottom: 8px;
+}
+
+.summary-card .mat-mdc-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.summary-amount {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.fixed-costs {
+  border-left: 4px solid #1976d2;
+}
+
+.fixed-costs .mat-mdc-card-title {
+  color: #1976d2;
+}
+
+.fixed-costs .summary-amount {
+  color: #1976d2;
+}
+
+.variable-costs {
+  border-left: 4px solid #388e3c;
+}
+
+.variable-costs .mat-mdc-card-title {
+  color: #388e3c;
+}
+
+.variable-costs .summary-amount {
+  color: #388e3c;
+}
+
+.total-costs {
+  border-left: 4px solid #7b1fa2;
+}
+
+.total-costs .mat-mdc-card-title {
+  color: #7b1fa2;
+}
+
+.total-costs .summary-amount {
+  color: #7b1fa2;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .header-content {
+    padding: 0 8px;
+    flex-direction: column;
+    height: auto;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    gap: 8px;
+  }
+
+  .main-content {
+    padding: 16px 8px;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-container {
+    max-width: none;
+  }
+
+  .add-button {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+
+  .tab-navigation,
+  .sub-tab-navigation {
+    flex-wrap: wrap;
+  }
+
+  .tab-button,
+  .sub-tab-button {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .expenses-table,
+  .products-table,
+  .offers-table {
+    min-width: 600px;
+  }
+
+  .summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* Material Design adjustments */
+.mat-mdc-form-field-outline {
+  color: rgba(0, 0, 0, 0.12);
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-outline-thick {
+  color: #1976d2;
+}
+
+.mat-mdc-checkbox.mat-mdc-checkbox-checked .mat-mdc-checkbox-background {
+  background-color: #1976d2;
+}
+
+.mat-mdc-raised-button.mat-primary {
+  background-color: #1976d2;
+}
+
+.mat-mdc-icon-button.mat-primary {
+  color: #1976d2;
+}
+
+.mat-mdc-icon-button.mat-warn {
+  color: #f44336;
+}
