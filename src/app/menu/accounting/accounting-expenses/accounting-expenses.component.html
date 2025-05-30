@@ -7,7 +7,55 @@
         <h1 class="header-title">Panel Zarządzania Kosztami</h1>
       </div>
       <div class="header-right">
-        <span class="current-month">{{ currentMonth }}</span>
+        <!-- Month/Year Selector -->
+        <div class="date-selector">
+          <button mat-icon-button
+                  class="date-nav-button"
+                  (click)="goToPreviousMonth()"
+                  matTooltip="Poprzedni miesiąc">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+
+          <div class="date-controls">
+            <mat-form-field appearance="outline" class="month-select">
+              <mat-label>Miesiąc</mat-label>
+              <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onMonthYearChange()">
+                <mat-option *ngFor="let month of months" [value]="month.value">
+                  {{ month.name }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="year-select">
+              <mat-label>Rok</mat-label>
+              <mat-select [(ngModel)]="selectedYear" (selectionChange)="onMonthYearChange()">
+                <mat-option *ngFor="let year of years" [value]="year">
+                  {{ year }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <button mat-icon-button
+                  class="date-nav-button"
+                  (click)="goToNextMonth()"
+                  matTooltip="Następny miesiąc">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+
+          <button mat-button
+                  class="current-month-button"
+                  (click)="goToCurrentMonth()"
+                  matTooltip="Przejdź do bieżącego miesiąca">
+            <mat-icon>today</mat-icon>
+            Dziś
+          </button>
+        </div>
+
+        <div class="current-period">
+          <span class="period-label">Wybrany okres:</span>
+          <span class="period-value">{{ currentMonth }}</span>
+        </div>
       </div>
     </div>
   </header>

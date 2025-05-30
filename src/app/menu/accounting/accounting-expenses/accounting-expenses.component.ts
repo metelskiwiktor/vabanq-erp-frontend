@@ -17,6 +17,8 @@ import {MatCard, MatCardContent, MatCardHeader, MatCardTitle} from "@angular/mat
 import {MatButton, MatIconButton} from "@angular/material/button";
 import {MatTooltip} from "@angular/material/tooltip";
 import {MatInput} from "@angular/material/input";
+import {MatSelect} from "@angular/material/select";
+import {MatOption} from "@angular/material/core";
 
 interface FixedExpense {
   id: number;
@@ -58,6 +60,12 @@ interface Offer {
   margin: number;
 }
 
+interface MonthYear {
+  month: number;
+  year: number;
+  displayName: string;
+}
+
 @Component({
   selector: 'app-accounting-expenses',
   standalone: true,
@@ -89,6 +97,8 @@ interface Offer {
     MatLabel,
     MatCardTitle,
     NgIf,
+    MatSelect,
+    MatOption,
   ],
   templateUrl: './accounting-expenses.component.html',
   styleUrl: './accounting-expenses.component.css'
@@ -99,7 +109,29 @@ export class AccountingExpensesComponent implements OnInit {
   productSubTab: string = 'products';
   searchQuery: string = '';
   showGross: boolean = true;
-  currentMonth: string = 'Czerwiec 2023';
+
+  // Date selection properties
+  selectedMonth: number = 6; // June
+  selectedYear: number = 2023;
+  currentMonth: string = '';
+
+  // Available months and years
+  months: Array<{value: number, name: string}> = [
+    { value: 1, name: 'Styczeń' },
+    { value: 2, name: 'Luty' },
+    { value: 3, name: 'Marzec' },
+    { value: 4, name: 'Kwiecień' },
+    { value: 5, name: 'Maj' },
+    { value: 6, name: 'Czerwiec' },
+    { value: 7, name: 'Lipiec' },
+    { value: 8, name: 'Sierpień' },
+    { value: 9, name: 'Wrzesień' },
+    { value: 10, name: 'Październik' },
+    { value: 11, name: 'Listopad' },
+    { value: 12, name: 'Grudzień' }
+  ];
+
+  years: number[] = [];
 
   fixedExpenses: FixedExpense[] = [
     { id: 1, category: 'Biuro', name: 'Czynsz', amount: 2500, month: 'Czerwiec 2023', lastUpdated: '2023-06-01' },
@@ -178,6 +210,28 @@ export class AccountingExpensesComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
+    this.initializeYears();
+    this.updateCurrentMonth();
+  }
+
+  private initializeYears(): void {
+    const currentYear = new Date().getFullYear();
+    // Generate years from 2020 to current year + 2
+    for (let year = 2020; year <= currentYear + 2; year++) {
+      this.years.push(year);
+    }
+  }
+
+  private updateCurrentMonth(): void {
+    const monthName = this.months.find(m => m.value === this.selectedMonth)?.name || '';
+    this.currentMonth = `${monthName} ${this.selectedYear}`;
+  }
+
+  onMonthYearChange(): void {
+    this.updateCurrentMonth();
+    // Here you would typically reload data for the selected month/year
+    console.log(`Loading data for ${this.currentMonth}`);
+    // TODO: Call API to load expenses for selected month/year
   }
 
   setActiveTab(tab: string): void {
@@ -239,5 +293,33 @@ export class AccountingExpensesComponent implements OnInit {
 
   onSearchChange(event: any): void {
     this.searchQuery = event.target.value;
+  }
+
+  // Navigation methods for quick month/year changes
+  goToPreviousMonth(): void {
+    if (this.selectedMonth === 1) {
+      this.selectedMonth = 12;
+      this.selectedYear--;
+    } else {
+      this.selectedMonth--;
+    }
+    this.onMonthYearChange();
+  }
+
+  goToNextMonth(): void {
+    if (this.selectedMonth === 12) {
+      this.selectedMonth = 1;
+      this.selectedYear++;
+    } else {
+      this.selectedMonth++;
+    }
+    this.onMonthYearChange();
+  }
+
+  goToCurrentMonth(): void {
+    const now = new Date();
+    this.selectedMonth = now.getMonth() + 1;
+    this.selectedYear = now.getFullYear();
+    this.onMonthYearChange();
   }
 }

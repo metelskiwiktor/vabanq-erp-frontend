@@ -19,7 +19,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 64px;
+  min-height: 64px;
+  gap: 16px;
 }
 
 .header-title {
@@ -29,9 +30,90 @@
   color: #1a1a1a;
 }
 
-.current-month {
-  font-size: 14px;
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Date Selector */
+.date-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.date-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.month-select, .year-select {
+  width: 120px;
+}
+
+.month-select .mat-mdc-form-field-wrapper,
+.year-select .mat-mdc-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.date-nav-button {
+  background-color: white;
+  border: 1px solid #e0e0e0;
   color: #666;
+  transition: all 0.2s ease;
+}
+
+.date-nav-button:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.current-month-button {
+  background-color: #1976d2;
+  color: white;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  min-width: auto;
+  transition: all 0.2s ease;
+}
+
+.current-month-button:hover {
+  background-color: #1565c0;
+}
+
+.current-month-button .mat-icon {
+  margin-right: 4px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Current Period Display */
+.current-period {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 160px;
+}
+
+.period-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.period-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 /* Main content */
@@ -328,16 +410,31 @@
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .header-content {
-    padding: 0 8px;
     flex-direction: column;
-    height: auto;
-    padding-top: 16px;
-    padding-bottom: 16px;
-    gap: 8px;
+    align-items: stretch;
+    padding: 16px;
+    gap: 16px;
   }
 
+  .header-right {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .date-selector {
+    justify-content: center;
+  }
+
+  .current-period {
+    align-items: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
   .main-content {
     padding: 16px 8px;
   }
@@ -386,6 +483,37 @@
     align-items: flex-start;
     gap: 8px;
   }
+
+  .date-selector {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .date-controls {
+    justify-content: center;
+  }
+
+  .month-select, .year-select {
+    width: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .date-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .month-select, .year-select {
+    width: 100%;
+    min-width: 160px;
+  }
+
+  .header-title {
+    font-size: 20px;
+    text-align: center;
+  }
 }
 
 /* Material Design adjustments */
@@ -411,4 +539,40 @@
 
 .mat-mdc-icon-button.mat-warn {
   color: #f44336;
+}
+
+/* Compact form fields in date selector */
+.date-selector .mat-mdc-form-field {
+  font-size: 14px;
+}
+
+.date-selector .mat-mdc-form-field .mat-mdc-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.date-selector .mat-mdc-form-field .mat-mdc-form-field-infix {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: auto;
+}
+
+.date-selector .mat-mdc-select-value {
+  font-size: 14px;
+}
+
+/* Date selector animations */
+.date-selector {
+  transition: all 0.3s ease;
+}
+
+.date-selector:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Period value emphasis */
+.period-value {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
