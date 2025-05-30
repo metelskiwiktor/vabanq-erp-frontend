@@ -15,7 +15,7 @@ export class CompanyExpensesComponent implements OnInit, OnChanges {
 
   activeSubTab: string = 'fixed';
   searchQuery: string = '';
-  showGross: boolean = false; // Zmienione na false - domyślnie netto
+  showGross: boolean = false; // Domyślnie netto
 
   constructor() { }
 
@@ -37,6 +37,11 @@ export class CompanyExpensesComponent implements OnInit, OnChanges {
 
   setActiveSubTab(subTab: string): void {
     this.activeSubTab = subTab;
+
+    // Reset search when switching to power tab (no search needed there)
+    if (subTab === 'power') {
+      this.searchQuery = '';
+    }
   }
 
   toggleGross(): void {

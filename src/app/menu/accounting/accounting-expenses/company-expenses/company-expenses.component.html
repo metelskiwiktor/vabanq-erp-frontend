@@ -9,6 +9,13 @@
   </button>
   <button
     class="sub-tab-button"
+    [class.active]="activeSubTab === 'power'"
+    (click)="setActiveSubTab('power')">
+    <mat-icon>flash_on</mat-icon>
+    Prąd
+  </button>
+  <button
+    class="sub-tab-button"
     [class.active]="activeSubTab === 'variable'"
     (click)="setActiveSubTab('variable')">
     Koszty zmienne
@@ -16,8 +23,8 @@
 </div>
 
 <div class="content-padding">
-  <!-- Filtrowanie i wyszukiwanie -->
-  <div class="filter-controls">
+  <!-- Filtrowanie i wyszukiwanie - tylko dla kosztów stałych i zmiennych -->
+  <div *ngIf="activeSubTab !== 'power'" class="filter-controls">
     <div class="search-container">
       <mat-form-field appearance="outline" class="search-field">
         <mat-label>Szukaj wydatków...</mat-label>
@@ -48,6 +55,16 @@
       [searchQuery]="searchQuery"
       [showGross]="showGross">
     </app-fixed-expenses>
+  </div>
+
+  <!-- Wydatek na prąd -->
+  <div *ngIf="activeSubTab === 'power'">
+    <app-power-expense
+      [selectedMonth]="selectedMonth"
+      [selectedYear]="selectedYear"
+      [currentMonth]="currentMonth"
+      [showGross]="showGross">
+    </app-power-expense>
   </div>
 
   <!-- Koszty zmienne -->

@@ -30,11 +30,15 @@ import { ProductExpensesComponent } from './accounting-expenses/product-expenses
 import { ProductCostsTableComponent } from './accounting-expenses/product-costs-table/product-costs-table.component';
 import { OfferCostsTableComponent } from './accounting-expenses/offer-costs-table/offer-costs-table.component';
 
+// Power expense components
+import { PowerExpenseComponent } from './accounting-expenses/power-expense/power-expense.component';
+
 // Shared dialogs
 import {
   ExpenseDialogComponent,
   DeleteConfirmationDialogComponent
 } from './accounting-expenses/shared/expense-dialogs.component';
+import { PowerExpenseDialogComponent } from './accounting-expenses/shared/power-expense-dialog.component';
 
 @NgModule({
   declarations: [
@@ -52,9 +56,13 @@ import {
     ProductCostsTableComponent,
     OfferCostsTableComponent,
 
+    // Power expense components
+    PowerExpenseComponent,
+
     // Shared dialogs
     ExpenseDialogComponent,
-    DeleteConfirmationDialogComponent
+    DeleteConfirmationDialogComponent,
+    PowerExpenseDialogComponent
   ],
   imports: [
     CommonModule,

@@ -185,6 +185,18 @@ export class ExpenseDialogComponent implements OnInit {
     <div mat-dialog-content>
       <p>Czy na pewno chcesz usunąć wydatek "<strong>{{ data.expenseName }}</strong>"?</p>
 
+      <!-- Special message for power expenses -->
+      <div *ngIf="data.type === 'power'" class="power-delete-info">
+        <div class="info-box">
+          <mat-icon>flash_on</mat-icon>
+          <div class="info-text">
+            <p><strong>Wydatek na energię elektryczną</strong></p>
+            <p>Po usunięciu będzie można ponownie dodać wydatek na prąd dla tego miesiąca.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options for fixed expenses -->
       <div *ngIf="data.type === 'fixed'" class="future-months-option">
         <mat-checkbox [(ngModel)]="applyToFutureMonths">
           Usuń również z przyszłych miesięcy (wydatek nie będzie się już powtarzać)
@@ -193,6 +205,11 @@ export class ExpenseDialogComponent implements OnInit {
           Jeśli nie zaznaczysz tej opcji, wydatek zostanie usunięty tylko z bieżącego miesiąca,
           ale będzie nadal pojawiać się w nowych miesiącach.
         </p>
+      </div>
+
+      <!-- Standard message for variable expenses -->
+      <div *ngIf="data.type === 'variable'" class="variable-delete-info">
+        <p class="info-text">Ta operacja nie może być cofnięta.</p>
       </div>
     </div>
     <div mat-dialog-actions align="end">
@@ -213,6 +230,51 @@ export class ExpenseDialogComponent implements OnInit {
       color: #666;
       margin-top: 8px;
       margin-bottom: 0;
+    }
+    .power-delete-info {
+      margin: 16px 0;
+    }
+    .info-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: #fff8e1;
+      border-radius: 8px;
+      border-left: 4px solid #ffc107;
+    }
+    .info-box mat-icon {
+      color: #f57c00;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+    }
+    .info-text {
+      flex: 1;
+    }
+    .info-text p {
+      margin: 0 0 8px 0;
+      color: #856404;
+      line-height: 1.4;
+    }
+    .info-text p:last-child {
+      margin-bottom: 0;
+    }
+    .info-text strong {
+      color: #663c00;
+    }
+    .variable-delete-info {
+      margin: 16px 0;
+      padding: 12px;
+      background: #ffebee;
+      border-radius: 4px;
+      border-left: 4px solid #f44336;
+    }
+    .variable-delete-info .info-text {
+      color: #c62828;
+      font-weight: 500;
+      margin: 0;
     }
   `]
 })
