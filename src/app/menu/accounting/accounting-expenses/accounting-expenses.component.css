@@ -409,6 +409,72 @@
   color: #7b1fa2;
 }
 
+/* Dialog Styles */
+.full-width {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.gross-amount-display {
+  background-color: #e8f5e8;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.recurring-checkbox {
+  margin-bottom: 16px;
+}
+
+.future-months-option {
+  background-color: #fff3cd;
+  padding: 16px;
+  border-radius: 4px;
+  margin: 16px 0;
+  border-left: 4px solid #ffc107;
+}
+
+.help-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Action buttons in table */
+.mat-mdc-icon-button.mat-primary {
+  color: #1976d2;
+}
+
+.mat-mdc-icon-button.mat-warn {
+  color: #f44336;
+}
+
+.mat-mdc-icon-button:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Enhanced button styling */
+.add-button {
+  background-color: #1976d2;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
+  transition: all 0.2s ease;
+}
+
+.add-button:hover {
+  background-color: #1565c0;
+  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.4);
+  transform: translateY(-1px);
+}
+
+.add-button .mat-icon {
+  margin-right: 8px;
+}
+
 /* Responsive design */
 @media (max-width: 1024px) {
   .header-content {
@@ -533,14 +599,6 @@
   background-color: #1976d2;
 }
 
-.mat-mdc-icon-button.mat-primary {
-  color: #1976d2;
-}
-
-.mat-mdc-icon-button.mat-warn {
-  color: #f44336;
-}
-
 /* Compact form fields in date selector */
 .date-selector .mat-mdc-form-field {
   font-size: 14px;
@@ -575,4 +633,43 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Dialog content styling */
+mat-dialog-content {
+  min-width: 400px;
+}
+
+/* Success and error states */
+.mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-outline-thick {
+  color: #f44336;
+}
+
+/* Loading states */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Enhanced table styling */
+.expenses-table .mat-mdc-cell,
+.products-table .mat-mdc-cell,
+.offers-table .mat-mdc-cell {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Alternating row colors */
+.expenses-table .mat-mdc-row:nth-child(even),
+.products-table .mat-mdc-row:nth-child(even),
+.offers-table .mat-mdc-row:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.01);
 }

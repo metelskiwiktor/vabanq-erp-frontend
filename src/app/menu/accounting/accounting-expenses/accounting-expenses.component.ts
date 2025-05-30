@@ -19,21 +19,25 @@ import {MatTooltip} from "@angular/material/tooltip";
 import {MatInput} from "@angular/material/input";
 import {MatSelect} from "@angular/material/select";
 import {MatOption} from "@angular/material/core";
+import {MatDialog, MatDialogModule} from "@angular/material/dialog";
+import {MatDialogRef, MAT_DIALOG_DATA} from "@angular/material/dialog";
+import {Inject} from "@angular/core";
 
 interface FixedExpense {
   id: number;
   category: string;
   name: string;
-  amount: number;
+  amount: number; // netto
   month: string;
   lastUpdated: string;
+  isRecurring: boolean; // czy ma się powtarzać w nowych miesiącach
 }
 
 interface VariableExpense {
   id: number;
   category: string;
   name: string;
-  amount: number;
+  amount: number; // netto
   date: string;
   supplier: string;
 }
@@ -64,6 +68,207 @@ interface MonthYear {
   month: number;
   year: number;
   displayName: string;
+}
+
+// Dialog component for adding/editing expenses
+@Component({
+  selector: 'app-expense-dialog',
+  template: `
+    <h1 mat-dialog-title>{{ data.isEdit ? 'Edytuj wydatek' : 'Dodaj wydatek' }}</h1>
+    <div mat-dialog-content>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Kategoria</mat-label>
+        <mat-select [(ngModel)]="expense.category">
+          <mat-option value="Biuro">Biuro</mat-option>
+          <mat-option value="Materiały">Materiały</mat-option>
+          <mat-option value="Opłaty">Opłaty</mat-option>
+          <mat-option value="Transport">Transport</mat-option>
+          <mat-option value="Marketing">Marketing</mat-option>
+          <mat-option value="Inne">Inne</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nazwa wydatku</mat-label>
+        <input matInput [(ngModel)]="expense.name" placeholder="Wpisz nazwę wydatku">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Kwota netto (PLN)</mat-label>
+        <input matInput type="number" step="0.01" [(ngModel)]="expense.amount"
+               (input)="calculateGross()" placeholder="0.00">
+      </mat-form-field>
+
+      <div class="gross-amount-display">
+        <strong>Kwota brutto: {{ formatCurrency(getGrossAmount()) }}</strong>
+      </div>
+
+      <!-- Dla wydatków zmiennych -->
+      <div *ngIf="data.type === 'variable'">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Data</mat-label>
+          <input matInput type="date" [(ngModel)]="expense.date">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Dostawca</mat-label>
+          <input matInput [(ngModel)]="expense.supplier" placeholder="Nazwa dostawcy">
+        </mat-form-field>
+      </div>
+
+      <!-- Dla wydatków stałych -->
+      <div *ngIf="data.type === 'fixed'">
+        <mat-checkbox [(ngModel)]="expense.isRecurring" class="recurring-checkbox">
+          Wydatek cykliczny (powtarzaj w nowych miesiącach)
+        </mat-checkbox>
+      </div>
+    </div>
+    <div mat-dialog-actions align="end">
+      <button mat-button (click)="onCancel()">Anuluj</button>
+      <button mat-raised-button color="primary" (click)="onSave()"
+              [disabled]="!isFormValid()">
+        {{ data.isEdit ? 'Zapisz' : 'Dodaj' }}
+      </button>
+    </div>
+  `,
+  styles: [`
+    .full-width {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .gross-amount-display {
+      background-color: #e8f5e8;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .recurring-checkbox {
+      margin-bottom: 16px;
+    }
+    mat-dialog-content {
+      min-width: 400px;
+    }
+  `]
+})
+export class ExpenseDialogComponent {
+  expense: any = {
+    category: '',
+    name: '',
+    amount: 0,
+    date: new Date().toISOString().split('T')[0],
+    supplier: '',
+    isRecurring: true
+  };
+
+  constructor(
+    public dialogRef: MatDialogRef<ExpenseDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {
+    if (data.expense) {
+      this.expense = { ...data.expense };
+      if (data.type === 'variable' && this.expense.date) {
+        // Ensure date is in correct format for input[type="date"]
+        this.expense.date = new Date(this.expense.date).toISOString().split('T')[0];
+      }
+    }
+  }
+
+  calculateGross(): void {
+    // Trigger change detection for gross amount
+  }
+
+  getGrossAmount(): number {
+    return this.expense.amount * 1.23;
+  }
+
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: 'PLN'
+    }).format(value);
+  }
+
+  isFormValid(): boolean {
+    if (!this.expense.category || !this.expense.name || !this.expense.amount) {
+      return false;
+    }
+
+    if (this.data.type === 'variable') {
+      return !!(this.expense.date && this.expense.supplier);
+    }
+
+    return true;
+  }
+
+  onCancel(): void {
+    this.dialogRef.close();
+  }
+
+  onSave(): void {
+    if (this.isFormValid()) {
+      this.dialogRef.close(this.expense);
+    }
+  }
+}
+
+// Dialog for delete confirmation
+@Component({
+  selector: 'app-delete-confirmation-dialog',
+  template: `
+    <h1 mat-dialog-title>Potwierdź usunięcie</h1>
+    <div mat-dialog-content>
+      <p>Czy na pewno chcesz usunąć wydatek "<strong>{{ data.expenseName }}</strong>"?</p>
+
+      <div *ngIf="data.type === 'fixed'" class="future-months-option">
+        <mat-checkbox [(ngModel)]="applyToFutureMonths">
+          Usuń również z przyszłych miesięcy (wydatek nie będzie się już powtarzać)
+        </mat-checkbox>
+        <p class="help-text">
+          Jeśli nie zaznaczysz tej opcji, wydatek zostanie usunięty tylko z bieżącego miesiąca,
+          ale będzie nadal pojawiać się w nowych miesiącach.
+        </p>
+      </div>
+    </div>
+    <div mat-dialog-actions align="end">
+      <button mat-button (click)="onCancel()">Anuluj</button>
+      <button mat-raised-button color="warn" (click)="onConfirm()">Usuń</button>
+    </div>
+  `,
+  styles: [`
+    .future-months-option {
+      background-color: #fff3cd;
+      padding: 16px;
+      border-radius: 4px;
+      margin: 16px 0;
+      border-left: 4px solid #ffc107;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+      margin-bottom: 0;
+    }
+  `]
+})
+export class DeleteConfirmationDialogComponent {
+  applyToFutureMonths: boolean = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<DeleteConfirmationDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {}
+
+  onCancel(): void {
+    this.dialogRef.close();
+  }
+
+  onConfirm(): void {
+    this.dialogRef.close({
+      confirmed: true,
+      applyToFutureMonths: this.applyToFutureMonths
+    });
+  }
 }
 
 @Component({
@@ -101,20 +306,21 @@ export class AccountingExpensesComponent implements OnInit {
 
   years: number[] = [];
 
+  // Updated sample data with netto amounts and recurring flags
   fixedExpenses: FixedExpense[] = [
-    { id: 1, category: 'Biuro', name: 'Czynsz', amount: 2500, month: 'Czerwiec 2023', lastUpdated: '2023-06-01' },
-    { id: 2, category: 'Biuro', name: 'Internet', amount: 150, month: 'Czerwiec 2023', lastUpdated: '2023-06-01' },
-    { id: 3, category: 'Opłaty', name: 'Księgowość', amount: 350, month: 'Czerwiec 2023', lastUpdated: '2023-06-01' },
-    { id: 4, category: 'Biuro', name: 'Prąd', amount: 420, month: 'Czerwiec 2023', lastUpdated: '2023-06-01' },
-    { id: 5, category: 'Biuro', name: 'Ogrzewanie', amount: 300, month: 'Czerwiec 2023', lastUpdated: '2023-06-01' }
+    { id: 1, category: 'Biuro', name: 'Czynsz', amount: 2033, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
+    { id: 2, category: 'Biuro', name: 'Internet', amount: 122, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
+    { id: 3, category: 'Opłaty', name: 'Księgowość', amount: 285, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
+    { id: 4, category: 'Biuro', name: 'Prąd', amount: 341, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true },
+    { id: 5, category: 'Biuro', name: 'Ogrzewanie', amount: 244, month: 'Czerwiec 2023', lastUpdated: '2023-06-01', isRecurring: true }
   ];
 
   variableExpenses: VariableExpense[] = [
-    { id: 6, category: 'Materiały', name: 'Filament PLA czarny', amount: 150, date: '2023-06-05', supplier: 'FilamentWorld' },
-    { id: 7, category: 'Materiały', name: 'Filament PETG transparent', amount: 180, date: '2023-06-05', supplier: 'FilamentWorld' },
-    { id: 8, category: 'Materiały', name: 'Kartony 20x20x10', amount: 120, date: '2023-06-03', supplier: 'PackagingPro' },
-    { id: 9, category: 'Materiały', name: 'Elementy złączne M4', amount: 45, date: '2023-06-02', supplier: 'HardwareShop' },
-    { id: 10, category: 'Biuro', name: 'Artykuły biurowe', amount: 80, date: '2023-06-02', supplier: 'OfficeSupplies' }
+    { id: 6, category: 'Materiały', name: 'Filament PLA czarny', amount: 122, date: '2023-06-05', supplier: 'FilamentWorld' },
+    { id: 7, category: 'Materiały', name: 'Filament PETG transparent', amount: 146, date: '2023-06-05', supplier: 'FilamentWorld' },
+    { id: 8, category: 'Materiały', name: 'Kartony 20x20x10', amount: 98, date: '2023-06-03', supplier: 'PackagingPro' },
+    { id: 9, category: 'Materiały', name: 'Elementy złączne M4', amount: 37, date: '2023-06-02', supplier: 'HardwareShop' },
+    { id: 10, category: 'Biuro', name: 'Artykuły biurowe', amount: 65, date: '2023-06-02', supplier: 'OfficeSupplies' }
   ];
 
   products: Product[] = [
@@ -175,7 +381,9 @@ export class AccountingExpensesComponent implements OnInit {
     }
   ];
 
-  constructor() { }
+  private nextId = 100; // For generating new IDs
+
+  constructor(private dialog: MatDialog) { }
 
   ngOnInit(): void {
     this.initializeYears();
@@ -184,7 +392,6 @@ export class AccountingExpensesComponent implements OnInit {
 
   private initializeYears(): void {
     const currentYear = new Date().getFullYear();
-    // Generate years from 2020 to current year + 2
     for (let year = 2020; year <= currentYear + 2; year++) {
       this.years.push(year);
     }
@@ -197,9 +404,7 @@ export class AccountingExpensesComponent implements OnInit {
 
   onMonthYearChange(): void {
     this.updateCurrentMonth();
-    // Here you would typically reload data for the selected month/year
     console.log(`Loading data for ${this.currentMonth}`);
-    // TODO: Call API to load expenses for selected month/year
   }
 
   setActiveTab(tab: string): void {
@@ -219,7 +424,7 @@ export class AccountingExpensesComponent implements OnInit {
   }
 
   formatCurrency(value: number): string {
-    const adjustedValue = this.showGross ? value : value / 1.23;
+    const adjustedValue = this.showGross ? value * 1.23 : value;
     return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: 'PLN'
@@ -228,12 +433,12 @@ export class AccountingExpensesComponent implements OnInit {
 
   getFixedExpensesTotal(): number {
     const total = this.fixedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    return this.showGross ? total : total / 1.23;
+    return this.showGross ? total * 1.23 : total;
   }
 
   getVariableExpensesTotal(): number {
     const total = this.variableExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    return this.showGross ? total : total / 1.23;
+    return this.showGross ? total * 1.23 : total;
   }
 
   getTotalExpenses(): number {
@@ -247,20 +452,105 @@ export class AccountingExpensesComponent implements OnInit {
   }
 
   addExpense(): void {
-    // Implementacja dodawania wydatku
-    console.log('Dodaj wydatek');
+    const expenseType = this.activeSubTab === 'fixed' ? 'fixed' : 'variable';
+
+    const dialogRef = this.dialog.open(ExpenseDialogComponent, {
+      width: '500px',
+      data: {
+        type: expenseType,
+        isEdit: false
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const newExpense = {
+          ...result,
+          id: this.nextId++,
+          month: this.currentMonth,
+          lastUpdated: new Date().toISOString().split('T')[0]
+        };
+
+        if (expenseType === 'fixed') {
+          this.fixedExpenses.push(newExpense);
+        } else {
+          this.variableExpenses.push(newExpense);
+        }
+
+        console.log('Dodano nowy wydatek:', newExpense);
+      }
+    });
   }
 
   editExpense(id: number): void {
-    console.log('Edytuj wydatek:', id);
+    const isFixed = this.activeSubTab === 'fixed';
+    const expenses = isFixed ? this.fixedExpenses : this.variableExpenses;
+    const expense = expenses.find(e => e.id === id);
+
+    if (!expense) return;
+
+    const dialogRef = this.dialog.open(ExpenseDialogComponent, {
+      width: '500px',
+      data: {
+        type: isFixed ? 'fixed' : 'variable',
+        isEdit: true,
+        expense: { ...expense }
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const index = expenses.findIndex(e => e.id === id);
+        if (index !== -1) {
+          expenses[index] = {
+            ...expenses[index],
+            ...result,
+            lastUpdated: new Date().toISOString().split('T')[0]
+          };
+          console.log('Zaktualizowano wydatek:', expenses[index]);
+        }
+      }
+    });
   }
 
   deleteExpense(id: number): void {
-    console.log('Usuń wydatek:', id);
+    const isFixed = this.activeSubTab === 'fixed';
+    const expenses = isFixed ? this.fixedExpenses : this.variableExpenses;
+    const expense = expenses.find(e => e.id === id);
+
+    if (!expense) return;
+
+    const dialogRef = this.dialog.open(DeleteConfirmationDialogComponent, {
+      width: '450px',
+      data: {
+        type: isFixed ? 'fixed' : 'variable',
+        expenseName: expense.name
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.confirmed) {
+        const index = expenses.findIndex(e => e.id === id);
+        if (index !== -1) {
+          if (isFixed && result.applyToFutureMonths) {
+            // Mark as non-recurring to exclude from future months
+            // @ts-ignore
+            expenses[index].isRecurring = false;
+            console.log('Wydatek oznaczony jako niepowtarzający się:', expense.name);
+          }
+
+          // Remove from current month
+          expenses.splice(index, 1);
+          console.log('Usunięto wydatek:', expense.name,
+            result.applyToFutureMonths ? '(również z przyszłych miesięcy)' : '(tylko z bieżącego miesiąca)');
+        }
+      }
+    });
   }
 
   onSearchChange(event: any): void {
     this.searchQuery = event.target.value;
+    // TODO: Implement search filtering
   }
 
   // Navigation methods for quick month/year changes

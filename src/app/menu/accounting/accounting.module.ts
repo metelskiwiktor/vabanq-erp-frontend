@@ -18,14 +18,20 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AccountingComponent } from './accounting.component';
 import { AccountingDashboardComponent } from './accounting-dashboard/accounting-dashboard.component';
 import { AccountingInvoicesComponent } from './accounting-invoices/accounting-invoices.component';
-import { AccountingExpensesComponent } from './accounting-expenses/accounting-expenses.component';
+import {
+  AccountingExpensesComponent,
+  DeleteConfirmationDialogComponent,
+  ExpenseDialogComponent
+} from './accounting-expenses/accounting-expenses.component';
 
 @NgModule({
   declarations: [
     AccountingComponent,
     AccountingDashboardComponent,
     AccountingInvoicesComponent,
-    AccountingExpensesComponent
+    AccountingExpensesComponent,
+    ExpenseDialogComponent,
+    DeleteConfirmationDialogComponent
   ],
   imports: [
     CommonModule,
