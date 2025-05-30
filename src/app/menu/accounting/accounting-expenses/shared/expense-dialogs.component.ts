@@ -1,5 +1,5 @@
 // src/app/menu/accounting/accounting-expenses/shared/expense-dialogs.component.ts
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 // Dialog component for adding/editing expenses
@@ -46,6 +46,12 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
           <mat-label>Dostawca</mat-label>
           <input matInput [(ngModel)]="expense.supplier" placeholder="Nazwa dostawcy">
         </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Opis (opcjonalny)</mat-label>
+          <textarea matInput [(ngModel)]="expense.description"
+                    placeholder="Dodatkowe informacje o wydatku"></textarea>
+        </mat-form-field>
       </div>
 
       <!-- Dla wydatków stałych -->
@@ -89,7 +95,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
     }
   `]
 })
-export class ExpenseDialogComponent {
+export class ExpenseDialogComponent implements OnInit {
   expense: any = {
     category: '',
     name: '',
@@ -103,16 +109,31 @@ export class ExpenseDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<ExpenseDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
-  ) {
-    if (data.expense) {
-      this.expense = { ...data.expense };
-      if (data.type === 'variable' && this.expense.date) {
-        // Ensure date is in correct format for input[type="date"]
-        this.expense.date = new Date(this.expense.date).toISOString().split('T')[0];
+  ) {}
+
+  ngOnInit(): void {
+    if (this.data.expense) {
+      this.expense = { ...this.data.expense };
+
+      // Handle different date formats for variable expenses
+      if (this.data.type === 'variable') {
+        if (this.expense.expenseDate) {
+          // Backend returns date as string in ISO format
+          this.expense.date = new Date(this.expense.expenseDate).toISOString().split('T')[0];
+        } else if (this.expense.date) {
+          // Ensure date is in correct format for input[type="date"]
+          this.expense.date = new Date(this.expense.date).toISOString().split('T')[0];
+        }
       }
+
       // Convert netAmount to string for form binding if it's from backend
       if (typeof this.expense.netAmount === 'number') {
         this.expense.netAmount = this.expense.netAmount.toString();
+      }
+    } else {
+      // Set default date for new variable expenses
+      if (this.data.type === 'variable') {
+        this.expense.date = new Date().toISOString().split('T')[0];
       }
     }
   }

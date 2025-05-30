@@ -1,65 +1,154 @@
 <!-- src/app/menu/accounting/accounting-expenses/variable-expenses/variable-expenses.component.html -->
 <div class="table-container">
-  <div class="coming-soon">
-    <mat-icon>construction</mat-icon>
-    <h3>Koszty zmienne - w przygotowaniu</h3>
-    <p>Funkcjonalność kosztów zmiennych będzie dostępna wkrótce.</p>
+  <!-- Loading indicator -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-icon class="loading-spinner">refresh</mat-icon>
+    <p>Ładowanie kosztów zmiennych...</p>
   </div>
 
-  <!-- Temporary mock table -->
-  <mat-table [dataSource]="variableExpenses" class="expenses-table mock-table">
-    <ng-container matColumnDef="category">
-      <mat-header-cell *matHeaderCellDef>Kategoria</mat-header-cell>
-      <mat-cell *matCellDef="let expense">{{ expense.category }}</mat-cell>
-    </ng-container>
+  <!-- No data message -->
+  <div *ngIf="!isLoading && filteredExpenses.length === 0 && !searchQuery" class="empty-state">
+    <mat-icon>receipt_long</mat-icon>
+    <h3>Brak kosztów zmiennych</h3>
+    <p>Nie znaleziono kosztów zmiennych dla {{ currentMonth }}.</p>
+    <button mat-raised-button color="primary" class="add-button" (click)="onAddExpense()">
+      <mat-icon>add</mat-icon>
+      Dodaj pierwszy koszt
+    </button>
+  </div>
 
-    <ng-container matColumnDef="name">
-      <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
-      <mat-cell *matCellDef="let expense" class="expense-name">{{ expense.name }}</mat-cell>
-    </ng-container>
+  <!-- No search results -->
+  <div *ngIf="!isLoading && filteredExpenses.length === 0 && searchQuery" class="empty-state">
+    <mat-icon>search_off</mat-icon>
+    <h3>Brak wyników wyszukiwania</h3>
+    <p>Nie znaleziono kosztów zmiennych pasujących do frazy: "{{ searchQuery }}"</p>
+  </div>
 
-    <ng-container matColumnDef="amount">
-      <mat-header-cell *matHeaderCellDef>Kwota {{ showGross ? 'brutto' : 'netto' }}</mat-header-cell>
-      <mat-cell *matCellDef="let expense">{{ formatCurrency(expense.amount) }}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="date">
-      <mat-header-cell *matHeaderCellDef>Data</mat-header-cell>
-      <mat-cell *matCellDef="let expense">{{ expense.date }}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="supplier">
-      <mat-header-cell *matHeaderCellDef>Dostawca</mat-header-cell>
-      <mat-cell *matCellDef="let expense">{{ expense.supplier }}</mat-cell>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
-      <mat-cell *matCellDef="let expense">
-        <button mat-icon-button
-                color="primary"
-                disabled
-                matTooltip="Niedostępne">
-          <mat-icon>edit</mat-icon>
+  <!-- Data table -->
+  <div *ngIf="!isLoading && filteredExpenses.length > 0">
+    <!-- Add expense button -->
+    <div class="filter-controls">
+      <div class="search-container">
+        <!-- Search is handled by parent component -->
+      </div>
+      <div class="filter-options">
+        <button mat-raised-button color="primary" class="add-button" (click)="onAddExpense()">
+          <mat-icon>add</mat-icon>
+          Dodaj koszt zmienny
         </button>
-        <button mat-icon-button
-                color="warn"
-                disabled
-                matTooltip="Niedostępne">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </mat-cell>
-    </ng-container>
+      </div>
+    </div>
 
-    <mat-header-row *matHeaderRowDef="['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-header-row>
-    <mat-row *matRowDef="let row; columns: ['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-row>
-  </mat-table>
+    <!-- Expenses table -->
+    <mat-table [dataSource]="filteredExpenses" class="expenses-table">
+      <ng-container matColumnDef="category">
+        <mat-header-cell *matHeaderCellDef>Kategoria</mat-header-cell>
+        <mat-cell *matCellDef="let expense">
+          <span class="category-badge" [attr.data-category]="expense.category">
+            {{ expense.category }}
+          </span>
+        </mat-cell>
+      </ng-container>
 
-  <!-- Suma poza tabelą -->
-  <div class="table-summary">
+      <ng-container matColumnDef="name">
+        <mat-header-cell *matHeaderCellDef>Nazwa</mat-header-cell>
+        <mat-cell *matCellDef="let expense" class="expense-name">
+          <div class="expense-info">
+            <span class="name">{{ expense.name }}</span>
+            <small class="description" *ngIf="expense.description">{{ expense.description }}</small>
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <mat-header-cell *matHeaderCellDef>
+          Kwota {{ showGross ? 'brutto' : 'netto' }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let expense" class="total-cost">
+          {{ formatCurrency(showGross ? expense.grossAmount : expense.netAmount) }}
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="date">
+        <mat-header-cell *matHeaderCellDef>Data</mat-header-cell>
+        <mat-cell *matCellDef="let expense">
+          {{ formatDate(expense.expenseDate) }}
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="supplier">
+        <mat-header-cell *matHeaderCellDef>Dostawca</mat-header-cell>
+        <mat-cell *matCellDef="let expense">
+          <div class="supplier-info">
+            <mat-icon class="supplier-icon">business</mat-icon>
+            {{ expense.supplier }}
+          </div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
+        <mat-cell *matCellDef="let expense">
+          <button mat-icon-button
+                  color="primary"
+                  (click)="onEditExpense(expense)"
+                  matTooltip="Edytuj koszt">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button
+                  color="warn"
+                  (click)="onDeleteExpense(expense)"
+                  matTooltip="Usuń koszt">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: ['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-row>
+    </mat-table>
+  </div>
+
+  <!-- Summary section -->
+  <div *ngIf="!isLoading && filteredExpenses.length > 0" class="table-summary">
     <div class="summary-row">
-      <span class="summary-label">Suma kosztów zmiennych (dane testowe):</span>
-      <span class="summary-value">{{ formatCurrency(getVariableExpensesTotal()) }}</span>
+      <span class="summary-label">
+        Suma kosztów zmiennych ({{ filteredExpenses.length }} pozycji):
+      </span>
+      <span class="summary-value">
+        {{ formatCurrency(getVariableExpensesTotal()) }}
+      </span>
+    </div>
+
+    <!-- Category breakdown -->
+    <div *ngIf="expenseSummary && expenseSummary.categorySummaries.length > 0" class="category-breakdown">
+      <h4>Podział według kategorii</h4>
+      <div class="category-grid">
+        <div *ngFor="let category of expenseSummary.categorySummaries" class="category-item">
+          <div class="category-name">{{ category.category }}</div>
+          <div class="category-amount">
+            {{ formatCurrency(showGross ? category.grossAmount : category.netAmount) }}
+          </div>
+          <div class="category-count">{{ category.count }} pozycji</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplier breakdown -->
+    <div *ngIf="expenseSummary && expenseSummary.supplierSummaries.length > 0" class="category-breakdown">
+      <h4>Podział według dostawców</h4>
+      <div class="category-grid">
+        <div *ngFor="let supplier of expenseSummary.supplierSummaries" class="category-item">
+          <div class="category-name">
+            <mat-icon class="supplier-icon">business</mat-icon>
+            {{ supplier.supplier }}
+          </div>
+          <div class="category-amount">
+            {{ formatCurrency(showGross ? supplier.grossAmount : supplier.netAmount) }}
+          </div>
+          <div class="category-count">{{ supplier.count }} pozycji</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
