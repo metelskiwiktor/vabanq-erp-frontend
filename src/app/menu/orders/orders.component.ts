@@ -1,4 +1,4 @@
-// orders.component.ts - Updated to use backend API and Allegro Invoice integration
+// orders.component.ts - Updated to remove PDF download and Allegro status check requests
 import { Component, inject, OnInit, TemplateRef } from '@angular/core';
 import {
   trigger,
@@ -86,52 +86,17 @@ export class OrdersComponent implements OnInit {
               invoiceStatus: inv.status.toLowerCase(),
               invoiceUrl: inv.invoiceUrl,
               createdAt: inv.createdAt,
-              // Inicjalizuj nowe pola
-              isAttachedToAllegro: false,
-              allegroInvoiceId: undefined,
+              // Pobierz status Allegro z modelu faktury
+              isAttachedToAllegro: inv.attachedToAllegro,
+              allegroInvoiceId: undefined, // Można dodać do backendu jeśli potrzebne
               isAttachingToAllegro: false,
               allegroAttachmentError: undefined
             }));
           }
         });
-
-        // Po załadowaniu faktur, sprawdź które są już dołączone do Allegro
-        this.checkAllegroInvoiceAttachments();
       },
       error: (error) => {
         console.error('Failed to fetch invoices:', error);
-      }
-    });
-  }
-
-  /**
-   * Sprawdza które faktury są już dołączone do Allegro
-   */
-  checkAllegroInvoiceAttachments(): void {
-    const token = localStorage.getItem('allegro-token') || '';
-
-    this.orders.forEach(order => {
-      if (order.invoices && order.invoices.length > 0) {
-        this.productService.getAllegroInvoicesForOrder(order.orderId, token).subscribe({
-          next: (allegroInvoices: any) => {
-            // Oznacz faktury jako dołączone do Allegro jeśli zostały znalezione
-            if (allegroInvoices && Array.isArray(allegroInvoices) && allegroInvoices.length > 0) {
-              order.invoices?.forEach(invoice => {
-                const allegroInvoice = allegroInvoices.find((ai: any) =>
-                  ai.invoiceNumber === invoice.invoiceNumber ||
-                  ai.fileName?.includes(invoice.invoiceNumber)
-                );
-                if (allegroInvoice) {
-                  invoice.isAttachedToAllegro = true;
-                  invoice.allegroInvoiceId = allegroInvoice.id;
-                }
-              });
-            }
-          },
-          error: (error) => {
-            console.log(`No Allegro invoices found for order ${order.orderId}:`, error);
-          }
-        });
       }
     });
   }
@@ -174,7 +139,6 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  // Invoice generation methods - Updated to use backend API
   generateInvoice(order: Order, template: TemplateRef<any>): void {
     event?.stopPropagation();
 
@@ -202,13 +166,8 @@ export class OrdersComponent implements OnInit {
         order.invoices.push(invoiceInfo);
         order.isInvoiceGenerating = false;
 
-        this.toastSuccessMessage = `Faktura została zlecona do generowania. Status: ${this.getInvoiceStatusTranslation(response.status.toLowerCase())}`;
+        this.toastSuccessMessage = `Faktura została wygenerowana. Status: ${this.getInvoiceStatusTranslation(response.status.toLowerCase())}`;
         this.showSuccess(template);
-
-        // Odśwież status faktury po chwili
-        setTimeout(() => {
-          this.refreshInvoiceStatus(order, invoiceInfo.invoiceId);
-        }, 5000);
       },
       error: (error) => {
         console.error('Failed to generate invoice:', error);
@@ -218,55 +177,11 @@ export class OrdersComponent implements OnInit {
           template: template,
           classname: 'bg-danger text-light',
           delay: 2000,
-          text: 'Nie udało się zlecić generowania faktury. Spróbuj ponownie.',
+          text: 'Nie udało się wygenerować faktury. Spróbuj ponownie.',
         });
       }
     });
   }
-
-  refreshInvoiceStatus(order: Order, invoiceId: string): void {
-    this.infaktService.getInvoiceForOrder(order.orderId).subscribe({
-      next: (invoice: InvoiceResponse | null) => {
-        if (invoice && order.invoices) {
-          const invoiceIndex = order.invoices.findIndex(inv => inv.invoiceId === invoiceId);
-          if (invoiceIndex >= 0) {
-            const existingInvoice = order.invoices[invoiceIndex];
-            order.invoices[invoiceIndex] = {
-              ...existingInvoice, // Zachowaj istniejące pola Allegro
-              invoiceId: invoice.id,
-              invoiceNumber: invoice.invoiceNumber || 'Processing...',
-              invoiceStatus: invoice.status.toLowerCase(),
-              invoiceUrl: invoice.invoiceUrl || '',
-              createdAt: invoice.createdAt
-            };
-          }
-        }
-      },
-      error: (error) => {
-        console.error('Failed to refresh invoice status:', error);
-      }
-    });
-  }
-
-  downloadInvoicePdf(invoiceId: string, invoiceNumber: string): void {
-    event?.stopPropagation();
-
-    this.infaktService.getInvoicePdfUrl(invoiceId).subscribe({
-      next: (url: string) => {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Faktura_${invoiceNumber.replace('/', '_')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      },
-      error: (error) => {
-        console.error('Failed to get PDF URL:', error);
-      }
-    });
-  }
-
-  // ====== NOWE METODY DLA ALLEGRO INVOICE ======
 
   /**
    * Dołącza fakturę do zamówienia w Allegro jako dowód zakupu
@@ -317,59 +232,6 @@ export class OrdersComponent implements OnInit {
           classname: 'bg-danger text-light',
           delay: 4000,
           text: `Nie udało się dołączyć faktury do Allegro: ${invoice.allegroAttachmentError}`,
-        });
-      }
-    });
-  }
-
-  /**
-   * Automatycznie dołącza fakturę do zamówienia w Allegro
-   */
-  autoAttachInvoiceToAllegro(order: Order, template: TemplateRef<any>): void {
-    event?.stopPropagation();
-
-    const token = localStorage.getItem('allegro-token') || '';
-    if (!token) {
-      this.toastService.show({
-        template: template,
-        classname: 'bg-danger text-light',
-        delay: 3000,
-        text: 'Brak tokenu Allegro. Sprawdź połączenie z Allegro.',
-      });
-      return;
-    }
-
-    // Oznacz że próbujemy dołączyć
-    if (order.invoices && order.invoices.length > 0) {
-      order.invoices[0].isAttachingToAllegro = true;
-      order.invoices[0].allegroAttachmentError = undefined;
-    }
-
-    this.productService.autoAttachInvoiceToOrder(order.orderId, token).subscribe({
-      next: (response: AttachInvoiceResponse) => {
-        if (order.invoices && order.invoices.length > 0) {
-          const invoice = order.invoices[0];
-          invoice.isAttachingToAllegro = false;
-          invoice.isAttachedToAllegro = true;
-          invoice.allegroInvoiceId = response.allegroInvoiceId;
-        }
-
-        this.toastSuccessMessage = `Faktura została pomyślnie dołączona do zamówienia w Allegro jako dowód zakupu.`;
-        this.showSuccess(template);
-      },
-      error: (error) => {
-        console.error('Failed to auto-attach invoice to Allegro:', error);
-        if (order.invoices && order.invoices.length > 0) {
-          const invoice = order.invoices[0];
-          invoice.isAttachingToAllegro = false;
-          invoice.allegroAttachmentError = error.error?.message || 'Nieznany błąd';
-        }
-
-        this.toastService.show({
-          template: template,
-          classname: 'bg-danger text-light',
-          delay: 4000,
-          text: `Nie udało się dołączyć faktury do Allegro: ${error.error?.message || 'Nieznany błąd'}`,
         });
       }
     });
@@ -524,10 +386,5 @@ export class OrdersComponent implements OnInit {
       (invoice.invoiceStatus === 'issued' ||
         invoice.invoiceStatus === 'sent' ||
         invoice.invoiceStatus === 'paid');
-  }
-
-  // Sprawdza czy zamówienie ma faktury gotowe do dołączenia do Allegro
-  hasInvoicesReadyForAllegro(order: Order): boolean {
-    return !!(order.invoices && order.invoices.some(inv => this.canAttachToAllegro(inv)));
   }
 }

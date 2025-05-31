@@ -191,8 +191,6 @@ export class ProductService {
     return this.http.get<any>(this.apiAllegroUrl + "/synchronization/all-offers-products", {headers: new HttpHeaders().set('allegro-api', token)});
   }
 
-  // product.service.ts (dodaj dwie metody)
-
   synchronizeOffers(token: string): Observable<{ created: number; updated: number }> {
     const headers = new HttpHeaders().set('allegro-api', token);
     return this.http.get<{ created: number; updated: number }>(
@@ -232,7 +230,7 @@ export class ProductService {
     );
   }
 
-  // ====== NOWE METODY DLA ALLEGRO INVOICE ======
+  // ====== METODY DLA ALLEGRO INVOICE ======
 
   /**
    * Dołącza istniejącą fakturę do zamówienia w Allegro
@@ -255,17 +253,6 @@ export class ProductService {
 
     return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/auto-attach/${orderId}`, {}, { headers }).pipe(
       tap((response) => console.log('Invoice auto-attached to Allegro order:', response))
-    );
-  }
-
-  /**
-   * Pobiera listę faktur dołączonych do zamówienia w Allegro
-   */
-  getAllegroInvoicesForOrder(orderId: string, token: string): Observable<any> {
-    const headers = new HttpHeaders().set('allegro-api', token);
-
-    return this.http.get<any>(`${this.apiAllegroInvoiceUrl}/order/${orderId}`, { headers }).pipe(
-      tap((response) => console.log('Allegro invoices for order:', response))
     );
   }
 }

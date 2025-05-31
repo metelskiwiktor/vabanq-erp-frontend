@@ -16,6 +16,7 @@ export interface InvoiceResponse {
   buyerEmail: string;
   buyerFirstName: string;
   buyerLastName: string;
+  attachedToAllegro: boolean;
 }
 
 @Injectable({
@@ -70,19 +71,6 @@ export class InfaktService {
         catchError(error => {
           console.error('Error fetching invoices:', error);
           return of([]);
-        })
-      );
-  }
-
-  /**
-   * Get PDF invoice download URL
-   */
-  getInvoicePdfUrl(invoiceId: string): Observable<string> {
-    return this.http.get<string>(`${this.apiUrl}/${invoiceId}/pdf-url`)
-      .pipe(
-        catchError(error => {
-          console.error('Error getting invoice PDF:', error);
-          throw error;
         })
       );
   }
