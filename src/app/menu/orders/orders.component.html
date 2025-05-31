@@ -109,6 +109,7 @@
         <th>Status</th>
         <th>Suma</th>
         <th>Faktura</th>
+        <th>Wysyłka</th>
       </tr>
       </thead>
       <tbody>
@@ -185,7 +186,7 @@
 
         <!-- Szczegóły zamówienia -->
         <tr class="details-row" [class.expanded]="element.isExpanded">
-          <td colspan="6" class="details-cell">
+          <td colspan="7" class="details-cell">
             <div class="details-container">
               <div class="details-grid">
                 <!-- Lewa kolumna: Informacje o zamówieniu i produktach -->
@@ -319,60 +320,63 @@
                     </div>
                   </div>
                 </div>
-                <div class="details-section">
-                  <div class="details-section-header">
-                    Dane zamówienia
-                  </div>
-                  <div class="details-section-content">
-                    <h1>Data sprzedaży: {{ element.saleDate | date:'long' }}</h1>
-                    <p><strong>Rynek:</strong> {{ element.market }}</p>
-                    <p><strong>Status:</strong> {{ getStatusTranslation(element.status) }}</p>
 
-                    <!-- Sekcja faktury w szczegółach -->
-                    <div *ngIf="element.invoices && element.invoices.length > 0" class="invoice-details">
-                      <h3>Faktury:</h3>
-                      <div *ngFor="let invoice of element.invoices" class="invoice-detail-item">
-                        <div class="invoice-detail-header">
-                          <span class="invoice-detail-number">{{ invoice.invoiceNumber }}</span>
-                          <span class="invoice-detail-date">{{ invoice.createdAt | date:'short' }}</span>
-                        </div>
-                        <div class="invoice-detail-status">
-                          Status: <span [ngClass]="'invoice-status-' + invoice.invoiceStatus">
-                              {{ getInvoiceStatusTranslation(invoice.invoiceStatus) }}
-                            </span>
-                        </div>
-                        <div class="invoice-detail-actions">
-                          <button class="btn btn-sm" (click)="downloadInvoicePdf(invoice.invoiceId, invoice.invoiceNumber)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                              <polyline points="7 10 12 15 17 10"></polyline>
-                              <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            Pobierz PDF
-                          </button>
-                          <a href="{{ invoice.invoiceUrl }}" target="_blank" class="btn btn-sm">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                              <polyline points="15 3 21 3 21 9"></polyline>
-                              <line x1="10" y1="14" x2="21" y2="3"></line>
-                            </svg>
-                            Otwórz w Infakt
-                          </a>
+                <!-- Środkowa kolumna: Dane zamówienia -->
+                <div class="details-column">
+                  <div class="details-section">
+                    <div class="details-section-header">
+                      Dane zamówienia
+                    </div>
+                    <div class="details-section-content">
+                      <h1>Data sprzedaży: {{ element.saleDate | date:'long' }}</h1>
+                      <p><strong>Rynek:</strong> {{ element.market }}</p>
+                      <p><strong>Status:</strong> {{ getStatusTranslation(element.status) }}</p>
+
+                      <!-- Sekcja faktury w szczegółach -->
+                      <div *ngIf="element.invoices && element.invoices.length > 0" class="invoice-details">
+                        <h3>Faktury:</h3>
+                        <div *ngFor="let invoice of element.invoices" class="invoice-detail-item">
+                          <div class="invoice-detail-header">
+                            <span class="invoice-detail-number">{{ invoice.invoiceNumber }}</span>
+                            <span class="invoice-detail-date">{{ invoice.createdAt | date:'short' }}</span>
+                          </div>
+                          <div class="invoice-detail-status">
+                            Status: <span [ngClass]="'invoice-status-' + invoice.invoiceStatus">
+                                {{ getInvoiceStatusTranslation(invoice.invoiceStatus) }}
+                              </span>
+                          </div>
+                          <div class="invoice-detail-actions">
+                            <button class="btn btn-sm" (click)="downloadInvoicePdf(invoice.invoiceId, invoice.invoiceNumber)">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                              </svg>
+                              Pobierz PDF
+                            </button>
+                            <a href="{{ invoice.invoiceUrl }}" target="_blank" class="btn btn-sm">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                              </svg>
+                              Otwórz w Infakt
+                            </a>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <!-- Przycisk do generowania faktury w szczegółach, jeśli jeszcze nie ma żadnej -->
-                    <div *ngIf="(!element.invoices || element.invoices.length === 0) && !element.isInvoiceGenerating" class="invoice-generate-detail">
-                      <button class="btn btn-primary" (click)="generateInvoice(element, successTpl)">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                          <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                        </svg>
-                        Wystaw fakturę za zakup
-                      </button>
-                    </div>
+                      <!-- Przycisk do generowania faktury w szczegółach, jeśli jeszcze nie ma żadnej -->
+                      <div *ngIf="(!element.invoices || element.invoices.length === 0) && !element.isInvoiceGenerating" class="invoice-generate-detail">
+                        <button class="btn btn-primary" (click)="generateInvoice(element, successTpl)">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                          </svg>
+                          Wystaw fakturę za zakup
+                        </button>
+                      </div>
 
                     <!-- Loader podczas generowania faktury w szczegółach -->
                     <div *ngIf="element.isInvoiceGenerating" class="invoice-loader-detail">
@@ -384,38 +388,53 @@
                   </div>
                 </div>
 
-                <!-- Produkty -->
-                <div class="details-section">
-                  <div class="details-section-header">
-                    Zamówione produkty
-                  </div>
-                  <div class="details-section-content">
-                    <table class="details-table">
-                      <thead>
-                      <tr>
-                        <th>Ilość</th>
-                        <th>Produkt</th>
-                        <th>Cena</th>
-                        <th>Łącznie</th>
-                      </tr>
-                      </thead>
-                      <tbody>
-                      <tr *ngFor="let product of element.products">
-                        <td>{{ product.quantity }}</td>
-                        <td>
-                          <a [href]="'https://allegro.pl.allegrosandbox.pl/oferta/' + product.productId" target="_blank" rel="noopener noreferrer" class="product-link">
-                            {{ product.name }}
-                          </a>
-                        </td>
-                        <td>{{ product.unitPrice | currency:'PLN ' }}</td>
-                        <td>{{ product.totalPrice | currency:'PLN ' }}</td>
-                      </tr>
-                      </tbody>
-                    </table>
-                    <h3><strong>Suma:</strong> {{ element.totalAmount | currency:'PLN ' }}</h3>
+                  <!-- Produkty -->
+                  <div class="details-section">
+                    <div class="details-section-header">
+                      Zamówione produkty
+                    </div>
+                    <div class="details-section-content">
+                      <table class="details-table">
+                        <thead>
+                        <tr>
+                          <th>Ilość</th>
+                          <th>Produkt</th>
+                          <th>Cena</th>
+                          <th>Łącznie</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr *ngFor="let product of element.products">
+                          <td>{{ product.quantity }}</td>
+                          <td>
+                            <a [href]="'https://allegro.pl.allegrosandbox.pl/oferta/' + product.productId" target="_blank" rel="noopener noreferrer" class="product-link">
+                              {{ product.name }}
+                            </a>
+                          </td>
+                          <td>{{ product.unitPrice | currency:'PLN ' }}</td>
+                          <td>{{ product.totalPrice | currency:'PLN ' }}</td>
+                        </tr>
+                        </tbody>
+                      </table>
+                      <h3><strong>Suma:</strong> {{ element.totalAmount | currency:'PLN ' }}</h3>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Prawa kolumna: Dane klienta i dostawy -->
-              <div class="details-column">
+              <div class="details-footer">
+                <button class="collapse-btn" (click)="element.isExpanded = false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="18 15 12 9 6 15"></polyline>
+                  </svg>
+                  Zwiń szczegóły
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-container>
+      </tbody>
+    </table>
+  </div>
+</div>

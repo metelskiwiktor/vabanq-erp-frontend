@@ -38,15 +38,6 @@ export class OrdersComponent implements OnInit {
   filterDateTo: Date | null = null;
   filterHasInvoice: boolean = false;
 
-  columnsToDisplay: string[] = [
-    'orderId',
-    'saleDate',
-    'market',
-    'status',
-    'totalAmount',
-    'invoice'
-  ];
-
   allExpanded: boolean = false;
 
   constructor(private productService: ProductService) {}
