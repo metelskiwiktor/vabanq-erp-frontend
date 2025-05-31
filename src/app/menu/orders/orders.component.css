@@ -10,6 +10,8 @@
   --pink-light: #fce4ec;
   --purple-color: #6a1b9a;
   --purple-light: #f3e5f5;
+  --allegro-color: #ff5a00;
+  --allegro-light: #fff4f0;
   --text-primary: #333333;
   --text-secondary: #666666;
   --text-light: #999999;
@@ -464,8 +466,8 @@ h1 {
 
 .orders-table td {
   padding: 16px;
-  border-bottom: 1px solid var(--border-color);
   font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
 }
 
@@ -588,6 +590,18 @@ h1 {
   animation: dash 1.5s ease-in-out infinite;
 }
 
+.spinner-small {
+  animation: rotate 2s linear infinite;
+  width: 16px;
+  height: 16px;
+}
+
+.spinner-small .path {
+  stroke: var(--allegro-color);
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
 @keyframes rotate {
   100% {
     transform: rotate(360deg);
@@ -650,6 +664,7 @@ h1 {
   display: flex;
   gap: 8px;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .invoice-generate-detail {
@@ -665,4 +680,236 @@ h1 {
   background-color: #f9f9f9;
   border-radius: 4px;
   margin-top: 10px;
+}
+
+/* ====== NOWE STYLE DLA ALLEGRO INVOICE ====== */
+
+/* Kolumna Allegro w tabeli */
+.allegro-no-invoice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.allegro-status-none {
+  color: var(--text-light);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.allegro-invoice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.allegro-invoice-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* Status badges dla Allegro */
+.allegro-status-attached {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--green-color);
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.allegro-status-attached-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green-color);
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.allegro-status-not-attached {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+.allegro-status-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--orange-color);
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.allegro-status-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #d32f2f;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+/* Przyciski Allegro */
+.allegro-attach-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.allegro-attach-actions .btn {
+  background-color: var(--allegro-color);
+  color: white;
+  border: none;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.allegro-attach-actions .btn:hover {
+  background-color: #e64a00;
+}
+
+.allegro-attaching {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--allegro-color);
+  font-size: 11px;
+}
+
+.allegro-attaching-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--allegro-color);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.allegro-cant-attach {
+  display: flex;
+  align-items: center;
+}
+
+.allegro-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retry-btn {
+  background-color: #d32f2f !important;
+  color: white !important;
+  padding: 2px 6px !important;
+  font-size: 10px !important;
+  border-radius: 2px !important;
+}
+
+.retry-btn:hover {
+  background-color: #b71c1c !important;
+}
+
+/* Status Allegro w szczegółach faktury */
+.invoice-allegro-status {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+/* Responsywność dla kolumny Allegro */
+@media (max-width: 1024px) {
+  .orders-table th:nth-child(7),
+  .orders-table td:nth-child(7) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .orders-table th:nth-child(6),
+  .orders-table td:nth-child(6),
+  .orders-table th:nth-child(7),
+  .orders-table td:nth-child(7) {
+    display: none;
+  }
+
+  .allegro-invoice-actions {
+    margin-top: 8px;
+  }
+
+  .allegro-attach-actions .btn {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+}
+
+/* Dodatkowe style dla lepszej czytelności */
+.allegro-invoice-item .btn-sm {
+  font-size: 10px;
+  padding: 3px 6px;
+  line-height: 1.2;
+}
+
+.invoice-detail-actions .btn {
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+/* Hover effects dla statusów Allegro */
+.allegro-status-error:hover {
+  cursor: help;
+}
+
+.allegro-status-pending:hover {
+  cursor: help;
+}
+
+/* Animacje dla statusów */
+.allegro-status-attached {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.allegro-status-error {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* Poprawki dla spójności wizualnej */
+.invoice-buttons .btn,
+.allegro-attach-actions .btn,
+.invoice-detail-actions .btn {
+  transition: all 0.2s ease;
+}
+
+.invoice-buttons .btn:hover,
+.allegro-attach-actions .btn:hover,
+.invoice-detail-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }

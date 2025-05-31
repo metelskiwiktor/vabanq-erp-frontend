@@ -37,6 +37,11 @@ export interface InvoiceInfo {
   invoiceStatus: string;
   invoiceUrl: string;
   createdAt: string;
+  // Nowe pola dla integracji z Allegro
+  isAttachedToAllegro?: boolean;
+  allegroInvoiceId?: string;
+  isAttachingToAllegro?: boolean;
+  allegroAttachmentError?: string;
 }
 
 export interface Order {

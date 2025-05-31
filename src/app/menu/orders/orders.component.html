@@ -36,6 +36,11 @@
       <div class="stat-title">Zamówienia z fakturami</div>
       <div class="stat-value">{{ getOrdersWithInvoicesCount() }}</div>
     </div>
+    <!-- Nowa karta dla faktur w Allegro -->
+    <div class="stat-card green">
+      <div class="stat-title">Faktury w Allegro</div>
+      <div class="stat-value">{{ getOrdersWithAllegroInvoicesCount() }}</div>
+    </div>
   </div>
 
   <!-- Pasek akcji -->
@@ -109,6 +114,7 @@
         <th>Status</th>
         <th>Suma</th>
         <th>Faktura</th>
+        <th>Allegro</th>
         <th>Wysyłka</th>
       </tr>
       </thead>
@@ -182,11 +188,91 @@
               </div>
             </div>
           </td>
+
+          <!-- Nowa kolumna Allegro -->
+          <td (click)="$event.stopPropagation()">
+            <!-- Jeśli nie ma faktury -->
+            <div *ngIf="!element.invoices || element.invoices.length === 0" class="allegro-no-invoice">
+              <span class="allegro-status-none">Brak faktury</span>
+            </div>
+
+            <!-- Jeśli ma faktury -->
+            <div *ngIf="element.invoices && element.invoices.length > 0" class="allegro-invoice-actions">
+              <div *ngFor="let invoice of element.invoices" class="allegro-invoice-item">
+
+                <!-- Jeśli faktura jest już dołączona do Allegro -->
+                <div *ngIf="invoice.isAttachedToAllegro" class="allegro-attached">
+                  <span class="allegro-status-attached">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Dołączona
+                  </span>
+                </div>
+
+                <!-- Jeśli faktura jest w trakcie dołączania -->
+                <div *ngIf="invoice.isAttachingToAllegro" class="allegro-attaching">
+                  <svg class="spinner-small" viewBox="0 0 50 50">
+                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                  </svg>
+                  Dołączanie...
+                </div>
+
+                <!-- Jeśli można dołączyć fakturę -->
+                <div *ngIf="canAttachToAllegro(invoice)" class="allegro-attach-actions">
+                  <button class="btn btn-primary btn-sm"
+                          title="Dołącz fakturę do Allegro jako dowód zakupu"
+                          (click)="attachInvoiceToAllegro(element, invoice, successTpl)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21.5 2l-8 20L9 14l-7-3z"></path>
+                    </svg>
+                    Wyślij do Allegro
+                  </button>
+                </div>
+
+                <!-- Jeśli faktura nie może być dołączona (zły status) -->
+                <div *ngIf="!canAttachToAllegro(invoice) && !invoice.isAttachedToAllegro && !invoice.isAttachingToAllegro" class="allegro-cant-attach">
+                  <span class="allegro-status-pending" title="Faktura musi być w statusie 'Wystawiona', 'Wysłana' lub 'Opłacona'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Oczekuje
+                  </span>
+                </div>
+
+                <!-- Jeśli wystąpił błąd -->
+                <div *ngIf="invoice.allegroAttachmentError" class="allegro-error">
+                  <span class="allegro-status-error" [title]="invoice.allegroAttachmentError">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    Błąd
+                  </span>
+                  <button class="btn btn-icon btn-sm retry-btn"
+                          title="Spróbuj ponownie"
+                          (click)="attachInvoiceToAllegro(element, invoice, successTpl)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="1 4 1 10 7 10"></polyline>
+                      <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <!-- Tutaj mogą być informacje o wysyłce w przyszłości -->
+          </td>
         </tr>
 
         <!-- Szczegóły zamówienia -->
         <tr class="details-row" [class.expanded]="element.isExpanded">
-          <td colspan="7" class="details-cell">
+          <td colspan="8" class="details-cell">
             <div class="details-container">
               <div class="details-grid">
                 <!-- Lewa kolumna: Informacje o zamówieniu i produktach -->
@@ -345,6 +431,25 @@
                                 {{ getInvoiceStatusTranslation(invoice.invoiceStatus) }}
                               </span>
                           </div>
+
+                          <!-- Status Allegro -->
+                          <div class="invoice-allegro-status">
+                            <span *ngIf="invoice.isAttachedToAllegro" class="allegro-status-attached-detail">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                              Dołączona do Allegro
+                            </span>
+                            <span *ngIf="!invoice.isAttachedToAllegro && !invoice.isAttachingToAllegro" class="allegro-status-not-attached">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                              </svg>
+                              Nie dołączona do Allegro
+                            </span>
+                          </div>
+
                           <div class="invoice-detail-actions">
                             <button class="btn btn-sm" (click)="downloadInvoicePdf(invoice.invoiceId, invoice.invoiceNumber)">
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -362,6 +467,24 @@
                               </svg>
                               Otwórz w Infakt
                             </a>
+
+                            <!-- Przycisk dołączenia do Allegro w szczegółach -->
+                            <button *ngIf="canAttachToAllegro(invoice)"
+                                    class="btn btn-primary btn-sm"
+                                    (click)="attachInvoiceToAllegro(element, invoice, successTpl)">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.5 2l-8 20L9 14l-7-3z"></path>
+                              </svg>
+                              Wyślij do Allegro
+                            </button>
+
+                            <!-- Loader dołączania do Allegro -->
+                            <div *ngIf="invoice.isAttachingToAllegro" class="allegro-attaching-detail">
+                              <svg class="spinner-small" viewBox="0 0 50 50">
+                                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                              </svg>
+                              Dołączanie do Allegro...
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -378,15 +501,15 @@
                         </button>
                       </div>
 
-                    <!-- Loader podczas generowania faktury w szczegółach -->
-                    <div *ngIf="element.isInvoiceGenerating" class="invoice-loader-detail">
-                      <svg class="spinner" viewBox="0 0 50 50">
-                        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-                      </svg>
-                      Generowanie faktury...
+                      <!-- Loader podczas generowania faktury w szczegółach -->
+                      <div *ngIf="element.isInvoiceGenerating" class="invoice-loader-detail">
+                        <svg class="spinner" viewBox="0 0 50 50">
+                          <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                        </svg>
+                        Generowanie faktury...
+                      </div>
                     </div>
                   </div>
-                </div>
 
                   <!-- Produkty -->
                   <div class="details-section">

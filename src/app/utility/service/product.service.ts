@@ -7,6 +7,20 @@ import {GroupedAccessoriesResponse} from "../model/request/add-product-request";
 import {ProductResponse} from "../model/response/product-response.model";
 import {Order} from "../../menu/orders/model/orders-model";
 
+// Dodane interfejsy dla Allegro Invoice
+export interface AttachInvoiceRequest {
+  orderId: string;
+  invoiceId: string;
+}
+
+export interface AttachInvoiceResponse {
+  allegroInvoiceId: string;
+  invoiceNumber: string;
+  fileName: string;
+  status: string;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,12 +31,14 @@ export class ProductService {
   private readonly apiMaterialUrl: string;
   private readonly apiWmsUrl: string;
   private readonly apiAllegroUrl: string;
+  private readonly apiAllegroInvoiceUrl: string; // Nowy URL dla faktur Allegro
 
   constructor(private http: HttpClient, private readonly keycloak: KeycloakService) {
     this.apiProductUrl = environment.backendUrl + '/api/products';
     this.apiMaterialUrl = environment.backendUrl + '/api/accessories';
     this.apiWmsUrl = environment.backendUrl + '/api/inventory';
     this.apiAllegroUrl = environment.backendUrl + '/allegro';
+    this.apiAllegroInvoiceUrl = environment.backendUrl + '/api/allegro/invoices'; // Nowy endpoint
     console.log(this.apiProductUrl);
   }
 
@@ -216,4 +232,40 @@ export class ProductService {
     );
   }
 
+  // ====== NOWE METODY DLA ALLEGRO INVOICE ======
+
+  /**
+   * Dołącza istniejącą fakturę do zamówienia w Allegro
+   */
+  attachInvoiceToOrder(orderId: string, invoiceId: string, token: string): Observable<AttachInvoiceResponse> {
+    const headers = new HttpHeaders().set('allegro-api', token);
+    const request: AttachInvoiceRequest = { orderId, invoiceId };
+
+    return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/attach`, request, { headers }).pipe(
+      tap((response) => console.log('Invoice attached to Allegro order:', response))
+    );
+  }
+
+  /**
+   * Automatycznie dołącza fakturę do zamówienia na podstawie orderId
+   * (znajduje fakturę na podstawie orderId i dołącza ją do Allegro)
+   */
+  autoAttachInvoiceToOrder(orderId: string, token: string): Observable<AttachInvoiceResponse> {
+    const headers = new HttpHeaders().set('allegro-api', token);
+
+    return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/auto-attach/${orderId}`, {}, { headers }).pipe(
+      tap((response) => console.log('Invoice auto-attached to Allegro order:', response))
+    );
+  }
+
+  /**
+   * Pobiera listę faktur dołączonych do zamówienia w Allegro
+   */
+  getAllegroInvoicesForOrder(orderId: string, token: string): Observable<any> {
+    const headers = new HttpHeaders().set('allegro-api', token);
+
+    return this.http.get<any>(`${this.apiAllegroInvoiceUrl}/order/${orderId}`, { headers }).pipe(
+      tap((response) => console.log('Allegro invoices for order:', response))
+    );
+  }
 }
