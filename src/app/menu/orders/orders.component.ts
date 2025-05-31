@@ -49,7 +49,7 @@ export class OrdersComponent implements OnInit {
   filterStatus: string = '';
   filterDateFrom: Date | null = null;
   filterDateTo: Date | null = null;
-  filterHasInvoice: boolean = false;
+  filterMustHasInvoice: boolean = false;
 
   allExpanded: boolean = false;
 
@@ -71,7 +71,7 @@ export class OrdersComponent implements OnInit {
       this.filterStatus,
       this.filterDateFrom,
       this.filterDateTo,
-      this.filterHasInvoice
+      this.filterMustHasInvoice
     ).subscribe({
       next: (response: OrdersPageResponse) => {
         this.orders = response.content.map(order => ({ ...order, isExpanded: false }));
@@ -347,7 +347,7 @@ export class OrdersComponent implements OnInit {
   }
 
   toggleInvoiceFilter(): void {
-    this.filterHasInvoice = !this.filterHasInvoice;
+    this.filterMustHasInvoice = !this.filterMustHasInvoice;
     this.currentPage = 0;
     this.fetchOrders();
   }
@@ -357,7 +357,7 @@ export class OrdersComponent implements OnInit {
     this.filterStatus = '';
     this.filterDateFrom = null;
     this.filterDateTo = null;
-    this.filterHasInvoice = false;
+    this.filterMustHasInvoice = false;
     this.currentPage = 0;
 
     const statusSelect = document.querySelector('.filter-select') as HTMLSelectElement;

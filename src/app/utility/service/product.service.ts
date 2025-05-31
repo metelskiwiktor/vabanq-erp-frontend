@@ -244,7 +244,7 @@ export class ProductService {
     status?: string,
     dateFrom?: Date | null,
     dateTo?: Date | null,
-    hasInvoice?: boolean
+    mustHasInvoice?: boolean
   ): Observable<OrdersPageResponse> {
     const headers = new HttpHeaders().set('allegro-api', token);
 
@@ -272,8 +272,8 @@ export class ProductService {
       params = params.set('dateTo', toStr);
     }
 
-    if (hasInvoice !== undefined) {
-      params = params.set('hasInvoice', hasInvoice.toString());
+    if (mustHasInvoice !== undefined) {
+      params = params.set('mustHasInvoice', mustHasInvoice.toString());
     }
 
     return this.http.get<OrdersPageResponse>(`${this.apiAllegroUrl}/orders/paginated`, {

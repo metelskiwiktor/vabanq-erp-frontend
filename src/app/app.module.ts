@@ -1,5 +1,5 @@
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {APP_INITIALIZER, NgModule} from '@angular/core';
+import {APP_INITIALIZER, LOCALE_ID, NgModule} from '@angular/core';
 import {HttpClientModule} from '@angular/common/http';
 import {AppComponent} from './app.component';
 import {AppRoutingModule} from "./app-routing.module";
@@ -25,7 +25,8 @@ import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
 import { SharedModule } from './shared/shared.module';
 import {AccountingComponent} from "./menu/accounting/accounting.component";
 import {AccountingModule} from "./menu/accounting/accounting.module";
-
+import {registerLocaleData} from "@angular/common";
+import localePl from '@angular/common/locales/pl';
 
 function initializeKeycloak(keycloak: KeycloakService) {
   return () =>
@@ -41,6 +42,8 @@ function initializeKeycloak(keycloak: KeycloakService) {
       }
     });
 }
+
+registerLocaleData(localePl)
 
 @NgModule({
   declarations: [AppComponent],
@@ -68,6 +71,7 @@ function initializeKeycloak(keycloak: KeycloakService) {
   ],
   bootstrap: [AppComponent],
   providers: [
+    {provide: LOCALE_ID, useValue: 'pl'},
     provideAnimationsAsync(),
     provideNgxMask()
     // {
