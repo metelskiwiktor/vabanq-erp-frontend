@@ -1,16 +1,21 @@
-// orders.component.ts - Updated to remove PDF download and Allegro status check requests
-import { Component, inject, OnInit, TemplateRef } from '@angular/core';
-import {
-  trigger,
-  state,
-  style,
-  transition,
-  animate
-} from '@angular/animations';
-import { ProductService, AttachInvoiceResponse } from "../../utility/service/product.service";
-import { ToastService } from "../../utility/service/toast-service";
+// orders.component.ts - Updated with pagination
+import {Component, inject, OnInit, TemplateRef} from '@angular/core';
+import {animate, state, style, transition, trigger} from '@angular/animations';
+import {AttachInvoiceResponse, ProductService} from "../../utility/service/product.service";
+import {ToastService} from "../../utility/service/toast-service";
 import {InfaktService, InvoiceResponse} from "../../utility/service/infakt.service";
 import {InvoiceInfo, Order} from "./model/orders-model";
+
+export interface OrdersPageResponse {
+  content: Order[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+}
 
 @Component({
   selector: 'app-orders',
@@ -31,6 +36,14 @@ export class OrdersComponent implements OnInit {
   toastService = inject(ToastService);
   infaktService = inject(InfaktService);
 
+  // Pagination properties
+  currentPage: number = 0;
+  pageSize: number = 10;
+  totalElements: number = 0;
+  totalPages: number = 0;
+  pageSizeOptions: number[] = [10, 25, 50, 100];
+  isLoading: boolean = false;
+
   // Filtry
   filterText: string = '';
   filterStatus: string = '';
@@ -47,16 +60,34 @@ export class OrdersComponent implements OnInit {
   }
 
   fetchOrders(): void {
+    this.isLoading = true;
     const token = localStorage.getItem('allegro-token') || '';
-    this.productService.getOrders(token).subscribe({
-      next: (orders: Order[]) => {
-        this.orders = orders.map(order => ({ ...order, isExpanded: false }));
+
+    this.productService.getOrdersPaginated(
+      token,
+      this.currentPage,
+      this.pageSize,
+      this.filterText,
+      this.filterStatus,
+      this.filterDateFrom,
+      this.filterDateTo,
+      this.filterHasInvoice
+    ).subscribe({
+      next: (response: OrdersPageResponse) => {
+        this.orders = response.content.map(order => ({ ...order, isExpanded: false }));
+        this.filteredOrders = [...this.orders];
+        this.totalElements = response.totalElements;
+        this.totalPages = response.totalPages;
+        this.currentPage = response.number;
+        this.pageSize = response.size;
+
         this.fetchInvoicesForOrders();
-        this.applyFilters();
-        console.log('Fetched orders:', this.orders);
+        this.isLoading = false;
+        console.log('Fetched orders page:', response);
       },
       error: (error) => {
         console.error('Failed to fetch orders:', error);
+        this.isLoading = false;
       }
     });
   }
@@ -86,19 +117,72 @@ export class OrdersComponent implements OnInit {
               invoiceStatus: inv.status.toLowerCase(),
               invoiceUrl: inv.invoiceUrl,
               createdAt: inv.createdAt,
-              // Pobierz status Allegro z modelu faktury
               isAttachedToAllegro: inv.attachedToAllegro,
-              allegroInvoiceId: undefined, // Można dodać do backendu jeśli potrzebne
+              allegroInvoiceId: undefined,
               isAttachingToAllegro: false,
               allegroAttachmentError: undefined
             }));
           }
         });
+
+        // Update filtered orders after invoices are loaded
+        this.filteredOrders = [...this.orders];
       },
       error: (error) => {
         console.error('Failed to fetch invoices:', error);
       }
     });
+  }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages && page !== this.currentPage) {
+      this.currentPage = page;
+      this.fetchOrders();
+    }
+  }
+
+  goToFirstPage(): void {
+    this.goToPage(0);
+  }
+
+  goToLastPage(): void {
+    this.goToPage(this.totalPages - 1);
+  }
+
+  goToPreviousPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  goToNextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  changePageSize(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.pageSize = +target.value;
+    this.currentPage = 0; // Reset to first page when changing page size
+    this.fetchOrders();
+  }
+
+  getPageNumbers(): number[] {
+    const pageNumbers: number[] = [];
+    const maxPagesToShow = 5;
+    const half = Math.floor(maxPagesToShow / 2);
+
+    let start = Math.max(0, this.currentPage - half);
+    let end = Math.min(this.totalPages - 1, start + maxPagesToShow - 1);
+
+    // Adjust start if we're near the end
+    if (end - start + 1 < maxPagesToShow) {
+      start = Math.max(0, end - maxPagesToShow + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pageNumbers.push(i);
+    }
+
+    return pageNumbers;
   }
 
   synchronizeOrders(template: TemplateRef<any>): void {
@@ -110,6 +194,8 @@ export class OrdersComponent implements OnInit {
         } else {
           this.toastSuccessMessage = `Synchronizacja zakończona pomyślnie.\n${response.created} nowych zamówień\n${response.updated} zaktualizowanych zamówień.`;
         }
+        // Reset to first page after sync
+        this.currentPage = 0;
         this.fetchOrders();
         this.showSuccess(template);
       },
@@ -152,7 +238,6 @@ export class OrdersComponent implements OnInit {
           invoiceStatus: response.status.toLowerCase(),
           invoiceUrl: response.invoiceUrl || '',
           createdAt: response.createdAt,
-          // Inicjalizuj nowe pola
           isAttachedToAllegro: false,
           allegroInvoiceId: undefined,
           isAttachingToAllegro: false,
@@ -183,9 +268,6 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  /**
-   * Dołącza fakturę do zamówienia w Allegro jako dowód zakupu
-   */
   attachInvoiceToAllegro(order: Order, invoice: InvoiceInfo, template: TemplateRef<any>): void {
     event?.stopPropagation();
 
@@ -237,32 +319,37 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  // Metody dla filtrów
+  // Filter methods - now trigger backend requests
   applyFilter(event: Event): void {
     this.filterText = (event.target as HTMLInputElement).value.trim().toLowerCase();
-    this.applyFilters();
+    this.currentPage = 0; // Reset to first page when filtering
+    this.fetchOrders();
   }
 
   filterByStatus(event: Event): void {
     this.filterStatus = (event.target as HTMLSelectElement).value;
-    this.applyFilters();
+    this.currentPage = 0;
+    this.fetchOrders();
   }
 
   filterByDateFrom(event: Event): void {
     const dateStr = (event.target as HTMLInputElement).value;
     this.filterDateFrom = dateStr ? new Date(dateStr) : null;
-    this.applyFilters();
+    this.currentPage = 0;
+    this.fetchOrders();
   }
 
   filterByDateTo(event: Event): void {
     const dateStr = (event.target as HTMLInputElement).value;
     this.filterDateTo = dateStr ? new Date(dateStr) : null;
-    this.applyFilters();
+    this.currentPage = 0;
+    this.fetchOrders();
   }
 
   toggleInvoiceFilter(): void {
     this.filterHasInvoice = !this.filterHasInvoice;
-    this.applyFilters();
+    this.currentPage = 0;
+    this.fetchOrders();
   }
 
   clearFilters(): void {
@@ -271,6 +358,7 @@ export class OrdersComponent implements OnInit {
     this.filterDateFrom = null;
     this.filterDateTo = null;
     this.filterHasInvoice = false;
+    this.currentPage = 0;
 
     const statusSelect = document.querySelector('.filter-select') as HTMLSelectElement;
     if (statusSelect) statusSelect.value = '';
@@ -284,55 +372,10 @@ export class OrdersComponent implements OnInit {
     const invoiceCheckbox = document.querySelector('#invoice-filter') as HTMLInputElement;
     if (invoiceCheckbox) invoiceCheckbox.checked = false;
 
-    this.applyFilters();
+    this.fetchOrders();
   }
 
-  applyFilters(): void {
-    this.filteredOrders = this.orders.filter(order => {
-      if (this.filterText) {
-        const searchText = this.filterText.toLowerCase();
-        const orderIdMatch = order.orderId.toLowerCase().includes(searchText);
-        const buyerMatch = `${order.buyer.firstName} ${order.buyer.lastName}`.toLowerCase().includes(searchText);
-        const emailMatch = order.buyer.email.toLowerCase().includes(searchText);
-        const invoiceMatch = order.invoices?.some(inv =>
-          inv.invoiceNumber.toLowerCase().includes(searchText)
-        ) || false;
-
-        if (!(orderIdMatch || buyerMatch || emailMatch || invoiceMatch)) {
-          return false;
-        }
-      }
-
-      if (this.filterStatus && order.status !== this.filterStatus) {
-        return false;
-      }
-
-      if (this.filterHasInvoice && (!order.invoices || order.invoices.length === 0)) {
-        return false;
-      }
-
-      if (this.filterDateFrom) {
-        const saleDate = new Date(order.saleDate);
-        if (saleDate < this.filterDateFrom) {
-          return false;
-        }
-      }
-
-      if (this.filterDateTo) {
-        const saleDate = new Date(order.saleDate);
-        const endOfDay = new Date(this.filterDateTo);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        if (saleDate > endOfDay) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }
-
-  // Metody dla statystyk
+  // Statistics methods - these will need to be updated to use separate API calls
   getOrdersCountByStatus(status: string): number {
     return this.orders.filter(order => order.status === status).length;
   }
@@ -351,7 +394,6 @@ export class OrdersComponent implements OnInit {
     ).length;
   }
 
-  // Metoda do tłumaczenia statusów na język polski
   getStatusTranslation(status: string): string {
     const statusMap: { [key: string]: string } = {
       'READY_FOR_PROCESSING': 'Nowe',
@@ -364,7 +406,6 @@ export class OrdersComponent implements OnInit {
     return statusMap[status] || status;
   }
 
-  // Metoda do tłumaczenia statusów faktury na język polski
   getInvoiceStatusTranslation(status: string): string {
     const statusMap: { [key: string]: string } = {
       'processing': 'Przetwarzanie',
@@ -379,7 +420,6 @@ export class OrdersComponent implements OnInit {
     return statusMap[status] || status;
   }
 
-  // Sprawdza czy faktura może być dołączona do Allegro
   canAttachToAllegro(invoice: InvoiceInfo): boolean {
     return !invoice.isAttachedToAllegro &&
       !invoice.isAttachingToAllegro &&

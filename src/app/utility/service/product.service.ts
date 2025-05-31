@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Observable, of, Subject, tap} from 'rxjs';
 import {environment} from "../../../environments/environment";
 import {KeycloakService} from "keycloak-angular";
@@ -222,14 +222,6 @@ export class ProductService {
       }
     );
   }
-
-  getOrders(token: string): Observable<Order[]> {
-    const headers = new HttpHeaders().set('allegro-api', token);
-    return this.http.get<Order[]>(`${this.apiAllegroUrl}/orders`, { headers }).pipe(
-      tap((orders) => console.log('Fetched orders from backend:', orders))
-    );
-  }
-
   // ====== METODY DLA ALLEGRO INVOICE ======
 
   /**
@@ -244,15 +236,62 @@ export class ProductService {
     );
   }
 
-  /**
-   * Automatycznie dołącza fakturę do zamówienia na podstawie orderId
-   * (znajduje fakturę na podstawie orderId i dołącza ją do Allegro)
-   */
-  autoAttachInvoiceToOrder(orderId: string, token: string): Observable<AttachInvoiceResponse> {
+  getOrdersPaginated(
+    token: string,
+    page: number = 0,
+    size: number = 10,
+    search?: string,
+    status?: string,
+    dateFrom?: Date | null,
+    dateTo?: Date | null,
+    hasInvoice?: boolean
+  ): Observable<OrdersPageResponse> {
     const headers = new HttpHeaders().set('allegro-api', token);
 
-    return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/auto-attach/${orderId}`, {}, { headers }).pipe(
-      tap((response) => console.log('Invoice auto-attached to Allegro order:', response))
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    if (search && search.trim()) {
+      params = params.set('search', search.trim());
+    }
+
+    if (status && status.trim()) {
+      params = params.set('status', status.trim());
+    }
+
+    if (dateFrom) {
+      // Format date to YYYY-MM-DD
+      const fromStr = dateFrom.toISOString().split('T')[0];
+      params = params.set('dateFrom', fromStr);
+    }
+
+    if (dateTo) {
+      // Format date to YYYY-MM-DD
+      const toStr = dateTo.toISOString().split('T')[0];
+      params = params.set('dateTo', toStr);
+    }
+
+    if (hasInvoice !== undefined) {
+      params = params.set('hasInvoice', hasInvoice.toString());
+    }
+
+    return this.http.get<OrdersPageResponse>(`${this.apiAllegroUrl}/orders/paginated`, {
+      headers,
+      params
+    }).pipe(
+      tap((response) => console.log('Fetched paginated orders from backend:', response))
     );
   }
+}
+
+export interface OrdersPageResponse {
+  content: Order[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
 }
