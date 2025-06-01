@@ -111,11 +111,11 @@
     <li class="profile">
       <div class="profile-details">
         <div class="name_job">
-          <div class="name">Jan Kowalski</div>
-          <div class="job">jan.kowalski&commat;gmail.com</div>
+          <div class="name">{{userProfile?.firstName! + " " + userProfile?.lastName!}}</div>
+          <div class="job">{{userProfile?.email!}}</div>
         </div>
       </div>
-      <button><i class="bx bx-log-out" id="log_out"></i></button>
+      <button><i class="bx bx-log-out" id="log_out" (click)="logout()"></i></button>
     </li>
   </ul>
 </div>

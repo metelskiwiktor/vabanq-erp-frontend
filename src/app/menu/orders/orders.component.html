@@ -436,11 +436,11 @@
                         <div class="details-address-line"><strong>Adres dostawy:</strong></div>
                         <div class="details-address-line">{{ element.buyer.firstName }} {{ element.buyer.lastName }}
                         </div>
-                        <div class="details-address-line">{{ element.delivery.deliveryAddress.street }}</div>
+                        <div class="details-address-line">{{ element.delivery.deliveryAddress?.street || '– brak ulicy –' }}</div>
                         <div
-                          class="details-address-line">{{ element.delivery.deliveryAddress.postCode }} {{ element.delivery.deliveryAddress.city }}
+                          class="details-address-line">{{ element.delivery.deliveryAddress?.postCode }} {{ element.delivery.deliveryAddress?.city }}
                         </div>
-                        <div class="details-address-line">{{ element.delivery.deliveryAddress.countryCode }}</div>
+                        <div class="details-address-line">{{ element.delivery.deliveryAddress?.countryCode }}</div>
                         <div class="details-address-line">Tel: {{ element.buyer.phoneNumber }}</div>
                       </div>
                     </div>

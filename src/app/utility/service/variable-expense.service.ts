@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import {environment} from "../../../environments/environment";
 
 export interface VariableExpenseResponse {
   id: string;
@@ -69,7 +70,7 @@ export interface TotalResponse {
   providedIn: 'root'
 })
 export class VariableExpenseService {
-  private readonly baseUrl = 'http://localhost:8080/api/expenses/variable';
+  private readonly baseUrl = `${environment.backendUrl}/api/expenses/variable`;
 
   constructor(private http: HttpClient) { }
 

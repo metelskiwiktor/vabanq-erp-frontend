@@ -35,3 +35,8 @@ cp dist/vabanq-erp/browser/index.html dist/vabanq-erp/browser/404.html
 npx angular-cli-ghpages --dir=dist/vabanq-erp/browser
 
 https://metelskiwiktor.github.io/vabanq-erp-frontend/
+
+# docker
+ng build --configuration=production --base-href=/view/
+docker build -t wmetelski/vabanq-platform-frontend:latest .
+docker push wmetelski/vabanq-platform-frontend:latest

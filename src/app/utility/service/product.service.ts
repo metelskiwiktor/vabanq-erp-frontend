@@ -37,7 +37,7 @@ export class ProductService {
     this.apiProductUrl = environment.backendUrl + '/api/products';
     this.apiMaterialUrl = environment.backendUrl + '/api/accessories';
     this.apiWmsUrl = environment.backendUrl + '/api/inventory';
-    this.apiAllegroUrl = environment.backendUrl + '/allegro';
+    this.apiAllegroUrl = environment.backendUrl + '/api/allegro';
     this.apiAllegroInvoiceUrl = environment.backendUrl + '/api/allegro/invoices'; // Nowy endpoint
     console.log(this.apiProductUrl);
   }

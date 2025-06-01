@@ -4,6 +4,7 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable, of} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {Order} from "../../menu/orders/model/orders-model";
+import {environment} from "../../../environments/environment";
 
 export interface InvoiceResponse {
   id: string;
@@ -23,7 +24,7 @@ export interface InvoiceResponse {
   providedIn: 'root'
 })
 export class InfaktService {
-  private apiUrl = 'http://localhost:8080/api/invoices';
+  private apiUrl = `${environment.backendUrl}/api/invoices`;
 
   constructor(private http: HttpClient) {}
 

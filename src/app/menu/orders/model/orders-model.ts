@@ -7,7 +7,7 @@ export interface BuyerOrder {
 }
 
 export interface AddressOrder {
-  street: string;
+  street?: string;
   city: string;
   postCode: string;
   countryCode: string;
@@ -20,7 +20,7 @@ export interface DeliveryOrder {
   dispatchTimeTo: string; // ISO date string
   deliveryTimeFrom: string; // ISO date string
   deliveryTimeTo: string; // ISO date string
-  deliveryAddress: AddressOrder;
+  deliveryAddress?: AddressOrder;
 }
 
 export interface ProductOrder {

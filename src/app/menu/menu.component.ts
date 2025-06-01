@@ -9,28 +9,28 @@ import {environment} from "../../environments/environment";
   styleUrl: './menu.component.css'
 })
 export class MenuComponent implements OnInit {
-  // public userProfile: KeycloakProfile | null = null;
+  public userProfile: KeycloakProfile | null = null;
 
-  // constructor(private readonly keycloak: KeycloakService) {
-  // }
-
-  public async ngOnInit() {
-    // console.log(environment.backendUrl);
-    // console.log(environment.keycloakUrl);
-    // this.userProfile = await this.keycloak.loadUserProfile();
-    // console.log(await this.keycloak.getToken());
+  constructor(private readonly keycloak: KeycloakService) {
   }
-  //
-  // logout() {
-  //   this.keycloak.logout();
-  // }
+
+  ngOnInit() {
+    const token = this.keycloak.getKeycloakInstance().idTokenParsed;
+    this.userProfile = {
+      firstName: token?.['given_name'],
+      lastName: token?.['family_name'],
+      email: token?.['email']
+    } as KeycloakProfile;
+  }
+
+  logout() {
+    localStorage.removeItem('auth_token');
+    this.keycloak.logout();
+  }
 
   subcategories: { [key: string]: boolean } = {
     items: true,
     accounting: true,
   };
 
-  toggleSubcategories(category: string): void {
-    // this.subcategories[category] = !this.subcategories[category];
-  }
 }

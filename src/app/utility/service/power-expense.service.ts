@@ -2,6 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import {environment} from "../../../environments/environment";
 
 export interface PowerExpenseResponse {
   id: string;
@@ -34,7 +35,7 @@ export interface UpdatePowerExpenseRequest {
   providedIn: 'root'
 })
 export class PowerExpenseService {
-  private readonly baseUrl = 'http://localhost:8080/api/expenses/power';
+  private readonly baseUrl = `${environment.backendUrl}/api/expenses/power`;
 
   constructor(private http: HttpClient) { }
 
