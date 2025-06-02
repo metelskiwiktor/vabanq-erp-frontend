@@ -1,10 +1,10 @@
-// orders.component.ts - Updated with pagination
+// orders.component.ts - Updated with enum support
 import {Component, inject, OnInit, TemplateRef} from '@angular/core';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {AttachInvoiceResponse, ProductService} from "../../utility/service/product.service";
 import {ToastService} from "../../utility/service/toast-service";
 import {InfaktService, InvoiceResponse} from "../../utility/service/infakt.service";
-import {InvoiceInfo, Order} from "./model/orders-model";
+import {InvoiceInfo, Order, OrderStatus, PaymentStatus} from "./model/orders-model";
 
 export interface OrdersPageResponse {
   content: Order[];
@@ -35,6 +35,9 @@ export class OrdersComponent implements OnInit {
   toastSuccessMessage: string = '';
   toastService = inject(ToastService);
   infaktService = inject(InfaktService);
+
+  // Enumy dostępne w template
+  OrderStatus = OrderStatus;
 
   // Pagination properties
   currentPage: number = 0;
@@ -375,8 +378,8 @@ export class OrdersComponent implements OnInit {
     this.fetchOrders();
   }
 
-  // Statistics methods - these will need to be updated to use separate API calls
-  getOrdersCountByStatus(status: string): number {
+  // Statistics methods - zaktualizowane żeby używały enumów
+  getOrdersCountByStatus(status: OrderStatus): number {
     return this.orders.filter(order => order.status === status).length;
   }
 
@@ -388,19 +391,32 @@ export class OrdersComponent implements OnInit {
     return this.orders.filter(order => order.invoices && order.invoices.length > 0).length;
   }
 
-  getOrdersWithAllegroInvoicesCount(): number {
-    return this.orders.filter(order =>
-      order.invoices && order.invoices.some(inv => inv.isAttachedToAllegro)
-    ).length;
+  // Tłumaczenia dla statusów zamówień
+  getOrderStatusTranslation(status: OrderStatus): string {
+    const statusMap: { [key in OrderStatus]: string } = {
+      [OrderStatus.NEW]: 'Nowe',
+      [OrderStatus.PROCESSING]: 'W realizacji',
+      [OrderStatus.READY_FOR_SHIPMENT]: 'Do wysłania',
+      [OrderStatus.READY_FOR_PICKUP]: 'Do odbioru',
+      [OrderStatus.SENT]: 'Wysłane',
+      [OrderStatus.PICKED_UP]: 'Odebrane',
+      [OrderStatus.CANCELLED]: 'Anulowane',
+      [OrderStatus.SUSPENDED]: 'Zawieszone',
+      [OrderStatus.RETURNED]: 'Zwrócone',
+      [OrderStatus.INVALID_STATUS]: 'Nieznany status'
+    };
+
+    return statusMap[status] || status;
   }
 
-  getStatusTranslation(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'READY_FOR_PROCESSING': 'Nowe',
-      'PROCESSING': 'Do wysyłki',
-      'SENT': 'Wysłane',
-      'COMPLETED': 'Zrealizowane',
-      'CANCELLED': 'Anulowane'
+  // Tłumaczenia dla statusów płatności
+  getPaymentStatusTranslation(status: PaymentStatus): string {
+    const statusMap: { [key in PaymentStatus]: string } = {
+      [PaymentStatus.BOUGHT]: 'Zlecenie kupna',
+      [PaymentStatus.FILLED_IN]: 'Czekające na płatność',
+      [PaymentStatus.READY_FOR_PROCESSING]: 'Opłacone',
+      [PaymentStatus.CANCELLED]: 'Anulowane',
+      [PaymentStatus.INVALID_STATUS]: 'Nieznany status'
     };
 
     return statusMap[status] || status;
@@ -426,5 +442,42 @@ export class OrdersComponent implements OnInit {
       (invoice.invoiceStatus === 'issued' ||
         invoice.invoiceStatus === 'sent' ||
         invoice.invoiceStatus === 'paid');
+  }
+
+  // Pomocnicze metody dla statusów w template
+  getOrderStatusBadgeClass(status: OrderStatus): string {
+    switch (status) {
+      case OrderStatus.NEW:
+        return 'status-new';
+      case OrderStatus.PROCESSING:
+      case OrderStatus.READY_FOR_SHIPMENT:
+        return 'status-processing';
+      case OrderStatus.SENT:
+      case OrderStatus.READY_FOR_PICKUP:
+        return 'status-shipped';
+      case OrderStatus.PICKED_UP:
+        return 'status-completed';
+      case OrderStatus.CANCELLED:
+      case OrderStatus.RETURNED:
+        return 'status-cancelled';
+      case OrderStatus.SUSPENDED:
+        return 'status-suspended';
+      default:
+        return 'status-unknown';
+    }
+  }
+
+  getPaymentStatusBadgeClass(status: PaymentStatus): string {
+    switch (status) {
+      case PaymentStatus.BOUGHT:
+      case PaymentStatus.FILLED_IN:
+        return 'payment-pending';
+      case PaymentStatus.READY_FOR_PROCESSING:
+        return 'payment-completed';
+      case PaymentStatus.CANCELLED:
+        return 'payment-cancelled';
+      default:
+        return 'payment-unknown';
+    }
   }
 }

@@ -2081,3 +2081,157 @@ h1 {
   outline: none;
 }
 
+/* ====== PROSTE STYLE DLA STATUSÓW PŁATNOŚCI ====== */
+
+/* Badge dla statusu płatności */
+.payment-status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: none;
+}
+
+/* Statusy płatności - proste kolory bez ramek */
+.payment-pending {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.payment-completed {
+  background-color: var(--green-light);
+  color: var(--green-color);
+}
+
+.payment-cancelled {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.payment-unknown {
+  background-color: #f5f5f5;
+  color: #616161;
+}
+
+/* ====== UPROSZCZONE STYLE DLA STATUSÓW ZAMÓWIEŃ ====== */
+
+/* Usuwam ramki - tylko kolory tła */
+.status-new {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.status-processing {
+  background-color: var(--orange-light);
+  color: var(--orange-color);
+}
+
+.status-shipped {
+  background-color: var(--purple-light);
+  color: var(--purple-color);
+}
+
+.status-completed {
+  background-color: var(--green-light);
+  color: var(--green-color);
+}
+
+.status-cancelled {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-suspended {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.status-unknown {
+  background-color: #f5f5f5;
+  color: #616161;
+}
+
+/* ====== SEKCJA STATUSÓW W SZCZEGÓŁACH ====== */
+
+.order-status-details {
+  margin: 16px 0;
+  padding: 12px;
+  background-color: var(--background-light);
+  border-radius: 6px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.order-status-details p {
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-status-details .status-badge,
+.order-status-details .payment-status-badge {
+  margin-left: auto;
+}
+
+/* ====== RESPONSYWNOŚĆ ====== */
+
+/* Na średnich ekranach ukryj kolumnę statusu płatności */
+@media (max-width: 1200px) {
+  .orders-table th:nth-child(5),
+  .orders-table td:nth-child(5) {
+    display: none;
+  }
+}
+
+/* Na małych ekranach ukryj też kolumnę rynku */
+@media (max-width: 1024px) {
+  .orders-table th:nth-child(3),
+  .orders-table td:nth-child(3) {
+    display: none;
+  }
+}
+
+/* ====== USUNIETE WSZYSTKIE IRYTUJACE ANIMACJE ====== */
+
+.status-badge,
+.payment-status-badge {
+  /* Tylko podstawowe style - bez transition i animacji */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Usuniete hover effects i pulse animacje */
+
+/* Style dla tabeli z dodatkowymi kolumnami */
+.orders-table th:nth-child(4),
+.orders-table th:nth-child(5) {
+  min-width: 120px;
+}
+
+/* Kompaktowe wyświetlanie na bardzo małych ekranach */
+@media (max-width: 768px) {
+  .status-badge,
+  .payment-status-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .order-status-details {
+    padding: 8px;
+  }
+
+  .order-status-details p {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .order-status-details .status-badge,
+  .order-status-details .payment-status-badge {
+    margin-left: 0;
+  }
+}

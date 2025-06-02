@@ -1,3 +1,24 @@
+export enum PaymentStatus {
+  BOUGHT = 'BOUGHT',
+  FILLED_IN = 'FILLED_IN',
+  READY_FOR_PROCESSING = 'READY_FOR_PROCESSING',
+  CANCELLED = 'CANCELLED',
+  INVALID_STATUS = 'INVALID_STATUS'
+}
+
+export enum OrderStatus {
+  NEW = 'NEW',
+  PROCESSING = 'PROCESSING',
+  READY_FOR_SHIPMENT = 'READY_FOR_SHIPMENT',
+  READY_FOR_PICKUP = 'READY_FOR_PICKUP',
+  SENT = 'SENT',
+  PICKED_UP = 'PICKED_UP',
+  CANCELLED = 'CANCELLED',
+  SUSPENDED = 'SUSPENDED',
+  RETURNED = 'RETURNED',
+  INVALID_STATUS = 'INVALID_STATUS'
+}
+
 export interface BuyerOrder {
   firstName: string;
   lastName: string;
@@ -37,7 +58,6 @@ export interface InvoiceInfo {
   invoiceStatus: string;
   invoiceUrl: string;
   createdAt: string;
-  // Nowe pola dla integracji z Allegro
   isAttachedToAllegro?: boolean;
   allegroInvoiceId?: string;
   isAttachingToAllegro?: boolean;
@@ -47,7 +67,8 @@ export interface InvoiceInfo {
 export interface Order {
   orderId: string;
   market: string;
-  status: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
   saleDate: string;
   buyer: BuyerOrder;
   delivery: DeliveryOrder;

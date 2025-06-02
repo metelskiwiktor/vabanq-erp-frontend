@@ -33,7 +33,7 @@ export function initializeKeycloak(keycloak: KeycloakService) {
     keycloak.init({
       config: {
         realm: 'vabanq-platform',
-        url: environment.keycloakUrl,       // https://platforma.vabanq.com/auth
+        url: environment.keycloakUrl,
         clientId: 'vabanq-platform-frontend'
       },
       initOptions: {
@@ -48,7 +48,6 @@ export function initializeKeycloak(keycloak: KeycloakService) {
          *  (opcjonalnie) wyłączamy też automatyczne odnawianie tokena co tzw. silent-check-sso,
          *  bo jeśli i to ma problemy z ciasteczkami, możemy to pominąć.
          */
-        silentCheckSsoRedirectUri: undefined
       },
       /**
        * Jeśli używasz Keycloak-Angular 9+ i chcesz automatycznie

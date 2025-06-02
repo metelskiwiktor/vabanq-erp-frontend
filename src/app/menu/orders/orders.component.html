@@ -17,29 +17,24 @@
   <div class="stats-container">
     <div class="stat-card blue">
       <div class="stat-title">Nowe zamówienia</div>
-      <div class="stat-value">{{ getOrdersCountByStatus('READY_FOR_PROCESSING') }}</div>
+      <div class="stat-value">{{ getOrdersCountByStatus(OrderStatus.NEW) }}</div>
     </div>
     <div class="stat-card orange">
-      <div class="stat-title">W trakcie wysyłki</div>
-      <div class="stat-value">{{ getOrdersCountByStatus('PROCESSING') }}</div>
+      <div class="stat-title">W trakcie realizacji</div>
+      <div class="stat-value">{{ getOrdersCountByStatus(OrderStatus.PROCESSING) + getOrdersCountByStatus(OrderStatus.READY_FOR_SHIPMENT) }}</div>
     </div>
     <div class="stat-card green">
-      <div class="stat-title">Zrealizowane</div>
-      <div class="stat-value">{{ getOrdersCountByStatus('COMPLETED') }}</div>
+      <div class="stat-title">Wysłane/Odebrane</div>
+      <div class="stat-value">{{ getOrdersCountByStatus(OrderStatus.SENT) + getOrdersCountByStatus(OrderStatus.PICKED_UP) }}</div>
     </div>
     <div class="stat-card pink">
       <div class="stat-title">Wartość całkowita</div>
       <div class="stat-value">{{ getTotalOrdersValue() | currency:'PLN ' }}</div>
     </div>
-    <!-- Nowa karta dla faktur -->
-    <div class="stat-card purple">
-      <div class="stat-title">Zamówienia z fakturami</div>
-      <div class="stat-value">{{ getOrdersWithInvoicesCount() }}</div>
-    </div>
     <!-- Nowa karta dla faktur w Allegro -->
     <div class="stat-card green">
-      <div class="stat-title">Faktury w Allegro</div>
-      <div class="stat-value">{{ getOrdersWithAllegroInvoicesCount() }}</div>
+      <div class="stat-title">Wystawione faktury</div>
+      <div class="stat-value">{{ getOrdersWithInvoicesCount() }}</div>
     </div>
   </div>
 
@@ -82,12 +77,14 @@
     <span class="filter-label">Filtruj:</span>
 
     <select class="filter-select" (change)="filterByStatus($event)">
-      <option value="">Wszystkie statusy</option>
-      <option value="READY_FOR_PROCESSING">Nowe</option>
-      <option value="PROCESSING">Do wysyłki</option>
-      <option value="SENT">Wysłane</option>
-      <option value="COMPLETED">Zrealizowane</option>
-      <option value="CANCELLED">Anulowane</option>
+      <option value="">Wszystkie statusy zamówień</option>
+      <option [value]="OrderStatus.NEW">{{ getOrderStatusTranslation(OrderStatus.NEW) }}</option>
+      <option [value]="OrderStatus.PROCESSING">{{ getOrderStatusTranslation(OrderStatus.PROCESSING) }}</option>
+      <option [value]="OrderStatus.READY_FOR_SHIPMENT">{{ getOrderStatusTranslation(OrderStatus.READY_FOR_SHIPMENT) }}</option>
+      <option [value]="OrderStatus.SENT">{{ getOrderStatusTranslation(OrderStatus.SENT) }}</option>
+      <option [value]="OrderStatus.PICKED_UP">{{ getOrderStatusTranslation(OrderStatus.PICKED_UP) }}</option>
+      <option [value]="OrderStatus.CANCELLED">{{ getOrderStatusTranslation(OrderStatus.CANCELLED) }}</option>
+      <option [value]="OrderStatus.RETURNED">{{ getOrderStatusTranslation(OrderStatus.RETURNED) }}</option>
     </select>
 
     <input type="date" class="filter-date" (change)="filterByDateFrom($event)">
@@ -138,7 +135,8 @@
         <th>Numer zamówienia</th>
         <th>Data sprzedaży</th>
         <th>Rynek</th>
-        <th>Status</th>
+        <th>Status zamówienia</th>
+        <th>Status płatności</th>
         <th>Suma</th>
         <th>Faktura</th>
         <th>Allegro</th>
@@ -151,16 +149,21 @@
           <td><span class="order-id">{{ element.orderId }}</span></td>
           <td>{{ element.saleDate | date:"dd/MM/y 'o' HH:mm:ss" }}</td>
           <td>{{ element.market }}</td>
+
+          <!-- Status zamówienia -->
           <td>
-              <span class="status-badge" [ngClass]="{
-                'status-new': element.status === 'READY_FOR_PROCESSING',
-                'status-ready': element.status === 'PROCESSING',
-                'status-shipped': element.status === 'SENT',
-                'status-completed': element.status === 'COMPLETED'
-              }">
-                {{ getStatusTranslation(element.status) }}
-              </span>
+            <span class="payment-status-badge" [ngClass]="getOrderStatusBadgeClass(element.status)">
+              {{ getOrderStatusTranslation(element.status) }}
+            </span>
           </td>
+
+          <!-- Status płatności -->
+          <td>
+            <span class="payment-status-badge" [ngClass]="getPaymentStatusBadgeClass(element.paymentStatus)">
+              {{ getPaymentStatusTranslation(element.paymentStatus) }}
+            </span>
+          </td>
+
           <td><strong>{{ element.totalAmount | currency:'PLN ' }}</strong></td>
           <td (click)="$event.stopPropagation()">
             <!-- Jeśli nie ma faktury i nie jest w trakcie generowania -->
@@ -211,7 +214,7 @@
             </div>
           </td>
 
-          <!-- Nowa kolumna Allegro -->
+          <!-- Kolumna Allegro -->
           <td (click)="$event.stopPropagation()">
             <!-- Jeśli nie ma faktury -->
             <div *ngIf="!element.invoices || element.invoices.length === 0" class="allegro-no-invoice">
@@ -254,7 +257,7 @@
                   </button>
                 </div>
 
-                <!-- Jeśli faktura nie może być dołączona (zły status) -->
+                <!-- Jeśli faktura nie może być dołączona -->
                 <div
                   *ngIf="!canAttachToAllegro(invoice) && !invoice.isAttachedToAllegro && !invoice.isAttachingToAllegro"
                   class="allegro-cant-attach">
@@ -298,7 +301,7 @@
 
         <!-- Szczegóły zamówienia -->
         <tr class="details-row" [class.expanded]="element.isExpanded">
-          <td colspan="7" class="details-cell">
+          <td colspan="8" class="details-cell">
             <div class="details-container">
               <div class="details-grid">
                 <!-- Lewa kolumna: Informacje o zamówieniu i produktach -->
@@ -438,9 +441,8 @@
                         </div>
                         <div class="details-address-line">{{ element.delivery.deliveryAddress?.street || '– brak ulicy –' }}</div>
                         <div
-                          class="details-address-line">{{ element.delivery.deliveryAddress?.postCode }} {{ element.delivery.deliveryAddress?.city }}
+                          class="details-address-line">{{ element.delivery.deliveryAddress?.postCode }} {{ element.delivery.deliveryAddress?.city }} {{ element.delivery.deliveryAddress?.countryCode }}
                         </div>
-                        <div class="details-address-line">{{ element.delivery.deliveryAddress?.countryCode }}</div>
                         <div class="details-address-line">Tel: {{ element.buyer.phoneNumber }}</div>
                       </div>
                     </div>
@@ -454,9 +456,22 @@
                       Dane zamówienia
                     </div>
                     <div class="details-section-content">
-                      <h1>Data sprzedaży: {{ element.saleDate | date:"LLLL d, y 'o' HH:mm:ss" }}</h1>
+                      <h3>Data sprzedaży: {{ element.saleDate | date:"LLLL d, y 'o' HH:mm:ss" }}</h3>
                       <p><strong>Rynek:</strong> {{ element.market }}</p>
-                      <p><strong>Status:</strong> {{ getStatusTranslation(element.status) }}</p>
+
+                      <!-- Statusy w szczegółach -->
+                      <div class="order-status-details">
+                        <p><strong>Status zamówienia:</strong>
+                          <span class="status-badge" [ngClass]="getOrderStatusBadgeClass(element.status)">
+                            {{ getOrderStatusTranslation(element.status) }}
+                          </span>
+                        </p>
+                        <p><strong>Status płatności:</strong>
+                          <span class="payment-status-badge" [ngClass]="getPaymentStatusBadgeClass(element.paymentStatus)">
+                            {{ getPaymentStatusTranslation(element.paymentStatus) }}
+                          </span>
+                        </p>
+                      </div>
 
                       <!-- Sekcja faktury w szczegółach -->
                       <div *ngIf="element.invoices && element.invoices.length > 0" class="invoice-details">
@@ -526,7 +541,7 @@
                         </div>
                       </div>
 
-                      <!-- Przycisk do generowania faktury w szczegółach, jeśli jeszcze nie ma żadnej -->
+                      <!-- Przycisk do generowania faktury w szczegółach -->
                       <div *ngIf="(!element.invoices || element.invoices.length === 0) && !element.isInvoiceGenerating"
                            class="invoice-generate-detail">
                         <button class="btn btn-primary" (click)="generateInvoice(element, successTpl)">
