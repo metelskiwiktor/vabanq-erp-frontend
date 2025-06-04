@@ -19,8 +19,18 @@
           <div class="row">
             <div class="col-md-6">
               <h2><label for="duration">Czas trwania druku</label></h2>
-              <input type="text" autocomplete="off" class="form-control" id="duration" name="duration"
-                     [disabled]="isViewMode" mask="00:00" [(ngModel)]="duration" placeholder="HH:MM">
+              <!-- POPRAWKA: Usunięto mask="00:00" i dodano (input) event -->
+              <input
+                type="text"
+                autocomplete="off"
+                class="form-control"
+                id="duration"
+                name="duration"
+                [disabled]="isViewMode"
+                [(ngModel)]="duration"
+                (input)="onDurationInput($event)"
+                placeholder="HH:MM"
+                maxlength="5">
             </div>
             <div class="col-md-6">
               <h2><label for="laborCost">Koszt robocizny</label></h2>
@@ -34,6 +44,7 @@
                   autocomplete="off"
                   [disabled]="isViewMode"
                   mask="separator.2"
+                  placeholder="Wprowadź koszt robocizny"
                   thousandSeparator=""
                 />
                 <span class="input-group-text">zł</span>
@@ -188,9 +199,11 @@
 
     <div class="container-fluid">
       <div class="row">
+        <!-- POPRAWKA: Dodano informację o limicie rozmiaru plików -->
         <div class="col-md-4" style="padding-left: 0;">
           <div class="form-group">
             <label>Główny widok</label>
+            <small class="file-upload-info">Maksymalny rozmiar pliku: 4MB</small>
 
             <!-- View Mode -->
             <div *ngIf="isViewMode">
@@ -207,7 +220,7 @@
             <!-- Edit Mode -->
             <ngx-dropzone *ngIf="!isViewMode" [accept]="'image/*'" (change)="onSelectPreview($event)"
                           [expandable]="true">
-              <ngx-dropzone-label>Widok produktu</ngx-dropzone-label>
+              <ngx-dropzone-label>Widok produktu (max 4MB)</ngx-dropzone-label>
 
               <ngx-dropzone-image-preview *ngFor="let f of preview" [file]="f" [removable]="true"
                                           (removed)="onRemovePreview(f)">
@@ -219,10 +232,10 @@
           </div>
         </div>
 
-
         <div class="col-md-8">
           <div class="form-group">
             <label>Wszystkie pliki</label>
+            <small class="file-upload-info">Maksymalny rozmiar pojedynczego pliku: 4MB</small>
 
             <!-- View Mode -->
             <div *ngIf="isViewMode">
@@ -237,7 +250,7 @@
 
             <!-- Edit Mode -->
             <ngx-dropzone *ngIf="!isViewMode" (change)="onSelectFiles($event)" [expandable]="true">
-              <ngx-dropzone-label>Wszystkie pliki</ngx-dropzone-label>
+              <ngx-dropzone-label>Wszystkie pliki (max 4MB każdy)</ngx-dropzone-label>
 
               <ngx-dropzone-preview *ngFor="let f of files" [removable]="true" (removed)="onRemoveFiles(f)">
                 <ngx-dropzone-label>

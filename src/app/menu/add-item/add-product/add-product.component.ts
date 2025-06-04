@@ -29,6 +29,9 @@ export class AddProductComponent implements OnInit, OnDestroy {
   buttonText: string = "Utwórz";
   toastMessage: string = "Pomyślnie utworzono";
 
+  // Stałe dla walidacji
+  private readonly MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB w bajtach
+
   materialsPrice: number = 0;
   displayedColumns: string[] = ['name', 'price', 'q'];
   dataSource: any[] = [];
@@ -65,7 +68,6 @@ export class AddProductComponent implements OnInit, OnDestroy {
     });
   }
 
-
   ngOnInit(): void {
     if (this.data) {
       this.isEditMode = !this.data.viewMode;  // Disable edit mode if viewMode is true
@@ -91,13 +93,13 @@ export class AddProductComponent implements OnInit, OnDestroy {
     this.fetchData();
   }
 
-
   ngOnDestroy(): void {
     // Revoke all object URLs to prevent memory leaks
     this.objectUrls.forEach(url => URL.revokeObjectURL(url));
     if (this.previewUrl) {
       URL.revokeObjectURL(this.previewUrl);
     }
+    this.subscription.unsubscribe();
   }
 
   fetchData(): void {
@@ -139,6 +141,45 @@ export class AddProductComponent implements OnInit, OnDestroy {
     );
   }
 
+  // POPRAWKA: Nowa metoda do formatowania czasu
+  formatPrintTime(value: string): string {
+    // Usuń wszystkie znaki oprócz cyfr
+    const digits = value.replace(/\D/g, '');
+
+    if (digits.length === 0) return '';
+    if (digits.length === 1) return digits;
+    if (digits.length === 2) return digits;
+    if (digits.length === 3) return digits.substring(0, 2) + ':' + digits.substring(2);
+    if (digits.length >= 4) return digits.substring(0, 2) + ':' + digits.substring(2, 4);
+
+    return digits;
+  }
+
+  // POPRAWKA: Metoda do obsługi wpisywania czasu
+  onDurationInput(event: any): void {
+    const input = event.target;
+    const formattedValue = this.formatPrintTime(input.value);
+    this.duration = formattedValue;
+    input.value = formattedValue;
+  }
+
+  // POPRAWKA: Walidacja rozmiaru pliku
+  private validateFileSize(file: File): boolean {
+    return file.size <= this.MAX_FILE_SIZE;
+  }
+
+  // POPRAWKA: Pokazanie błędu rozmiaru pliku
+  private showFileSizeError(fileName: string): void {
+    const maxSizeMB = this.MAX_FILE_SIZE / (1024 * 1024);
+    const errorMessage = `Plik "${fileName}" przekracza maksymalny rozmiar ${maxSizeMB}MB`;
+    this.toastService.show({
+      template: null as any,
+      classname: 'bg-danger text-light',
+      delay: 4000,
+      text: errorMessage
+    });
+  }
+
   base64ToBlob(base64Data: string, contentType: string): Blob {
     const sliceSize = 512;
     const byteCharacters = atob(base64Data);
@@ -165,7 +206,12 @@ export class AddProductComponent implements OnInit, OnDestroy {
     this.addProductRequest.eanName = product.eanName || '';
     this.addProductRequest.description = product.description || '';
     this.addProductRequest.laborCost = product.laborCost;
-    this.duration = `${product.printTime.hours}:${product.printTime.minutes}`;
+
+    // POPRAWKA: Lepsze formatowanie czasu z produktu
+    const hours = product.printTime.hours.toString().padStart(2, '0');
+    const minutes = product.printTime.minutes.toString().padStart(2, '0');
+    this.duration = `${hours}:${minutes}`;
+
     this.addProductRequest.tags = product.tags;
     this.preview = [];
     this.files = [];
@@ -272,19 +318,55 @@ export class AddProductComponent implements OnInit, OnDestroy {
     return this.preview[0].name !== this.originalPreview[0].name;
   }
 
-
+  // POPRAWKA: Zaktualizowana metoda onSelectFiles z walidacją
   onSelectFiles(event: any) {
-    const filesWithId = event.addedFiles.map((file: File) => ({
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    event.addedFiles.forEach((file: File) => {
+      if (this.validateFileSize(file)) {
+        validFiles.push(file);
+      } else {
+        invalidFiles.push(file.name);
+      }
+    });
+
+    // Dodaj tylko prawidłowe pliki
+    const filesWithId = validFiles.map((file: File) => ({
       id: null,
-      file: file
+      file: file,
+      url: URL.createObjectURL(file)
     }));
+
     this.files.push(...filesWithId);
+
+    // Pokaż błędy dla nieprawidłowych plików
+    if (invalidFiles.length > 0) {
+      invalidFiles.forEach(fileName => {
+        this.showFileSizeError(fileName);
+      });
+    }
   }
 
+  // POPRAWKA: Zaktualizowana metoda onSelectPreview z walidacją
   onSelectPreview(event: any) {
-    this.preview = [];
+    if (event.addedFiles.length === 0) return;
+
     const file = event.addedFiles[0];
+
+    if (!this.validateFileSize(file)) {
+      this.showFileSizeError(file.name);
+      return;
+    }
+
+    this.preview = [];
     this.preview = [file];
+
+    // Zwolnij poprzedni URL jeśli istnieje
+    if (this.previewUrl) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
+
     this.previewUrl = URL.createObjectURL(file);
   }
 
@@ -337,10 +419,29 @@ export class AddProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  // POPRAWKA: Poprawiona metoda parsePrintTime
   private parsePrintTime(duration: string): [number, number] {
-    const hoursStr = duration.slice(0, 2);
-    const minutesStr = duration.slice(2);
-    return [parseInt(hoursStr, 10), parseInt(minutesStr, 10)];
+    if (!duration || duration.length === 0) {
+      return [0, 0];
+    }
+
+    // Usuń dwukropek i podziel na godziny i minuty
+    const cleanDuration = duration.replace(':', '');
+
+    if (cleanDuration.length <= 2) {
+      // Jeśli mamy tylko 1-2 cyfry, traktuj jako minuty
+      const minutes = parseInt(cleanDuration, 10) || 0;
+      return [0, Math.min(minutes, 59)];
+    } else {
+      // Jeśli mamy 3-4 cyfry, pierwsze 1-2 to godziny, ostatnie 2 to minuty
+      const hoursStr = cleanDuration.slice(0, -2);
+      const minutesStr = cleanDuration.slice(-2);
+
+      const hours = parseInt(hoursStr, 10) || 0;
+      const minutes = parseInt(minutesStr, 10) || 0;
+
+      return [hours, Math.min(minutes, 59)];
+    }
   }
 
   private prepareAccessories() {
@@ -379,7 +480,6 @@ export class AddProductComponent implements OnInit, OnDestroy {
       this.showSuccess(successTpl, `Usunięto obraz podglądu`);
     }
   }
-
 
   private onEditProductSubmit(productRequest: any, successTpl: TemplateRef<any>, errorTpl: TemplateRef<any>) {
     if (!this.data) return;
