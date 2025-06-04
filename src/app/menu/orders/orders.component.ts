@@ -5,6 +5,7 @@ import {AttachInvoiceResponse, ProductService} from "../../utility/service/produ
 import {ToastService} from "../../utility/service/toast-service";
 import {InfaktService, InvoiceResponse} from "../../utility/service/infakt.service";
 import {InvoiceInfo, Order, OrderStatus, PaymentStatus} from "./model/orders-model";
+import {environment} from '../../../environments/environment';
 
 export interface OrdersPageResponse {
   content: Order[];
@@ -23,8 +24,8 @@ export interface OrdersPageResponse {
   styleUrls: ['./orders.component.css'],
   animations: [
     trigger('detailExpand', [
-      state('collapsed', style({ height: '0px', minHeight: '0' })),
-      state('expanded', style({ height: '*' })),
+      state('collapsed', style({height: '0px', minHeight: '0'})),
+      state('expanded', style({height: '*'})),
       transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)'))
     ])
   ]
@@ -63,6 +64,11 @@ export class OrdersComponent implements OnInit {
     this.fetchOrders();
   }
 
+  // Dodana metoda do obsługi rozwijania szczegółów zamówienia
+  toggleOrderDetails(order: Order): void {
+    order.isExpanded = !order.isExpanded;
+  }
+
   fetchOrders(): void {
     this.isLoading = true;
     const token = localStorage.getItem('allegro-token') || '';
@@ -75,10 +81,11 @@ export class OrdersComponent implements OnInit {
       this.filterStatus,
       this.filterDateFrom,
       this.filterDateTo,
-      this.filterMustHasInvoice
+      this.filterMustHasInvoice,
+      this.filterMarket
     ).subscribe({
       next: (response: OrdersPageResponse) => {
-        this.orders = response.content.map(order => ({ ...order, isExpanded: false }));
+        this.orders = response.content.map(order => ({...order, isExpanded: false}));
         this.applyMarketFilter(); // Apply market filter after fetching
         this.totalElements = response.totalElements;
         this.totalPages = response.totalPages;
@@ -151,7 +158,7 @@ export class OrdersComponent implements OnInit {
   // Market filter method
   filterByMarket(market: string): void {
     this.filterMarket = market;
-    this.applyMarketFilter();
+    this.fetchOrders();
   }
 
   // Pagination methods
@@ -233,7 +240,7 @@ export class OrdersComponent implements OnInit {
 
   toggleAllDetails(): void {
     this.allExpanded = !this.allExpanded;
-    this.filteredOrders = this.filteredOrders.map(order => ({ ...order, isExpanded: this.allExpanded }));
+    this.filteredOrders = this.filteredOrders.map(order => ({...order, isExpanded: this.allExpanded}));
   }
 
   showSuccess(template: TemplateRef<any>): void {
@@ -492,8 +499,25 @@ export class OrdersComponent implements OnInit {
     }
   }
 
-  getInvoiceButtonText(element: Order): string {
-    if (this.isInvoiceRequired(element)) {
+  // Metody do wyświetlania rynku
+  getMarketBadgeClass(market: string): string {
+    if (market.toLowerCase().includes('pl')) return 'market-pl';
+    if (market.toLowerCase().includes('cz')) return 'market-cz';
+    if (market.toLowerCase().includes('sk')) return 'market-sk';
+    if (market.toLowerCase().includes('hu')) return 'market-hu';
+    return 'market-other';
+  }
+
+  getMarketDisplayName(market: string): string {
+    if (market.toLowerCase().includes('pl')) return 'Allegro PL';
+    if (market.toLowerCase().includes('cz')) return 'Allegro CZ';
+    if (market.toLowerCase().includes('sk')) return 'Allegro SK';
+    if (market.toLowerCase().includes('hu')) return 'Allegro HU';
+    return market;
+  }
+
+  getInvoiceButtonText(order: Order): string {
+    if (this.isInvoiceRequired(order)) {
       return 'Wystaw fakturę wymaganą';
     }
     return 'Wystaw fakturę';
@@ -508,5 +532,13 @@ export class OrdersComponent implements OnInit {
       return 'Wyślij do allegro (wymagana)';
     }
     return 'Wyślij do allegro';
+  }
+
+  offerAllegroUrl(productId: string): string {
+    return `${environment.allegroUrl}/oferta/${productId}`;
+  }
+
+  orderAllegroUrl(orderId: string): string {
+    return `${environment.allegroSalesCenterUrl}/orders/${orderId}`;
   }
 }

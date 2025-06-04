@@ -273,7 +273,8 @@ export class ProductService {
     status?: string,
     dateFrom?: Date | null,
     dateTo?: Date | null,
-    mustHasInvoice?: boolean
+    mustHasInvoice?: boolean,
+    market?: string,
   ): Observable<OrdersPageResponse> {
     const headers = new HttpHeaders().set('allegro-api', token);
 
@@ -283,6 +284,10 @@ export class ProductService {
 
     if (search && search.trim()) {
       params = params.set('search', search.trim());
+    }
+
+    if (market && market.trim()) {
+      params = params.set('market', market.trim());
     }
 
     if (status && status.trim()) {
