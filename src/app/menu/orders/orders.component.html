@@ -8,710 +8,230 @@
   </div>
 </ng-template>
 
-<div class="container">
-  <!-- Nagłówek strony -->
-  <h1>Zarządzanie zamówieniami</h1>
-  <p class="subtitle">Przeglądaj i zarządzaj zamówieniami z różnych rynków</p>
-
-  <!-- Karty statystyk -->
-  <div class="stats-container">
-    <div class="stat-card blue">
-      <div class="stat-title">Nowe zamówienia</div>
-      <div class="stat-value">{{ getOrdersCountByStatus(OrderStatus.NEW) }}</div>
-    </div>
-    <div class="stat-card orange">
-      <div class="stat-title">W trakcie realizacji</div>
-      <div class="stat-value">{{ getOrdersCountByStatus(OrderStatus.PROCESSING) + getOrdersCountByStatus(OrderStatus.READY_FOR_SHIPMENT) }}</div>
-    </div>
-    <div class="stat-card green">
-      <div class="stat-title">Wysłane/Odebrane</div>
-      <div class="stat-value">{{ getOrdersCountByStatus(OrderStatus.SENT) + getOrdersCountByStatus(OrderStatus.PICKED_UP) }}</div>
-    </div>
-    <div class="stat-card pink">
-      <div class="stat-title">Wartość całkowita</div>
-      <div class="stat-value">{{ getTotalOrdersValue() | currency:'PLN ' }}</div>
-    </div>
-    <!-- Nowa karta dla faktur w Allegro -->
-    <div class="stat-card green">
-      <div class="stat-title">Wystawione faktury</div>
-      <div class="stat-value">{{ getOrdersWithInvoicesCount() }}</div>
-    </div>
-  </div>
-
-  <!-- Pasek akcji -->
-  <div class="actions-container">
-    <div class="search-container">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" class="search-input" placeholder="Szukaj zamówień po numerze, nazwisku klienta..."
-             (input)="applyFilter($event)">
-    </div>
-
-    <button mat-raised-button class="btn btn-primary" (click)="synchronizeOrders(successTpl)" [disabled]="isLoading">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="1 4 1 10 7 10"></polyline>
-        <polyline points="23 20 23 14 17 14"></polyline>
-        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-      </svg>
-      <span *ngIf="!isLoading">Synchronizuj</span>
-      <span *ngIf="isLoading">Synchronizowanie...</span>
-    </button>
-
-    <button mat-raised-button class="btn btn-outline" (click)="toggleAllDetails()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-      Przełącz szczegóły zamówień
-    </button>
-  </div>
-
-  <!-- Filtrowanie -->
-  <div class="filter-container">
-    <span class="filter-label">Filtruj:</span>
-
-    <select class="filter-select" (change)="filterByStatus($event)">
-      <option value="">Wszystkie statusy zamówień</option>
-      <option [value]="OrderStatus.NEW">{{ getOrderStatusTranslation(OrderStatus.NEW) }}</option>
-      <option [value]="OrderStatus.PROCESSING">{{ getOrderStatusTranslation(OrderStatus.PROCESSING) }}</option>
-      <option [value]="OrderStatus.READY_FOR_SHIPMENT">{{ getOrderStatusTranslation(OrderStatus.READY_FOR_SHIPMENT) }}</option>
-      <option [value]="OrderStatus.SENT">{{ getOrderStatusTranslation(OrderStatus.SENT) }}</option>
-      <option [value]="OrderStatus.PICKED_UP">{{ getOrderStatusTranslation(OrderStatus.PICKED_UP) }}</option>
-      <option [value]="OrderStatus.CANCELLED">{{ getOrderStatusTranslation(OrderStatus.CANCELLED) }}</option>
-      <option [value]="OrderStatus.RETURNED">{{ getOrderStatusTranslation(OrderStatus.RETURNED) }}</option>
-    </select>
-
-    <input type="date" class="filter-date" (change)="filterByDateFrom($event)">
-    <input type="date" class="filter-date" (change)="filterByDateTo($event)">
-
-    <!-- Filtr faktury -->
-    <div class="filter-checkbox-container">
-      <input type="checkbox" id="invoice-filter" (change)="toggleInvoiceFilter()">
-      <label for="invoice-filter">Tylko z fakturami</label>
-    </div>
-
-    <button class="btn btn-outline btn-filter" (click)="clearFilters()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
-        <line x1="18" y1="9" x2="12" y2="15"></line>
-        <line x1="12" y1="9" x2="18" y2="15"></line>
-      </svg>
-    </button>
-  </div>
-
-  <!-- Informacja o paginacji -->
-  <div class="pagination-info">
-    <span>Pokazano {{ orders.length }} z {{ totalElements }} zamówień</span>
-    <div class="page-size-selector">
-      <label for="page-size">Rekordów na stronę:</label>
-      <select id="page-size" [value]="pageSize" (change)="changePageSize($event)">
-        <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Loading indicator -->
-  <div *ngIf="isLoading" class="loading-container">
-    <div class="spinner-large">
-      <svg class="spinner" viewBox="0 0 50 50">
-        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-      </svg>
-    </div>
-    <p>Ładowanie zamówień...</p>
-  </div>
-
-  <!-- Tabela zamówień -->
-  <div class="orders-table-container" *ngIf="!isLoading">
-    <table class="orders-table">
-      <thead>
-      <tr>
-        <th>Login</th>
-        <th>Data sprzedaży</th>
-        <th>Rynek</th>
-        <th>Status zamówienia</th>
-        <th>Status płatności</th>
-        <th>Suma</th>
-        <th>Faktura</th>
-        <th>Allegro</th>
-      </tr>
-      </thead>
-      <tbody>
-      <ng-container *ngFor="let element of filteredOrders">
-        <!-- Wiersz zamówienia -->
-        <tr class="order-row" (click)="element.isExpanded = !element.isExpanded">
-          <td><span>{{ element.buyer.login }}</span></td>
-          <td>{{ element.saleDate | date:"dd/MM/y 'o' HH:mm:ss" }}</td>
-          <td>{{ element.market }}</td>
-
-          <!-- Status zamówienia -->
-          <td>
-            <span class="payment-status-badge" [ngClass]="getOrderStatusBadgeClass(element.status)">
-              {{ getOrderStatusTranslation(element.status) }}
-            </span>
-          </td>
-
-          <!-- Status płatności -->
-          <td>
-            <span class="payment-status-badge" [ngClass]="getPaymentStatusBadgeClass(element.paymentStatus)">
-              {{ getPaymentStatusTranslation(element.paymentStatus) }}
-            </span>
-          </td>
-
-          <td><strong>{{ element.totalAmount | currency:'PLN ' }}</strong></td>
-          <td (click)="$event.stopPropagation()">
-            <!-- Jeśli nie ma faktury i nie jest w trakcie generowania -->
-            <button *ngIf="(!element.invoices || element.invoices.length === 0) && !element.isInvoiceGenerating"
-                    class="btn btn-primary btn-sm"
-                    (click)="generateInvoice(element, successTpl)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
-                <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
-                <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-              </svg>
-              {{ getInvoiceButtonText(element) }}
-            </button>
-
-            <!-- Loader podczas generowania faktury -->
-            <div *ngIf="element.isInvoiceGenerating" class="invoice-loader">
-              <svg class="spinner" viewBox="0 0 50 50">
-                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-              </svg>
-              Generowanie...
-            </div>
-
-            <!-- Jeśli faktura już istnieje -->
-            <div *ngIf="element.invoices && element.invoices.length > 0" class="invoice-actions">
-              <div *ngFor="let invoice of element.invoices" class="invoice-item">
-                <span class="invoice-number">{{ invoice.invoiceNumber }}</span>
-                <span class="invoice-status" [ngClass]="'invoice-status-' + invoice.invoiceStatus">
-                  {{ getInvoiceStatusTranslation(invoice.invoiceStatus) }}
-                </span>
-
-                <div class="invoice-buttons">
-                  <a href="{{ invoice.invoiceUrl }}" target="_blank" class="btn btn-icon btn-sm"
-                     title="Otwórz w Infakt">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                      <polyline points="15 3 21 3 21 9"></polyline>
-                      <line x1="10" y1="14" x2="21" y2="3"></line>
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </td>
-
-          <!-- Kolumna Allegro -->
-          <td (click)="$event.stopPropagation()">
-            <!-- Jeśli nie ma faktury -->
-            <div *ngIf="!element.invoices || element.invoices.length === 0" class="allegro-no-invoice">
-              <span class="allegro-status-none">Brak faktury</span>
-            </div>
-
-            <!-- Jeśli ma faktury -->
-            <div *ngIf="element.invoices && element.invoices.length > 0" class="allegro-invoice-actions">
-              <div *ngFor="let invoice of element.invoices" class="allegro-invoice-item">
-
-                <!-- Jeśli faktura jest już dołączona do Allegro -->
-                <div *ngIf="invoice.isAttachedToAllegro" class="allegro-attached">
-                  <span class="allegro-status-attached">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Dołączona
-                  </span>
-                </div>
-
-                <!-- Jeśli faktura jest w trakcie dołączania -->
-                <div *ngIf="invoice.isAttachingToAllegro" class="allegro-attaching">
-                  <svg class="spinner-small" viewBox="0 0 50 50">
-                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-                  </svg>
-                  Dołączanie...
-                </div>
-
-                <!-- Jeśli można dołączyć fakturę -->
-                <div *ngIf="canAttachToAllegro(invoice)" class="allegro-attach-actions">
-                  <button class="btn btn-primary btn-sm"
-                          title="Dołącz fakturę do Allegro jako dowód zakupu"
-                          (click)="attachInvoiceToAllegro(element, invoice, successTpl)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21.5 2l-8 20L9 14l-7-3z"></path>
-                    </svg>
-                    {{ sendToAllegroButtonText(element) }}
-                  </button>
-                </div>
-
-                <!-- Jeśli faktura nie może być dołączona -->
-                <div
-                  *ngIf="!canAttachToAllegro(invoice) && !invoice.isAttachedToAllegro && !invoice.isAttachingToAllegro"
-                  class="allegro-cant-attach">
-                  <span class="allegro-status-pending"
-                        title="Faktura musi być w statusie 'Wystawiona', 'Wysłana' lub 'Opłacona'">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="8" x2="12" y2="12"></line>
-                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    Oczekuje
-                  </span>
-                </div>
-
-                <!-- Jeśli wystąpił błąd -->
-                <div *ngIf="invoice.allegroAttachmentError" class="allegro-error">
-                  <span class="allegro-status-error" [title]="invoice.allegroAttachmentError">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="15" y1="9" x2="9" y2="15"></line>
-                      <line x1="9" y1="9" x2="15" y2="15"></line>
-                    </svg>
-                    Błąd
-                  </span>
-                  <button class="btn btn-icon btn-sm retry-btn"
-                          title="Spróbuj ponownie"
-                          (click)="attachInvoiceToAllegro(element, invoice, successTpl)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="1 4 1 10 7 10"></polyline>
-                      <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </td>
-        </tr>
-
-        <!-- Szczegóły zamówienia -->
-        <tr class="details-row" [class.expanded]="element.isExpanded">
-          <td colspan="8" class="details-cell">
-            <div class="details-container">
-              <div class="details-grid">
-                <!-- Lewa kolumna: Informacje o zamówieniu i produktach -->
-                <div class="details-column">
-                  <!-- Dane zamawiającego -->
-                  <div class="details-section">
-                    <div class="details-section-header">
-                      Dane zamawiającego
-                    </div>
-                    <div class="details-section-content">
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Kupujący:</span>
-                          {{ element.buyer.firstName }} {{ element.buyer.lastName }}
-                        </div>
-                      </div>
-
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Faktura:</span>
-                          Wymagana: {{element.invoice.invoiceRequired ? 'Tak' : 'Nie'}} <br>
-                          NIP: {{ element.invoice.nip || 'Brak' }} <br>
-                        </div>
-                      </div>
-
-
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                              d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">E-mail:</span>
-                          {{ element.buyer.email }}
-                        </div>
-                      </div>
-
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                              d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Telefon:</span>
-                          {{ element.buyer.phoneNumber }}
-                        </div>
-                      </div>
-
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                            <path
-                              d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Język kupującego:</span>
-                          {{ element.buyer.language }}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Sposób/dane dostawy -->
-                  <div class="details-section">
-                    <div class="details-section-header">
-                      Sposób/dane dostawy
-                    </div>
-                    <div class="details-section-content">
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                            <line x1="2" y1="9" x2="22" y2="9"></line>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Metoda:</span>
-                          {{ element.delivery.methodName }}
-                        </div>
-                      </div>
-
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Czas na wysyłkę do:</span>
-                          {{ element.delivery.dispatchTimeTo | date:'short' }}
-                        </div>
-                      </div>
-
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Przewidywana dostawa:</span>
-                          {{ element.delivery.deliveryTimeTo | date:'short' }}
-                        </div>
-                      </div>
-
-                      <div class="details-field">
-                        <div class="details-field-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="1" x2="12" y2="23"></line>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                          </svg>
-                        </div>
-                        <div class="details-field-content">
-                          <span class="details-field-label">Koszt dostawy:</span>
-                          {{ element.delivery.cost | currency:'PLN' }}
-                        </div>
-                      </div>
-
-                      <div class="details-address">
-                        <div class="details-address-line"><strong>Adres dostawy:</strong></div>
-                        <div class="details-address-line">{{ element.buyer.firstName }} {{ element.buyer.lastName }}
-                        </div>
-                        <div class="details-address-line">{{ element.delivery.deliveryAddress?.street || '– brak ulicy –' }}</div>
-                        <div
-                          class="details-address-line">{{ element.delivery.deliveryAddress?.postCode }} {{ element.delivery.deliveryAddress?.city }} {{ element.delivery.deliveryAddress?.countryCode }}
-                        </div>
-                        <div class="details-address-line">Tel: {{ element.buyer.phoneNumber }}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Środkowa kolumna: Dane zamówienia -->
-                <div class="details-column">
-                  <div class="details-section">
-                    <div class="details-section-header">
-                      Dane zamówienia
-                    </div>
-                    <div class="details-section-content">
-                      <h3>Data sprzedaży: {{ element.saleDate | date:"LLLL d, y 'o' HH:mm:ss" }}</h3>
-                      <p><strong>id zamówienia:</strong> {{ element.orderId }}</p>
-                      <a href="https://salescenter.allegro.com.allegrosandbox.pl/orders/{{ element.orderId }}?sellerId=106948374" target="_blank" class="btn btn-sm">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                          <polyline points="15 3 21 3 21 9"></polyline>
-                          <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
-                        Otwórz zamówienie w allegro
-                      </a>
-
-                      <p><strong>Rynek:</strong> {{ element.market }}</p>
-
-                      <!-- Statusy w szczegółach -->
-                      <div class="order-status-details">
-                        <p><strong>Status zamówienia:</strong>
-                          <span class="status-badge" [ngClass]="getOrderStatusBadgeClass(element.status)">
-                            {{ getOrderStatusTranslation(element.status) }}
-                          </span>
-                        </p>
-                        <p><strong>Status płatności:</strong>
-                          <span class="payment-status-badge" [ngClass]="getPaymentStatusBadgeClass(element.paymentStatus)">
-                            {{ getPaymentStatusTranslation(element.paymentStatus) }}
-                          </span>
-                        </p>
-                      </div>
-
-                      <!-- Sekcja faktury w szczegółach -->
-                      <div *ngIf="element.invoices && element.invoices.length > 0" class="invoice-details">
-                        <h3>Faktury:</h3>
-                        <div *ngFor="let invoice of element.invoices" class="invoice-detail-item">
-                          <div class="invoice-detail-header">
-                            <span class="invoice-detail-number">{{ invoice.invoiceNumber }}</span>
-                            <span class="invoice-detail-date">{{ invoice.createdAt | date:'short' }}</span>
-                          </div>
-                          <div class="invoice-detail-status">
-                            Status: <span [ngClass]="'invoice-status-' + invoice.invoiceStatus">
-                                {{ getInvoiceStatusTranslation(invoice.invoiceStatus) }}
-                              </span>
-                          </div>
-
-                          <!-- Status Allegro -->
-                          <div class="invoice-allegro-status">
-                            <span *ngIf="invoice.isAttachedToAllegro" class="allegro-status-attached-detail">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                              </svg>
-                              Dołączona do Allegro
-                            </span>
-                            <span *ngIf="!invoice.isAttachedToAllegro && !invoice.isAttachingToAllegro"
-                                  class="allegro-status-not-attached">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                              </svg>
-                              Nie dołączona do Allegro
-                            </span>
-                          </div>
-
-                          <div class="invoice-detail-actions">
-                            <a href="{{ invoice.invoiceUrl }}" target="_blank" class="btn btn-sm">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                <polyline points="15 3 21 3 21 9"></polyline>
-                                <line x1="10" y1="14" x2="21" y2="3"></line>
-                              </svg>
-                              Otwórz w Infakt
-                            </a>
-
-                            <!-- Przycisk dołączenia do Allegro w szczegółach -->
-                            <button *ngIf="canAttachToAllegro(invoice)"
-                                    class="btn btn-primary btn-sm"
-                                    (click)="attachInvoiceToAllegro(element, invoice, successTpl)">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21.5 2l-8 20L9 14l-7-3z"></path>
-                              </svg>
-                              Wyślij do Allegro
-                            </button>
-
-                            <!-- Loader dołączania do Allegro -->
-                            <div *ngIf="invoice.isAttachingToAllegro" class="allegro-attaching-detail">
-                              <svg class="spinner-small" viewBox="0 0 50 50">
-                                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-                              </svg>
-                              Dołączanie do Allegro...
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- Przycisk do generowania faktury w szczegółach -->
-                      <div *ngIf="(!element.invoices || element.invoices.length === 0) && !element.isInvoiceGenerating"
-                           class="invoice-generate-detail">
-                        <button class="btn btn-primary" (click)="generateInvoice(element, successTpl)">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                              d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                          </svg>
-                          Wystaw fakturę za zakup
-                        </button>
-                      </div>
-
-                      <!-- Loader podczas generowania faktury w szczegółach -->
-                      <div *ngIf="element.isInvoiceGenerating" class="invoice-loader-detail">
-                        <svg class="spinner" viewBox="0 0 50 50">
-                          <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-                        </svg>
-                        Generowanie faktury...
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Produkty -->
-                  <div class="details-section">
-                    <div class="details-section-header">
-                      Zamówione produkty
-                    </div>
-                    <div class="details-section-content">
-                      <table class="details-table">
-                        <thead>
-                        <tr>
-                          <th>Ilość</th>
-                          <th>Produkt</th>
-                          <th>Cena</th>
-                          <th>Łącznie</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr *ngFor="let product of element.products">
-                          <td>{{ product.quantity }}</td>
-                          <td>
-                            <a [href]="'https://allegro.pl.allegrosandbox.pl/oferta/' + product.productId"
-                               target="_blank" rel="noopener noreferrer" class="product-link">
-                              {{ product.name }}
-                            </a>
-                          </td>
-                          <td>{{ product.unitPrice | currency:'PLN ' }}</td>
-                          <td>{{ product.totalPrice | currency:'PLN ' }}</td>
-                        </tr>
-                        </tbody>
-                      </table>
-                      <h3><strong>Suma:</strong> {{ element.totalAmount | currency:'PLN ' }}</h3>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="details-footer">
-                <button class="collapse-btn" (click)="element.isExpanded = false">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                       stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="18 15 12 9 6 15"></polyline>
-                  </svg>
-                  Zwiń szczegóły
-                </button>
-              </div>
-            </div>
-          </td>
-        </tr>
-      </ng-container>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Paginacja -->
-  <div class="pagination-container" *ngIf="!isLoading && totalPages > 1">
-    <div class="pagination-controls">
-      <!-- Przycisk pierwsza strona -->
-      <button
-        class="pagination-btn"
-        [disabled]="currentPage === 0"
-        (click)="goToFirstPage()"
-        title="Pierwsza strona">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="19 20 9 12 19 4 19 20"></polygon>
-          <line x1="5" y1="19" x2="5" y2="5"></line>
-        </svg>
-      </button>
-
-      <!-- Przycisk poprzednia strona -->
-      <button
-        class="pagination-btn"
-        [disabled]="currentPage === 0"
-        (click)="goToPreviousPage()"
-        title="Poprzednia strona">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-      </button>
-
-      <!-- Numery stron -->
-      <div class="page-numbers">
-        <button
-          *ngFor="let pageNum of getPageNumbers()"
-          class="pagination-btn page-number"
-          [class.active]="pageNum === currentPage"
-          (click)="goToPage(pageNum)">
-          {{ pageNum + 1 }}
+<div class="layout">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="page-title">
+        <div class="icon">
+          <i class="bx bx-cart"></i>
+        </div>
+        <h1>Zamówienia</h1>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button
+                class="btn btn-primary"
+                (click)="synchronizeOrders(successTpl)"
+                [disabled]="isLoading">
+          <i class="bx bx-sync" [class.spinning]="isLoading"></i>
+          <span *ngIf="!isLoading">Synchronizuj</span>
+          <span *ngIf="isLoading">Synchronizowanie...</span>
         </button>
       </div>
-
-      <!-- Przycisk następna strona -->
-      <button
-        class="pagination-btn"
-        [disabled]="currentPage === totalPages - 1"
-        (click)="goToNextPage()"
-        title="Następna strona">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      </button>
-
-      <!-- Przycisk ostatnia strona -->
-      <button
-        class="pagination-btn"
-        [disabled]="currentPage === totalPages - 1"
-        (click)="goToLastPage()"
-        title="Ostatnia strona">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="5 4 15 12 5 20 5 4"></polygon>
-          <line x1="19" y1="5" x2="19" y2="19"></line>
-        </svg>
-      </button>
     </div>
+  </header>
 
-    <!-- Informacja o stronach -->
-    <div class="pagination-summary">
-      Strona {{ currentPage + 1 }} z {{ totalPages }}
-    </div>
-  </div>
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Stats Grid -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i class="bx bx-shopping-bag"></i>
+        </div>
+        <div class="stat-number">{{ totalElements }}</div>
+        <div class="stat-label">Wszystkie zamówienia</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <i class="bx bx-time"></i>
+        </div>
+        <div class="stat-number">{{ getOrdersCountByStatus(OrderStatus.PROCESSING) + getOrdersCountByStatus(OrderStatus.READY_FOR_SHIPMENT) }}</div>
+        <div class="stat-label">Do realizacji</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <i class="bx bx-check-circle"></i>
+        </div>
+        <div class="stat-number">{{ getOrdersCountByStatus(OrderStatus.SENT) + getOrdersCountByStatus(OrderStatus.PICKED_UP) }}</div>
+        <div class="stat-label">Zrealizowane</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <i class="bx bx-receipt"></i>
+        </div>
+        <div class="stat-number">{{ getOrdersWithInvoicesCount() }}</div>
+        <div class="stat-label">Z fakturami</div>
+      </div>
+    </section>
+
+    <!-- Controls -->
+    <section class="controls-section">
+      <div class="controls-grid">
+        <div class="search-wrapper">
+          <i class="bx bx-search search-icon"></i>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Szukaj po numerze zamówienia, nazwisku kupującego..."
+            (input)="applyFilter($event)"
+          >
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <div class="filter-group">
+          <label class="filter-label">Rynek</label>
+          <div class="market-filter">
+            <div class="market-chip" [class.active]="filterMarket === ''" (click)="filterByMarket('')">
+              Wszystkie
+            </div>
+            <div class="market-chip" [class.active]="filterMarket === 'pl'" (click)="filterByMarket('pl')">
+              <div class="market-flag flag-pl"></div>
+              Polska
+            </div>
+            <div class="market-chip" [class.active]="filterMarket === 'cz'" (click)="filterByMarket('cz')">
+              <div class="market-flag flag-cz"></div>
+              Czechy
+            </div>
+            <div class="market-chip" [class.active]="filterMarket === 'sk'" (click)="filterByMarket('sk')">
+              <div class="market-flag flag-sk"></div>
+              Słowacja
+            </div>
+            <div class="market-chip" [class.active]="filterMarket === 'hu'" (click)="filterByMarket('hu')">
+              <div class="market-flag flag-hu"></div>
+              Węgry
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Status zamówienia</label>
+          <select class="filter-select" (change)="filterByStatus($event)">
+            <option value="">Wszystkie statusy</option>
+            <option [value]="OrderStatus.NEW">{{ getOrderStatusTranslation(OrderStatus.NEW) }}</option>
+            <option [value]="OrderStatus.PROCESSING">{{ getOrderStatusTranslation(OrderStatus.PROCESSING) }}</option>
+            <option [value]="OrderStatus.READY_FOR_SHIPMENT">{{ getOrderStatusTranslation(OrderStatus.READY_FOR_SHIPMENT) }}</option>
+            <option [value]="OrderStatus.SENT">{{ getOrderStatusTranslation(OrderStatus.SENT) }}</option>
+            <option [value]="OrderStatus.PICKED_UP">{{ getOrderStatusTranslation(OrderStatus.PICKED_UP) }}</option>
+            <option [value]="OrderStatus.CANCELLED">{{ getOrderStatusTranslation(OrderStatus.CANCELLED) }}</option>
+            <option [value]="OrderStatus.RETURNED">{{ getOrderStatusTranslation(OrderStatus.RETURNED) }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Data od</label>
+          <input type="date" class="filter-input" (change)="filterByDateFrom($event)">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Data do</label>
+          <input type="date" class="filter-input" (change)="filterByDateTo($event)">
+        </div>
+
+        <button class="btn btn-outline" (click)="clearFilters()">
+          <i class="bx bx-filter-alt"></i>
+          Wyczyść
+        </button>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section class="table-section">
+      <div class="table-header">
+        <span>Wyświetlanie {{ orders.length }} z {{ totalElements }} zamówień</span>
+        <div class="page-size-selector">
+          <span>Pokaż:</span>
+          <select class="page-size-select" [value]="pageSize" (change)="changePageSize($event)">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+          <span>pozycji</span>
+        </div>
+      </div>
+
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner-large">
+          <i class="bx bx-loader-alt spinner"></i>
+        </div>
+        <p>Ładowanie zamówień...</p>
+      </div>
+
+      <!-- Orders Table -->
+      <table class="orders-table" *ngIf="!isLoading">
+        <thead>
+        <tr>
+          <th>Kupujący</th>
+          <th>Rynek</th>
+          <th>Data</th>
+          <th>Status</th>
+          <th>Wartość</th>
+          <th>Faktura</th>
+          <th>Allegro</th>
+        </tr>
+        </thead>
+        <tbody>
+        <app-order-item
+          *ngFor="let order of filteredOrders"
+          [order]="order"
+          [successTemplate]="successTpl"
+          (generateInvoice)="generateInvoice($event, successTpl)"
+          (attachToAllegro)="attachInvoiceToAllegro($event.order, $event.invoice, successTpl)">
+        </app-order-item>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="!isLoading && totalPages > 1">
+        <div class="pagination-info">
+          Strona {{ currentPage + 1 }} z {{ totalPages }} ({{ totalElements }} pozycji)
+        </div>
+        <div class="pagination-controls">
+          <button
+            class="page-btn"
+            [disabled]="currentPage === 0"
+            (click)="goToFirstPage()"
+            title="Pierwsza strona">
+            <i class="bx bx-chevron-left"></i>
+            <i class="bx bx-chevron-left"></i>
+          </button>
+
+          <button
+            class="page-btn"
+            [disabled]="currentPage === 0"
+            (click)="goToPreviousPage()"
+            title="Poprzednia strona">
+            <i class="bx bx-chevron-left"></i>
+          </button>
+
+          <div class="page-numbers">
+            <button
+              *ngFor="let pageNum of getPageNumbers()"
+              class="page-btn"
+              [class.active]="pageNum === currentPage"
+              (click)="goToPage(pageNum)">
+              {{ pageNum + 1 }}
+            </button>
+          </div>
+
+          <button
+            class="page-btn"
+            [disabled]="currentPage === totalPages - 1"
+            (click)="goToNextPage()"
+            title="Następna strona">
+            <i class="bx bx-chevron-right"></i>
+          </button>
+
+          <button
+            class="page-btn"
+            [disabled]="currentPage === totalPages - 1"
+            (click)="goToLastPage()"
+            title="Ostatnia strona">
+            <i class="bx bx-chevron-right"></i>
+            <i class="bx bx-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
 </div>

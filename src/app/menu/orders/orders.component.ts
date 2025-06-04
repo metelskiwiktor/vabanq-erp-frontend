@@ -1,4 +1,4 @@
-// orders.component.ts - Updated with enum support
+// orders.component.ts - Updated with new structure
 import {Component, inject, OnInit, TemplateRef} from '@angular/core';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {AttachInvoiceResponse, ProductService} from "../../utility/service/product.service";
@@ -41,7 +41,7 @@ export class OrdersComponent implements OnInit {
 
   // Pagination properties
   currentPage: number = 0;
-  pageSize: number = 10;
+  pageSize: number = 25;
   totalElements: number = 0;
   totalPages: number = 0;
   pageSizeOptions: number[] = [10, 25, 50, 100];
@@ -50,6 +50,7 @@ export class OrdersComponent implements OnInit {
   // Filtry
   filterText: string = '';
   filterStatus: string = '';
+  filterMarket: string = '';
   filterDateFrom: Date | null = null;
   filterDateTo: Date | null = null;
   filterMustHasInvoice: boolean = false;
@@ -78,7 +79,7 @@ export class OrdersComponent implements OnInit {
     ).subscribe({
       next: (response: OrdersPageResponse) => {
         this.orders = response.content.map(order => ({ ...order, isExpanded: false }));
-        this.filteredOrders = [...this.orders];
+        this.applyMarketFilter(); // Apply market filter after fetching
         this.totalElements = response.totalElements;
         this.totalPages = response.totalPages;
         this.currentPage = response.number;
@@ -93,6 +94,16 @@ export class OrdersComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  applyMarketFilter(): void {
+    if (this.filterMarket === '') {
+      this.filteredOrders = [...this.orders];
+    } else {
+      this.filteredOrders = this.orders.filter(order =>
+        order.market.toLowerCase().includes(this.filterMarket.toLowerCase())
+      );
+    }
   }
 
   fetchInvoicesForOrders(): void {
@@ -129,12 +140,18 @@ export class OrdersComponent implements OnInit {
         });
 
         // Update filtered orders after invoices are loaded
-        this.filteredOrders = [...this.orders];
+        this.applyMarketFilter();
       },
       error: (error) => {
         console.error('Failed to fetch invoices:', error);
       }
     });
+  }
+
+  // Market filter method
+  filterByMarket(market: string): void {
+    this.filterMarket = market;
+    this.applyMarketFilter();
   }
 
   // Pagination methods
@@ -229,8 +246,6 @@ export class OrdersComponent implements OnInit {
   }
 
   generateInvoice(order: Order, template: TemplateRef<any>): void {
-    event?.stopPropagation();
-
     order.isInvoiceGenerating = true;
 
     this.infaktService.generateInvoice(order).subscribe({
@@ -272,8 +287,6 @@ export class OrdersComponent implements OnInit {
   }
 
   attachInvoiceToAllegro(order: Order, invoice: InvoiceInfo, template: TemplateRef<any>): void {
-    event?.stopPropagation();
-
     if (invoice.invoiceStatus !== 'issued' && invoice.invoiceStatus !== 'sent' && invoice.invoiceStatus !== 'paid') {
       this.toastService.show({
         template: template,
@@ -358,6 +371,7 @@ export class OrdersComponent implements OnInit {
   clearFilters(): void {
     this.filterText = '';
     this.filterStatus = '';
+    this.filterMarket = '';
     this.filterDateFrom = null;
     this.filterDateTo = null;
     this.filterMustHasInvoice = false;
@@ -366,14 +380,11 @@ export class OrdersComponent implements OnInit {
     const statusSelect = document.querySelector('.filter-select') as HTMLSelectElement;
     if (statusSelect) statusSelect.value = '';
 
-    const dateInputs = document.querySelectorAll('.filter-date') as NodeListOf<HTMLInputElement>;
+    const dateInputs = document.querySelectorAll('.filter-input') as NodeListOf<HTMLInputElement>;
     dateInputs.forEach(input => input.value = '');
 
     const searchInput = document.querySelector('.search-input') as HTMLInputElement;
     if (searchInput) searchInput.value = '';
-
-    const invoiceCheckbox = document.querySelector('#invoice-filter') as HTMLInputElement;
-    if (invoiceCheckbox) invoiceCheckbox.checked = false;
 
     this.fetchOrders();
   }
@@ -409,6 +420,7 @@ export class OrdersComponent implements OnInit {
     return statusMap[status] || status;
   }
 
+  // Tłumaczenia dla statusów płatności
   getPaymentStatusTranslation(status: PaymentStatus): string {
     const statusMap: { [key in PaymentStatus]: string } = {
       [PaymentStatus.BOUGHT]: 'Zlecenie kupna',
@@ -479,12 +491,14 @@ export class OrdersComponent implements OnInit {
         return 'payment-unknown';
     }
   }
+
   getInvoiceButtonText(element: Order): string {
     if (this.isInvoiceRequired(element)) {
       return 'Wystaw fakturę wymaganą';
     }
     return 'Wystaw fakturę';
   }
+
   isInvoiceRequired(order: Order): boolean {
     return order.invoice?.invoiceRequired === true;
   }
