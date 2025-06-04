@@ -1,4 +1,5 @@
-<!-- menu.component.html -->
+<!-- src/app/menu/menu.component.html -->
+<!-- Dodano wskaźnik statusu Allegro w logo-details -->
 <div class="sidebar open">
   <div class="logo-details">
     <i class="bx bxl-c-plus-plus icon"></i>
@@ -96,6 +97,30 @@
           <span class="links_name">Koszta</span>
         </a>
         <span class="tooltip">Koszta</span>
+      </li>
+    </ul>
+
+    <!-- Integracje -->
+    <li class="integrations-section">
+      <div class="integrations-header">
+        <i class="bx bx-link-alt"></i>
+        <span class="links_name">Integracje</span>
+      </div>
+      <span class="tooltip">Integracje</span>
+    </li>
+
+    <ul class="subcategories">
+      <li>
+        <div class="integration-item" (click)="onAllegroClick()">
+          <div class="integration-info">
+            <i class="bx bxl-shopify"></i>
+            <span class="links_name">Allegro</span>
+          </div>
+          <div class="allegro-status-indicator" [ngClass]="getAllegroStatusClass()" [title]="getAllegroStatusTooltip()">
+            <div class="status-dot"></div>
+          </div>
+        </div>
+        <span class="tooltip">{{ getAllegroStatusTooltip() }}</span>
       </li>
     </ul>
 

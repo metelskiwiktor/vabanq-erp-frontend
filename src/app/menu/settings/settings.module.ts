@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {SettingsComponent} from "./settings.component";
-
-
+import { SettingsComponent } from "./settings.component";
+import { AllegroTokenService } from "../../utility/service/allegro-token.service";
 
 @NgModule({
   declarations: [
@@ -10,6 +9,9 @@ import {SettingsComponent} from "./settings.component";
   ],
   imports: [
     CommonModule
+  ],
+  providers: [
+    AllegroTokenService
   ]
 })
 export class SettingsModule { }

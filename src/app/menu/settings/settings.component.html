@@ -1,8 +1,138 @@
-<div class="container-fluid" style="width: 100%;">
+<div class="container-fluid" style="width: 100%; padding: 20px;">
   <h1>Ustawienia</h1>
-  <button type="button" class="btn btn-warning btn-lg" (click)="connectAllegro()" *ngIf="!connectingAllegro">Połącz się z allegro</button>
-  <button class="btn btn-warning btn-lg" type="button" disabled *ngIf="connectingAllegro">
-    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-    Łączenie z allegro
-  </button>
+
+  <!-- Allegro Integration Section -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3>Integracja z Allegro</h3>
+    </div>
+    <div class="card-body">
+
+      <!-- Connection Status -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="status-indicator" [ngClass]="getStatusClass()">
+            <div class="status-circle"></div>
+            <span class="status-text">Status: {{ getStatusText() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Token Details -->
+      <div class="row" *ngIf="tokenDetails && tokenDetails.isValid">
+        <div class="col-md-6">
+          <div class="token-info">
+            <h5>Szczegóły tokena</h5>
+            <div class="info-row" *ngIf="tokenDetails.user_name">
+              <span class="label">Użytkownik:</span>
+              <span class="value">{{ tokenDetails.user_name }}</span>
+            </div>
+            <div class="info-row" *ngIf="tokenDetails.client_id">
+              <span class="label">Client ID:</span>
+              <span class="value">{{ tokenDetails.client_id }}</span>
+            </div>
+            <div class="info-row" *ngIf="tokenDetails.scope">
+              <span class="label">Uprawnienia:</span>
+              <span class="value">{{ tokenDetails.scope }}</span>
+            </div>
+            <div class="info-row" *ngIf="tokenDetails.iss">
+              <span class="label">Wydawca:</span>
+              <span class="value">{{ tokenDetails.iss }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="token-info">
+            <h5>Ważność tokena</h5>
+            <div class="info-row">
+              <span class="label">Wygasa:</span>
+              <span class="value">{{ formatExpiryDate(tokenDetails.expiryDate) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Pozostało:</span>
+              <span class="value" [ngClass]="{ 'text-warning': tokenDetails.status === 'warning', 'text-danger': tokenDetails.status === 'expired' }">
+                {{ getTimeRemaining() }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Token Info -->
+      <div class="row" *ngIf="!tokenDetails || !tokenDetails.isValid">
+        <div class="col-md-12">
+          <div class="alert alert-info">
+            <i class="bx bx-info-circle"></i>
+            Brak aktywnego połączenia z Allegro. Połącz się aby korzystać z funkcji integracji.
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="d-flex gap-2">
+            <!-- Connect Button -->
+            <button
+              type="button"
+              class="btn btn-warning btn-lg"
+              (click)="connectAllegro()"
+              *ngIf="!connectingAllegro && (!tokenDetails || !tokenDetails.isValid)"
+            >
+              <i class="bx bx-link"></i>
+              Połącz się z Allegro
+            </button>
+
+            <!-- Connecting Button -->
+            <button
+              class="btn btn-warning btn-lg"
+              type="button"
+              disabled
+              *ngIf="connectingAllegro"
+            >
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              Łączenie z Allegro...
+            </button>
+
+            <!-- Refresh Button -->
+            <button
+              type="button"
+              class="btn btn-success btn-lg"
+              (click)="refreshToken()"
+              *ngIf="!connectingAllegro && tokenDetails && (tokenDetails.status === 'warning' || tokenDetails.status === 'expired')"
+            >
+              <i class="bx bx-refresh"></i>
+              Odśwież token
+            </button>
+
+            <!-- Disconnect Button -->
+            <button
+              type="button"
+              class="btn btn-danger btn-lg"
+              (click)="disconnectAllegro()"
+              *ngIf="tokenDetails && tokenDetails.isValid"
+            >
+              <i class="bx bx-unlink"></i>
+              Odłącz
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning Messages -->
+      <div class="row mt-3" *ngIf="tokenDetails">
+        <div class="col-md-12">
+          <div class="alert alert-warning" *ngIf="tokenDetails.status === 'warning'">
+            <i class="bx bx-time"></i>
+            <strong>Uwaga!</strong> Token wygaśnie za mniej niż godzinę. Rozważ odświeżenie połączenia.
+          </div>
+          <div class="alert alert-danger" *ngIf="tokenDetails.status === 'expired'">
+            <i class="bx bx-error"></i>
+            <strong>Token wygasł!</strong> Musisz ponownie połączyć się z Allegro aby korzystać z funkcji integracji.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
