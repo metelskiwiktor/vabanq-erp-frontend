@@ -20,6 +20,7 @@ export enum OrderStatus {
 }
 
 export interface BuyerOrder {
+  login: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -80,7 +81,7 @@ export interface Order {
   products: ProductOrder[];
   totalAmount: number;
   sellerId: string;
-  invoice?: InvoiceOrder;
+  invoice: InvoiceOrder;
   isExpanded?: boolean;
   invoices?: InvoiceInfo[];
   isInvoiceGenerating?: boolean;
