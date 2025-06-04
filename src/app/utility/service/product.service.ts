@@ -21,6 +21,17 @@ export interface AttachInvoiceResponse {
   message: string;
 }
 
+export interface LinkedOffersPageResponse {
+  content: any[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -207,10 +218,28 @@ export class ProductService {
     );
   }
 
-  getLinkedOffers(token: string) {
-    return this.http.get<any>(`${this.apiAllegroUrl}/offers`, {
-      headers: new HttpHeaders().set('allegro-api', token)
-    });
+  getLinkedOffersPaginated(
+    token: string,
+    page: number = 0,
+    size: number = 10,
+    search?: string
+  ): Observable<LinkedOffersPageResponse> {
+    const headers = new HttpHeaders().set('allegro-api', token);
+
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    if (search && search.trim()) {
+      params = params.set('search', search.trim());
+    }
+
+    return this.http.get<LinkedOffersPageResponse>(`${this.apiAllegroUrl}/offers`, {
+      headers,
+      params
+    }).pipe(
+      tap((response) => console.log('Fetched paginated linked offers:', response))
+    );
   }
 
   updateOfferAssignment(offerId: string, productRequests: any[], packagingRequests?: any[]) {

@@ -20,10 +20,6 @@
         <h1>Allegro Synchronized</h1>
       </div>
       <div class="header-actions">
-        <button mat-button class="btn btn-outline">
-          <i class="bx bx-download"></i>
-          Export
-        </button>
         <button mat-raised-button color="primary" class="btn btn-primary" (click)="synchronizeOffers(successTpl)">
           <i class="bx bx-sync" [class.spinning]="isLoading"></i>
           Synchronizuj
@@ -44,33 +40,27 @@
             class="search-input"
             placeholder="Szukaj po nazwie, numerze oferty lub EAN..."
             [(ngModel)]="searchTerm"
-            (input)="onSearch()"
+            (input)="onSearchChange()"
           >
-        </div>
-        <div class="header-actions">
-          <button mat-button class="btn btn-outline">
-            <i class="bx bx-filter"></i>
-            Filtry
-          </button>
         </div>
       </div>
 
       <div class="stats-row">
         <div class="stat-item">
+          <span class="stat-number">{{ totalElements }}</span>
+          <div class="stat-label">Wszystkie oferty</div>
+        </div>
+        <div class="stat-item">
           <span class="stat-number">{{ getActiveOffersCount() }}</span>
-          <div class="stat-label">Aktywne</div>
+          <div class="stat-label">Aktywne oferty</div>
         </div>
         <div class="stat-item">
-          <span class="stat-number">{{ getInactiveOffersCount() }}</span>
-          <div class="stat-label">Nieaktywne</div>
+          <span class="stat-number">{{ getTotalAvailable() }}</span>
+          <div class="stat-label">Dostępne sztuki</div>
         </div>
         <div class="stat-item">
-          <span class="stat-number">{{ getTotalQuantity() }}</span>
-          <div class="stat-label">Łączna ilość</div>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number">{{ getTotalValue() | currency:'PLN':'symbol':'1.0-0' }}</span>
-          <div class="stat-label">Wartość</div>
+          <span class="stat-number">{{ getTotalSold() }}</span>
+          <div class="stat-label">Sprzedane sztuki</div>
         </div>
       </div>
     </section>
@@ -78,7 +68,7 @@
     <!-- Table -->
     <section class="table-section">
       <div class="table-header">
-        <span>Wyświetlanie {{ filteredOffers.length }} z {{ offers.length }} ofert</span>
+        <span>Wyświetlanie {{ (currentPage * pageSize) + 1 }}-{{ Math.min((currentPage + 1) * pageSize, totalElements) }} z {{ totalElements }} ofert</span>
       </div>
 
       <div *ngIf="isLoading" class="loading-state">
@@ -200,10 +190,29 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
       </table>
 
-      <!-- Simple pagination placeholder for future -->
+      <!-- Pagination -->
       <div *ngIf="!isLoading && filteredOffers.length > 0" class="pagination">
         <div class="pagination-info">
-          Wyświetlane wszystkie oferty ({{ filteredOffers.length }})
+          Strona {{ currentPage + 1 }} z {{ totalPages }} ({{ totalElements }} pozycji)
+        </div>
+        <div class="pagination-controls">
+          <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 0">
+            <i class="bx bx-chevron-left"></i>
+          </button>
+
+          <ng-container *ngFor="let page of getPageNumbers()">
+            <button *ngIf="page !== '...'"
+                    class="page-btn"
+                    [class.active]="page === currentPage + 1"
+                    (click)="goToPage(+page - 1)">
+              {{ page }}
+            </button>
+            <span *ngIf="page === '...'" class="pagination-dots">...</span>
+          </ng-container>
+
+          <button class="page-btn" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">
+            <i class="bx bx-chevron-right"></i>
+          </button>
         </div>
       </div>
     </section>

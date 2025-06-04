@@ -1,10 +1,11 @@
 // allegro-synchronized.component.ts
 
 import {Component, inject, OnInit, TemplateRef} from '@angular/core';
-import {ProductService} from "../../utility/service/product.service";
+import {ProductService, LinkedOffersPageResponse} from "../../utility/service/product.service";
 import {MatDialog} from "@angular/material/dialog";
 import {OfferEditDialogComponent} from "./offer-edit-dialog/offer-edit-dialog.component";
 import {ToastService} from "../../utility/service/toast-service";
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 export interface Offer {
   number: number;
@@ -42,10 +43,18 @@ export interface Offer {
 })
 export class AllegroSynchronizedComponent implements OnInit {
   toastSuccessMessage: string = '';
-  offers: Offer[] = [];
   filteredOffers: Offer[] = [];
   searchTerm: string = '';
   isLoading: boolean = false;
+
+  // Pagination properties
+  currentPage: number = 0;
+  pageSize: number = 10;
+  totalElements: number = 0;
+  totalPages: number = 0;
+
+  // Search debouncing
+  private searchSubject = new Subject<string>();
 
   toastService = inject(ToastService);
 
@@ -60,10 +69,22 @@ export class AllegroSynchronizedComponent implements OnInit {
     'actions'
   ];
 
+  // Expose Math for template
+  Math = Math;
+
   constructor(
     private productService: ProductService,
     private dialog: MatDialog
-  ) {}
+  ) {
+    // Setup search debouncing
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(searchTerm => {
+      this.currentPage = 0; // Reset to first page on search
+      this.loadOffers();
+    });
+  }
 
   ngOnInit(): void {
     this.loadOffers();
@@ -73,12 +94,13 @@ export class AllegroSynchronizedComponent implements OnInit {
     this.isLoading = true;
     const token = localStorage.getItem('allegro-token') || '';
 
-    this.productService.getLinkedOffers(token).subscribe({
-      next: (response: any[]) => {
-        // response to List<LinkedOfferResponse> z backendu
-        // Mapujemy do interfejsu Offer
-        this.offers = response.map((item, index) => ({
-          number: index + 1,
+    const searchParam = this.searchTerm.trim() || undefined;
+
+    this.productService.getLinkedOffersPaginated(token, this.currentPage, this.pageSize, searchParam).subscribe({
+      next: (response: LinkedOffersPageResponse) => {
+        // Map response to Offer interface
+        this.filteredOffers = response.content.map((item, index) => ({
+          number: (this.currentPage * this.pageSize) + index + 1,
           imageUrl: item.imageUrl || 'assets/default-image.png',
           auctionName: item.offerName,
           offerNumber: item.offerId,
@@ -95,7 +117,11 @@ export class AllegroSynchronizedComponent implements OnInit {
           products: item.products
         }));
 
-        this.filteredOffers = [...this.offers];
+        // Update pagination info
+        this.totalElements = response.totalElements;
+        this.totalPages = response.totalPages;
+        this.currentPage = response.number;
+
         this.isLoading = false;
       },
       error: (error) => {
@@ -119,7 +145,7 @@ export class AllegroSynchronizedComponent implements OnInit {
           this.toastSuccessMessage = `Pomyślnie zsynchronizowano.\n${response.created} nowych ofert\n${response.updated} zaktualizowanych ofert.`;
         }
         this.showSuccess(template);
-        this.loadOffers();
+        this.loadOffers(); // Reload current page
       },
       error: (error) => {
         console.error('Synchronization failed:', error);
@@ -150,29 +176,80 @@ export class AllegroSynchronizedComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((saved) => {
-      // Po zapisie odśwież tabelę
+      // Po zapisie odśwież aktualną stronę
       if (saved) {
         this.loadOffers();
       }
     });
   }
 
-  // Search functionality
-  onSearch(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredOffers = [...this.offers];
-      return;
+  // Search functionality with debouncing
+  onSearchChange(): void {
+    this.searchSubject.next(this.searchTerm);
+  }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages) {
+      this.currentPage = page;
+      this.loadOffers();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages - 1) {
+      this.currentPage++;
+      this.loadOffers();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.loadOffers();
+    }
+  }
+
+// W allegro-synchronized.component.ts - zaktualizuj metodę getPageNumbers()
+
+  getPageNumbers(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    const maxPagesToShow = 5;
+
+    if (this.totalPages <= maxPagesToShow) {
+      // Show all pages if total pages is small
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+
+      if (this.currentPage > 3) {
+        pages.push('...');
+      }
+
+      // Show pages around current page
+      const start = Math.max(2, this.currentPage + 1); // +1 bo currentPage jest 0-indexed
+      const end = Math.min(this.totalPages - 1, this.currentPage + 3); // +3 zamiast +2
+
+      for (let i = start; i <= end; i++) {
+        if (i !== 1 && i !== this.totalPages) {
+          pages.push(i);
+        }
+      }
+
+      if (this.currentPage < this.totalPages - 3) {
+        pages.push('...');
+      }
+
+      // Always show last page if more than 1 page
+      if (this.totalPages > 1) {
+        pages.push(this.totalPages);
+      }
     }
 
-    const searchLower = this.searchTerm.toLowerCase();
-    this.filteredOffers = this.offers.filter(offer =>
-      offer.auctionName.toLowerCase().includes(searchLower) ||
-      offer.offerNumber.toLowerCase().includes(searchLower) ||
-      offer.ean.toLowerCase().includes(searchLower) ||
-      (offer.products || []).some(product =>
-        product.productName.toLowerCase().includes(searchLower)
-      )
-    );
+    return pages;
   }
 
   // Helper methods for template
@@ -193,23 +270,27 @@ export class AllegroSynchronizedComponent implements OnInit {
     event.target.src = 'assets/default-image.png';
   }
 
-  // Stats methods
   getActiveOffersCount(): number {
-    return this.offers.filter(offer => offer.auctionStatus === 'ACTIVE').length;
+    return this.filteredOffers.filter(offer => offer.auctionStatus === 'ACTIVE').length;
   }
 
-  getInactiveOffersCount(): number {
-    return this.offers.filter(offer => offer.auctionStatus !== 'ACTIVE').length;
-  }
-
-  getTotalQuantity(): number {
-    return this.offers.reduce((total, offer) => {
-      const quantity = offer.allegroQuantity.split('/')[0];
-      return total + (parseInt(quantity) || 0);
+  getTotalAvailable(): number {
+    return this.filteredOffers.reduce((total, offer) => {
+      const available = offer.allegroQuantity.split('/')[0];
+      return total + (parseInt(available) || 0);
     }, 0);
   }
 
-  getTotalValue(): number {
-    return this.offers.reduce((total, offer) => total + (offer.price || 0), 0);
+  getTotalSold(): number {
+    return this.filteredOffers.reduce((total, offer) => {
+      const quantities = offer.allegroQuantity.split('/');
+      if (quantities.length === 2) {
+        const available = parseInt(quantities[0]) || 0;
+        const total_stock = parseInt(quantities[1]) || 0;
+        const sold = total_stock - available;
+        return total + sold;
+      }
+      return total;
+    }, 0);
   }
 }
