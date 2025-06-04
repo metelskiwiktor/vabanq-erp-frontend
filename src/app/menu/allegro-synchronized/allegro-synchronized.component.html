@@ -9,79 +9,203 @@
   </div>
 </ng-template>
 
-<button mat-raised-button color="primary" (click)="synchronizeOffers(successTpl)">Synchronizuj</button>
+<div class="layout">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="page-title">
+        <div class="icon">
+          <i class="bx bx-store"></i>
+        </div>
+        <h1>Allegro Synchronized</h1>
+      </div>
+      <div class="header-actions">
+        <button mat-button class="btn btn-outline">
+          <i class="bx bx-download"></i>
+          Export
+        </button>
+        <button mat-raised-button color="primary" class="btn btn-primary" (click)="synchronizeOffers(successTpl)">
+          <i class="bx bx-sync" [class.spinning]="isLoading"></i>
+          Synchronizuj
+        </button>
+      </div>
+    </div>
+  </header>
 
-<table mat-table [dataSource]="offers" class="mat-elevation-z8">
-  <ng-container matColumnDef="number">
-    <th mat-header-cell *matHeaderCellDef> Numer </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.number }} </td>
-  </ng-container>
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Controls -->
+    <section class="controls-section">
+      <div class="controls-grid">
+        <div class="search-wrapper">
+          <i class="bx bx-search search-icon"></i>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Szukaj po nazwie, numerze oferty lub EAN..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+          >
+        </div>
+        <div class="header-actions">
+          <button mat-button class="btn btn-outline">
+            <i class="bx bx-filter"></i>
+            Filtry
+          </button>
+        </div>
+      </div>
 
-  <ng-container matColumnDef="imageUrl">
-    <th mat-header-cell *matHeaderCellDef> Zdjęcie aukcji </th>
-    <td mat-cell *matCellDef="let offer">
-      <img [src]="offer.imageUrl" alt="Zdjęcie" width="50" height="50" />
-    </td>
-  </ng-container>
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-number">{{ getActiveOffersCount() }}</span>
+          <div class="stat-label">Aktywne</div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getInactiveOffersCount() }}</span>
+          <div class="stat-label">Nieaktywne</div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getTotalQuantity() }}</span>
+          <div class="stat-label">Łączna ilość</div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getTotalValue() | currency:'PLN':'symbol':'1.0-0' }}</span>
+          <div class="stat-label">Wartość</div>
+        </div>
+      </div>
+    </section>
 
-  <ng-container matColumnDef="auctionName">
-    <th mat-header-cell *matHeaderCellDef> Nazwa Aukcji </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.auctionName }} </td>
-  </ng-container>
+    <!-- Table -->
+    <section class="table-section">
+      <div class="table-header">
+        <span>Wyświetlanie {{ filteredOffers.length }} z {{ offers.length }} ofert</span>
+      </div>
 
-  <ng-container matColumnDef="offerNumber">
-    <th mat-header-cell *matHeaderCellDef> Numer oferty </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.offerNumber }} </td>
-  </ng-container>
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <div>Ładowanie ofert...</div>
+      </div>
 
-  <ng-container matColumnDef="linkedProducts">
-    <th mat-header-cell *matHeaderCellDef> Powiązane produkty </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.linkedProducts }} </td>
-  </ng-container>
+      <div *ngIf="!isLoading && filteredOffers.length === 0" class="empty-state">
+        <div class="empty-state-icon">
+          <i class="bx bx-search"></i>
+        </div>
+        <div>Nie znaleziono ofert spełniających kryteria wyszukiwania</div>
+      </div>
 
-  <ng-container matColumnDef="price">
-    <th mat-header-cell *matHeaderCellDef> Cena </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.price | currency:'PLN' }} </td>
-  </ng-container>
+      <table *ngIf="!isLoading && filteredOffers.length > 0" mat-table [dataSource]="filteredOffers" class="offers-table">
 
-  <ng-container matColumnDef="allegroQuantity">
-    <th mat-header-cell *matHeaderCellDef> Ilość </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.allegroQuantity }} </td>
-  </ng-container>
+        <!-- Offer Column -->
+        <ng-container matColumnDef="offer">
+          <th mat-header-cell *matHeaderCellDef>Oferta</th>
+          <td mat-cell *matCellDef="let offer">
+            <div class="offer-cell">
+              <img [src]="offer.imageUrl || 'assets/default-image.png'"
+                   alt="Offer"
+                   class="offer-image"
+                   (error)="onImageError($event)">
+              <div class="offer-info">
+                <div class="offer-title">{{ offer.auctionName }}</div>
+                <div class="offer-id">{{ offer.offerNumber }}</div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
 
-  <ng-container matColumnDef="ean">
-    <th mat-header-cell *matHeaderCellDef> EAN </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.ean }} </td>
-  </ng-container>
+        <!-- EAN Column -->
+        <ng-container matColumnDef="ean">
+          <th mat-header-cell *matHeaderCellDef>EAN</th>
+          <td mat-cell *matCellDef="let offer">
+            <span class="ean-code">{{ offer.ean || '-' }}</span>
+          </td>
+        </ng-container>
 
-  <ng-container matColumnDef="packaging">
-    <th mat-header-cell *matHeaderCellDef> Opakowania </th>
-    <td mat-cell *matCellDef="let offer">
-      <span *ngIf="offer.packagings && offer.packagings.length > 0">
-        <span *ngFor="let pkg of offer.packagings; let last = last">
-          {{ pkg.packagingName }} ({{ pkg.quantity }}){{ !last ? ', ' : '' }}
-        </span>
-      </span>
-      <span *ngIf="(!offer.packagings || offer.packagings.length === 0) && offer.packaging?.name">
-        {{ offer.packaging.name }} (1)
-      </span>
-      <span *ngIf="(!offer.packagings || offer.packagings.length === 0) && !offer.packaging?.name">-</span>
-    </td>
-  </ng-container>
+        <!-- Products Column -->
+        <ng-container matColumnDef="products">
+          <th mat-header-cell *matHeaderCellDef>Produkty</th>
+          <td mat-cell *matCellDef="let offer">
+            <div class="products-list">
+              <span *ngFor="let product of getProductsArray(offer)" class="product-item">
+                {{ product }}
+              </span>
+              <span *ngIf="getProductsArray(offer).length === 0" class="no-products">
+                Brak powiązań
+              </span>
+            </div>
+          </td>
+        </ng-container>
 
-  <ng-container matColumnDef="auctionStatus">
-    <th mat-header-cell *matHeaderCellDef> Status aukcji </th>
-    <td mat-cell *matCellDef="let offer"> {{ offer.auctionStatus }} </td>
-  </ng-container>
+        <!-- Price Column -->
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef>Cena</th>
+          <td mat-cell *matCellDef="let offer">
+            <span class="price-value">{{ offer.price | currency:'PLN':'symbol':'1.2-2' }}</span>
+          </td>
+        </ng-container>
 
-  <!-- Edit Column -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef> Edycja </th>
-    <td mat-cell *matCellDef="let offer">
-      <button mat-raised-button color="accent" (click)="openEditDialog(offer)">Edytuj</button>
-    </td>
-  </ng-container>
+        <!-- Quantity Column -->
+        <ng-container matColumnDef="quantity">
+          <th mat-header-cell *matHeaderCellDef>Ilość</th>
+          <td mat-cell *matCellDef="let offer">
+            <span class="quantity-badge">{{ offer.allegroQuantity }}</span>
+          </td>
+        </ng-container>
 
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-</table>
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let offer">
+            <span class="status-badge"
+                  [class.status-active]="offer.auctionStatus === 'ACTIVE'"
+                  [class.status-inactive]="offer.auctionStatus !== 'ACTIVE'">
+              {{ getStatusLabel(offer.auctionStatus) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Packaging Column -->
+        <ng-container matColumnDef="packaging">
+          <th mat-header-cell *matHeaderCellDef>Opakowania</th>
+          <td mat-cell *matCellDef="let offer">
+            <div class="packaging-list">
+              <!-- Multiple packagings -->
+              <span *ngFor="let pkg of offer.packagings" class="packaging-item">
+                {{ pkg.packagingName }} ({{ pkg.quantity }})
+              </span>
+              <!-- Single packaging (backward compatibility) -->
+              <span *ngIf="(!offer.packagings || offer.packagings.length === 0) && offer.packaging?.name"
+                    class="packaging-item">
+                {{ offer.packaging.name }} (1)
+              </span>
+              <!-- No packaging -->
+              <span *ngIf="(!offer.packagings || offer.packagings.length === 0) && !offer.packaging?.name"
+                    class="no-packaging">
+                -
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Akcje</th>
+          <td mat-cell *matCellDef="let offer">
+            <button mat-button class="action-btn" (click)="openEditDialog(offer)">
+              <i class="bx bx-edit"></i> Edytuj
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+      </table>
+
+      <!-- Simple pagination placeholder for future -->
+      <div *ngIf="!isLoading && filteredOffers.length > 0" class="pagination">
+        <div class="pagination-info">
+          Wyświetlane wszystkie oferty ({{ filteredOffers.length }})
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

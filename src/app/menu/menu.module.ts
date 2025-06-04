@@ -6,7 +6,6 @@ import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {HttpClientModule} from "@angular/common/http";
 import {AppRoutingModule} from "../app-routing.module";
 import {AddProductModule} from "./add-item/add-product/add-product.module";
-import {AllegroSynchronizationModule} from "./allegro-synchronization/allegro-synchronization.module";
 import {SettingsModule} from "./settings/settings.module";
 import {AllegroSynchronizedModule} from "./allegro-synchronized/allegro-synchronized.module";
 import {AddItemModule} from "./add-item/add-item.module";
@@ -26,7 +25,6 @@ import {DashboardModule} from "./dashboard/dashboard.module";
 import {OrdersModule} from "./orders/orders.module";
 @NgModule({
   imports: [
-    AllegroSynchronizationModule,
     AllegroSynchronizedModule,
     ProductMaterialsWmsTableModule,
     SummaryDialogModule,
