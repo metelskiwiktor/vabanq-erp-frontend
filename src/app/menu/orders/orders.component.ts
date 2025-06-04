@@ -409,7 +409,6 @@ export class OrdersComponent implements OnInit {
     return statusMap[status] || status;
   }
 
-  // Tłumaczenia dla statusów płatności
   getPaymentStatusTranslation(status: PaymentStatus): string {
     const statusMap: { [key in PaymentStatus]: string } = {
       [PaymentStatus.BOUGHT]: 'Zlecenie kupna',

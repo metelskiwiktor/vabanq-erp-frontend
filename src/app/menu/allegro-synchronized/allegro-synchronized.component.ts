@@ -254,7 +254,7 @@ export class AllegroSynchronizedComponent implements OnInit {
 
   // Helper methods for template
   getProductsArray(offer: Offer): string[] {
-    return (offer.products || []).map(p => p.productName);
+    return (offer.products || []).map(p => p.productName + (p.quantity ? ` (${p.quantity})` : ''));
   }
 
   getStatusLabel(status: string): string {
