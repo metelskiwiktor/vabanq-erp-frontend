@@ -64,6 +64,11 @@ export interface InvoiceInfo {
   allegroAttachmentError?: string;
 }
 
+export interface InvoiceOrder {
+  invoiceRequired: boolean;
+  nip?: string;
+}
+
 export interface Order {
   orderId: string;
   market: string;
@@ -75,6 +80,7 @@ export interface Order {
   products: ProductOrder[];
   totalAmount: number;
   sellerId: string;
+  invoice?: InvoiceOrder;
   isExpanded?: boolean;
   invoices?: InvoiceInfo[];
   isInvoiceGenerating?: boolean;

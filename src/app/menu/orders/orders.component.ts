@@ -480,4 +480,20 @@ export class OrdersComponent implements OnInit {
         return 'payment-unknown';
     }
   }
+  getInvoiceButtonText(element: Order): string {
+    if (this.isInvoiceRequired(element)) {
+      return 'Wystaw fakturę wymaganą';
+    }
+    return 'Wystaw fakturę';
+  }
+  isInvoiceRequired(order: Order): boolean {
+    return order.invoice?.invoiceRequired === true;
+  }
+
+  sendToAllegroButtonText(element: Order) {
+    if (this.isInvoiceRequired(element)) {
+      return 'Wyślij do allegro (wymagana)';
+    }
+    return 'Wyślij do allegro';
+  }
 }

@@ -2235,3 +2235,34 @@ h1 {
     margin-left: 0;
   }
 }
+.invoice-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.invoice-required-label {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid #ef5350;
+}
+
+.invoice-optional-label {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid #66bb6a;
+}
+
+.btn.invoice-required {
+  background-color: #d32f2f !important;
+  border-color: #d32f2f !important;
+}
