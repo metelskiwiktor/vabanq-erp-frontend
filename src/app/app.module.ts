@@ -21,12 +21,16 @@ import {MatInputModule} from "@angular/material/input";
 import {MatCardModule} from "@angular/material/card";
 import {FormsModule} from "@angular/forms";
 import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
-import { SharedModule } from './shared/shared.module';
 import {AccountingComponent} from "./menu/accounting/accounting.component";
 import {AccountingModule} from "./menu/accounting/accounting.module";
 import {registerLocaleData} from "@angular/common";
 import localePl from '@angular/common/locales/pl';
 import {AuthInterceptor} from "./login/auth.interceptor";
+import {AddItemModule} from "./menu/add-item/add-item.module";
+import {SharedMaterialModule} from "./shared-material/shared-material.module";
+import {AllegroSynchronizedModule} from "./menu/allegro-synchronized/allegro-synchronized.module";
+import {DashboardModule} from "./menu/dashboard/dashboard.module";
+import {ListItemsModule} from "./menu/list-items/list-items.module";
 
 export function initializeKeycloak(keycloak: KeycloakService) {
   return () =>
@@ -64,27 +68,23 @@ registerLocaleData(localePl)
 @NgModule({
   declarations: [AppComponent],
   imports: [
-    MenuModule,
-    // LoginModule,
-    KeycloakAngularModule,
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
-    MatSidenavModule,
-    MatListModule,
-    MatIconModule,
-    MatButtonModule,
-    MatMenuModule,
-    NgbToast,
-    MatToolbarModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCardModule,
-    MatButtonModule,
     FormsModule,
-    // SharedModule,
-    AccountingModule
+
+    // Keycloak
+    KeycloakAngularModule,
+
+    // Material Design
+    SharedMaterialModule,
+
+    // App Modules
+    MenuModule,
+
+    // Bootstrap
+    NgbToast
   ],
   bootstrap: [AppComponent],
   providers: [

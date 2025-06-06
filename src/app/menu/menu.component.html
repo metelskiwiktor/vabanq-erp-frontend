@@ -1,52 +1,89 @@
 <!-- src/app/menu/menu.component.html -->
-<!-- Dodano wskaźnik statusu Allegro w logo-details -->
-<div class="sidebar open">
+<div class="sidebar" [class.open]="isOpen">
+  <!-- Header -->
   <div class="logo-details">
     <i class="bx bxl-c-plus-plus icon"></i>
     <div class="logo_name">VaBanQ ERP</div>
+    <i class="bx"
+       [class.bx-menu-alt-right]="!isOpen"
+       [class.bx-menu]="isOpen"
+       id="btn"
+       (click)="toggleSidebar()"></i>
   </div>
+
   <ul class="nav-list">
     <!-- Search -->
     <li>
       <i class="bx bx-search"></i>
-      <input type="text" placeholder="Search..."/>
+      <input type="text"
+             placeholder="Search..."
+             [(ngModel)]="searchTerm"
+             (input)="onSearch($event)"/>
       <span class="tooltip">Search</span>
     </li>
 
     <!-- Dashboard -->
     <li>
-      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a routerLink="/dashboard"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{ exact: true }"
+         (click)="onItemClick('/dashboard')">
         <i class="bx bx-grid-alt"></i>
         <span class="links_name">Dashboard</span>
       </a>
       <span class="tooltip">Dashboard</span>
     </li>
 
+    <!-- Products Category -->
     <li class="category">
-      <a routerLink="/items" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a (click)="toggleCategory('products')"
+         [class.active]="isRouteActive('/items') || isRouteActive('/add-item') || isRouteActive('/wms') || isRouteActive('/generate-eans')">
         <i class="bx bx-cube"></i>
         <span class="links_name">Produkty</span>
+        <i class="bx bx-chevron-down arrow"
+           [class.rotate]="subcategories['products']"></i>
       </a>
       <span class="tooltip">Produkty</span>
     </li>
 
-    <ul *ngIf="subcategories['items']" class="subcategories">
+    <ul class="subcategories"
+        [class.show]="subcategories['products']"
+        [@slideInOut]="subcategories['products'] ? 'in' : 'out'">
       <li>
-        <a routerLink="/add-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bx bxs-plus-circle"></i>
+        <a routerLink="/items"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/items')">
+          <i class="bx bx-list-ul"></i>
+          <span class="links_name">Lista produktów</span>
+        </a>
+        <span class="tooltip">Lista produktów</span>
+      </li>
+      <li>
+        <a routerLink="/add-item"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/add-item')">
+          <i class="bx bx-plus-circle"></i>
           <span class="links_name">Stwórz produkt</span>
         </a>
         <span class="tooltip">Stwórz nowy produkt</span>
       </li>
       <li>
-        <a routerLink="/wms" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <a routerLink="/wms"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/wms')">
           <i class="bx bx-package"></i>
           <span class="links_name">Stany magazynowe</span>
         </a>
         <span class="tooltip">Stany magazynowe</span>
       </li>
       <li>
-        <a routerLink="/generate-eans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <a routerLink="/generate-eans"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/generate-eans')">
           <i class="bx bx-barcode"></i>
           <span class="links_name">Generowanie EAN</span>
         </a>
@@ -54,17 +91,36 @@
       </li>
     </ul>
 
+    <!-- Auctions Category -->
     <li class="category">
-      <a routerLink="/offers" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a (click)="toggleCategory('auctions')"
+         [class.active]="isRouteActive('/offers') || isRouteActive('/orders')">
         <i class="bx bx-store"></i>
         <span class="links_name">Aukcje</span>
+        <i class="bx bx-chevron-down arrow"
+           [class.rotate]="subcategories['auctions']"></i>
       </a>
       <span class="tooltip">Aukcje</span>
     </li>
 
-    <ul *ngIf="subcategories['items']" class="subcategories">
+    <ul class="subcategories"
+        [class.show]="subcategories['auctions']"
+        [@slideInOut]="subcategories['auctions'] ? 'in' : 'out'">
       <li>
-        <a routerLink="/orders" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <a routerLink="/offers"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/offers')">
+          <i class="bx bx-shopping-bag"></i>
+          <span class="links_name">Oferty</span>
+        </a>
+        <span class="tooltip">Oferty</span>
+      </li>
+      <li>
+        <a routerLink="/orders"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/orders')">
           <i class="bx bx-cart"></i>
           <span class="links_name">Zamówienia</span>
         </a>
@@ -72,51 +128,77 @@
       </li>
     </ul>
 
+    <!-- Accounting Category -->
     <li class="category">
-      <a routerLink="/accounting/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        <i class="bx bx-cube"></i>
+      <a (click)="toggleCategory('accounting')"
+         [class.active]="isRouteActive('/accounting')">
+        <i class="bx bx-calculator"></i>
         <span class="links_name">Księgowość</span>
+        <i class="bx bx-chevron-down arrow"
+           [class.rotate]="subcategories['accounting']"></i>
       </a>
       <span class="tooltip">Księgowość</span>
     </li>
 
-    <ul *ngIf="subcategories['accounting']" class="subcategories">
+    <ul class="subcategories"
+        [class.show]="subcategories['accounting']"
+        [@slideInOut]="subcategories['accounting'] ? 'in' : 'out'">
       <li>
-        <a routerLink="/accounting/invoices" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bx bxs-plus-circle"></i>
+        <a routerLink="/accounting/dashboard"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/accounting/dashboard')">
+          <i class="bx bx-tachometer"></i>
+          <span class="links_name">Dashboard</span>
+        </a>
+        <span class="tooltip">Dashboard księgowości</span>
+      </li>
+      <li>
+        <a routerLink="/accounting/invoices"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/accounting/invoices')">
+          <i class="bx bx-receipt"></i>
           <span class="links_name">Faktury</span>
         </a>
         <span class="tooltip">Faktury</span>
       </li>
-    </ul>
-
-    <ul *ngIf="subcategories['accounting']" class="subcategories">
       <li>
-        <a routerLink="/accounting/expenses" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-          <i class="bx bxs-plus-circle"></i>
-          <span class="links_name">Koszta</span>
+        <a routerLink="/accounting/expenses"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           (click)="onItemClick('/accounting/expenses')">
+          <i class="bx bx-money"></i>
+          <span class="links_name">Koszty</span>
         </a>
-        <span class="tooltip">Koszta</span>
+        <span class="tooltip">Koszty</span>
       </li>
     </ul>
 
-    <!-- Integracje -->
+    <!-- Integrations -->
     <li class="integrations-section">
-      <div class="integrations-header">
+      <a (click)="toggleCategory('integrations')"
+         [class.active]="activeIntegrations">
         <i class="bx bx-link-alt"></i>
         <span class="links_name">Integracje</span>
-      </div>
+        <i class="bx bx-chevron-down arrow"
+           [class.rotate]="subcategories['integrations']"></i>
+      </a>
       <span class="tooltip">Integracje</span>
     </li>
 
-    <ul class="subcategories">
+    <ul class="subcategories"
+        [class.show]="subcategories['integrations']"
+        [@slideInOut]="subcategories['integrations'] ? 'in' : 'out'">
       <li>
         <div class="integration-item" (click)="onAllegroClick()">
           <div class="integration-info">
             <i class="bx bxl-shopify"></i>
             <span class="links_name">Allegro</span>
           </div>
-          <div class="allegro-status-indicator" [ngClass]="getAllegroStatusClass()" [title]="getAllegroStatusTooltip()">
+          <div class="allegro-status-indicator"
+               [ngClass]="getAllegroStatusClass()"
+               [title]="getAllegroStatusTooltip()">
             <div class="status-dot"></div>
           </div>
         </div>
@@ -124,8 +206,12 @@
       </li>
     </ul>
 
+    <!-- Settings -->
     <li>
-      <a routerLink="/settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a routerLink="/settings"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{ exact: true }"
+         (click)="onItemClick('/settings')">
         <i class="bx bx-cog"></i>
         <span class="links_name">Ustawienia</span>
       </a>
@@ -134,13 +220,30 @@
 
     <!-- Profile -->
     <li class="profile">
-      <div class="profile-details">
+      <div class="profile-details" (click)="toggleProfileMenu()">
+        <div class="profile-avatar">
+          <i class="bx bx-user"></i>
+        </div>
         <div class="name_job">
           <div class="name">{{userProfile?.firstName! + " " + userProfile?.lastName!}}</div>
           <div class="job">{{userProfile?.email!}}</div>
         </div>
+        <i class="bx bx-chevron-down profile-arrow"
+           [class.rotate]="showProfileMenu"></i>
       </div>
-      <button><i class="bx bx-log-out" id="log_out" (click)="logout()"></i></button>
+
+      <div class="profile-menu"
+           [class.show]="showProfileMenu"
+           [@slideInOut]="showProfileMenu ? 'in' : 'out'">
+        <div class="profile-menu-item" (click)="viewProfile()">
+          <i class="bx bx-user"></i>
+          <span>Profil</span>
+        </div>
+        <div class="profile-menu-item" (click)="logout()">
+          <i class="bx bx-log-out"></i>
+          <span>Wyloguj</span>
+        </div>
+      </div>
     </li>
   </ul>
 </div>

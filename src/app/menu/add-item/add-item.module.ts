@@ -6,6 +6,7 @@ import {AddItemComponent} from "./add-item.component";
 import {MatTab, MatTabGroup} from "@angular/material/tabs";
 import {AddMaterialModule} from "./add-material/add-material.module";
 import {AddProductModule} from "./add-product/add-product.module";
+import {SharedMaterialModule} from "../../shared-material/shared-material.module";
 
 @NgModule({
   declarations: [
@@ -17,6 +18,7 @@ import {AddProductModule} from "./add-product/add-product.module";
     MatTabGroup,
     AddMaterialModule,
     AddProductModule,
+    SharedMaterialModule
   ]
 })
 export class AddItemModule { }
