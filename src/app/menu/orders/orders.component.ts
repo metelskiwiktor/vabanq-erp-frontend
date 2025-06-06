@@ -605,4 +605,12 @@ export class OrdersComponent implements OnInit {
   orderAllegroUrl(orderId: string): string {
     return `${environment.allegroSalesCenterUrl}/orders/${orderId}`;
   }
+
+  getShortOrderId(orderId: string): string {
+    if (window.innerWidth <= 768) {
+      return orderId.length > 10 ? `${orderId.substring(0, 10)}...` : orderId;
+    }
+
+    return orderId.length > 14 ? `${orderId.substring(0, 14)}...` : orderId;
+  }
 }

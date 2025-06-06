@@ -134,9 +134,9 @@
           <button class="filter-invoice-btn"
                   [class.active]="filterMustHasInvoice"
                   (click)="toggleInvoiceFilter()"
-                  title="Pokaż tylko zamówienia z fakturami">
+                  title="Pokaż zamówienia z wymaganaymi fakturami">
             <i class="bx bx-receipt"></i>
-            {{ filterMustHasInvoice ? 'Tak' : 'Wszystkie' }}
+            Wymagane
           </button>
         </div>
 
@@ -187,14 +187,16 @@
           <!-- Order Row -->
           <tr class="order-row" [class.expanded]="order.isExpanded" (click)="toggleOrderDetails(order)">
             <!-- Buyer Info -->
-            <td>
+            <td class="buyer-column">
               <div class="order-info">
-                <div class="order-id">{{ getBuyerDisplayName(order.buyer) }}</div>
-                <a [href]=orderAllegroUrl(order.orderId)
+                <div class="buyer-login" [title]="order.buyer.login">{{ order.buyer.login }}</div>
+                <div class="buyer-name" [title]="getBuyerDisplayName(order.buyer)">{{ getBuyerDisplayName(order.buyer) }}</div>
+                <a [href]="orderAllegroUrl(order.orderId)"
                    target="_blank"
                    class="order-number"
+                   [title]="'#' + order.orderId"
                    (click)="$event.stopPropagation()">
-                  #{{ order.orderId.substring(0, 12) }}...
+                  #{{ getShortOrderId(order.orderId) }}
                 </a>
               </div>
             </td>

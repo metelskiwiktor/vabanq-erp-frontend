@@ -535,11 +535,32 @@
   background: #f8f9fa;
 }
 
-/* Order Info */
+/* Buyer Column Fixed Width */
+.buyer-column {
+  width: 180px !important;
+  max-width: 180px !important;
+  min-width: 180px !important;
+  padding: 12px !important;
+}
+
+/* Order Info - Updated Structure */
 .order-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Buyer Login - Main Element */
+.buyer-login {
+  font-weight: 600;
+  color: #111827;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .order-id {
@@ -548,12 +569,19 @@
   font-size: 14px;
 }
 
+/* Order Number - Fixed to prevent overflow */
 .order-number {
-  font-size: 12px;
+  font-size: 11px;
   color: #8064A2;
   font-family: 'Monaco', 'Menlo', monospace;
   text-decoration: none;
   transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
+  max-width: 156px; /* 180px - padding */
 }
 
 .order-number:hover {
@@ -1226,5 +1254,24 @@
 
   .price-currency {
     font-size: 11px;
+  }
+
+  .buyer-column {
+    width: 140px !important;
+    max-width: 140px !important;
+    min-width: 140px !important;
+  }
+
+  .buyer-login {
+    font-size: 13px;
+  }
+
+  .buyer-name {
+    font-size: 11px;
+  }
+
+  .order-number {
+    font-size: 10px;
+    max-width: 116px;
   }
 }
