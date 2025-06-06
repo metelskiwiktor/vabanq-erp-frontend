@@ -1,0 +1,116 @@
+<!-- src/app/menu/orders/dialogs/invoice-generation-dialog/invoice-generation-dialog.component.html -->
+<h1 mat-dialog-title>
+  <div class="dialog-title">
+    <mat-icon>receipt</mat-icon>
+    Potwierdzenie wystawienia faktury
+  </div>
+</h1>
+
+<div mat-dialog-content>
+  <div class="confirmation-content">
+    <div class="warning-section" *ngIf="data.order.invoice.invoiceRequired">
+      <div class="warning-badge">
+        <mat-icon>warning</mat-icon>
+        <span>Faktura wymagana przez kupującego</span>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Podsumowanie zamówienia</h3>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <label>Numer zamówienia:</label>
+          <span class="order-number">#{{ data.order.orderId.substring(0, 16) }}...</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Rynek:</label>
+          <span>{{ getMarketDisplayName(data.order.market) }}</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Kupujący:</label>
+          <span>{{ getBuyerDisplayName(data.order.buyer) }}</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Data sprzedaży:</label>
+          <span>{{ data.order.saleDate | date:'dd.MM.yyyy HH:mm' }}</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Wartość zamówienia:</label>
+          <span class="amount">{{ formatCurrency(data.order.totalAmount, data.order.currency) }}</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Typ faktury:</label>
+          <span>{{ data.order.invoice.hasNip ? 'Faktura VAT (firma)' : 'Faktura (osoba prywatna)' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="invoice-details-section" *ngIf="data.order.invoice.hasNip">
+      <h3>Dane faktury</h3>
+
+      <div class="invoice-details">
+        <div class="detail-item" *ngIf="data.order.invoice.companyName">
+          <label>Nazwa firmy:</label>
+          <span>{{ data.order.invoice.companyName }}</span>
+        </div>
+
+        <div class="detail-item" *ngIf="data.order.invoice.nip">
+          <label>NIP:</label>
+          <span>{{ data.order.invoice.nip }}</span>
+        </div>
+
+        <div class="detail-item" *ngIf="data.order.invoice.address">
+          <label>Adres faktury:</label>
+          <div class="address-info">
+            <div *ngIf="data.order.invoice.address.street">{{ data.order.invoice.address.street }}</div>
+            <div>{{ data.order.invoice.address.postCode }} {{ data.order.invoice.address.city }}</div>
+            <div>{{ data.order.invoice.address.countryCode }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="products-section">
+      <h3>Produkty ({{ data.order.products.length }})</h3>
+
+      <div class="products-list">
+        <div *ngFor="let product of data.order.products" class="product-item">
+          <div class="product-name">{{ product.name }}</div>
+          <div class="product-details">
+            <span class="quantity">{{ product.quantity }} szt.</span>
+            <span class="price">{{ formatCurrency(product.totalPrice, product.currency) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-summary">
+        <div class="summary-line">
+          <span>Suma produktów:</span>
+          <span>{{ formatCurrency((data.order.totalAmount - data.order.delivery.cost), data.order.currency) }}</span>
+        </div>
+        <div class="summary-line">
+          <span>Dostawa:</span>
+          <span>{{ formatCurrency(data.order.delivery.cost, data.order.currency) }}</span>
+        </div>
+        <div class="summary-line total">
+          <span><strong>Suma całkowita:</strong></span>
+          <span><strong>{{ formatCurrency(data.order.totalAmount, data.order.currency) }}</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Anuluj</button>
+  <button mat-raised-button color="primary" (click)="onConfirm()">
+    <mat-icon>receipt</mat-icon>
+    Wystaw fakturę
+  </button>
+</div>

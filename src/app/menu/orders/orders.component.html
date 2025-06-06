@@ -242,6 +242,9 @@
                    class="invoice-status">
                 <button class="action-btn primary"
                         [class.invoice-required]="isInvoiceRequired(order)"
+                        [class.disabled]="isInvoiceGenerationDisabled(order)"
+                        [disabled]="isInvoiceGenerationDisabled(order)"
+                        [title]="isInvoiceGenerationDisabled(order) ? 'Funkcja dostępna tylko dla Allegro PL' : ''"
                         (click)="generateInvoice(order, successTpl)">
                   <i class="bx bx-receipt"></i>
                   {{ getInvoiceButtonText(order) }}

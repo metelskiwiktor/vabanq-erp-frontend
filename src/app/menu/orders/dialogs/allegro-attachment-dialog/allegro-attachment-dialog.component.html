@@ -1,0 +1,92 @@
+<!-- src/app/menu/orders/dialogs/allegro-attachment-dialog/allegro-attachment-dialog.component.html -->
+<h1 mat-dialog-title>
+  <div class="dialog-title">
+    <mat-icon>send</mat-icon>
+    Potwierdzenie dołączenia faktury do Allegro
+  </div>
+</h1>
+
+<div mat-dialog-content>
+  <div class="confirmation-content">
+    <div class="warning-section" *ngIf="isInvoiceRequired(data.order)">
+      <div class="warning-badge">
+        <mat-icon>warning</mat-icon>
+        <span>Faktura wymagana przez kupującego</span>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Informacje o zamówieniu</h3>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <label>Numer zamówienia:</label>
+          <span class="order-number">#{{ data.order.orderId.substring(0, 16) }}...</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Rynek:</label>
+          <span>{{ getMarketDisplayName(data.order.market) }}</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Kupujący:</label>
+          <span>{{ getBuyerDisplayName(data.order.buyer) }}</span>
+        </div>
+
+        <div class="summary-item">
+          <label>Wartość zamówienia:</label>
+          <span class="amount">{{ formatCurrency(data.order.totalAmount, data.order.currency) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="invoice-section">
+      <h3>Szczegóły faktury</h3>
+
+      <div class="invoice-details">
+        <div class="invoice-item">
+          <div class="invoice-header">
+            <div class="invoice-number">{{ data.invoice.invoiceNumber }}</div>
+            <div class="invoice-status" [ngClass]="'status-' + data.invoice.invoiceStatus">
+              {{ getInvoiceStatusTranslation(data.invoice.invoiceStatus) }}
+            </div>
+          </div>
+
+          <div class="invoice-info">
+            <div class="info-item">
+              <label>Data wystawienia:</label>
+              <span>{{ data.invoice.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Link do faktury:</label>
+              <a [href]="data.invoice.invoiceUrl" target="_blank" class="invoice-link">
+                <mat-icon>open_in_new</mat-icon>
+                Otwórz fakturę
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-info">
+      <div class="info-box">
+        <mat-icon>info</mat-icon>
+        <div class="info-content">
+          <strong>Co się stanie po potwierdzeniu?</strong>
+          <p>Faktura zostanie automatycznie dołączona do zamówienia w systemie Allegro jako dowód zakupu. Kupujący otrzyma powiadomienie o dostępności faktury w swoim panelu.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Anuluj</button>
+  <button mat-raised-button color="primary" (click)="onConfirm()">
+    <mat-icon>send</mat-icon>
+    Dołącz do Allegro
+  </button>
+</div>

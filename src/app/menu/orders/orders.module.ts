@@ -17,6 +17,8 @@ import {
 } from "@angular/material/table";
 import { MatButton } from "@angular/material/button";
 import { InfaktService } from "../../utility/service/infakt.service";
+import { MatDialogModule } from '@angular/material/dialog';
+import { OrdersDialogsModule } from './dialogs/orders-dialogs.module';
 
 @NgModule({
   declarations: [
@@ -36,7 +38,9 @@ import { InfaktService } from "../../utility/service/infakt.service";
     MatRowDef,
     MatHeaderRowDef,
     MatHeaderCellDef,
-    MatButton
+    MatButton,
+    MatDialogModule,
+    OrdersDialogsModule
   ],
   providers: [
     InfaktService

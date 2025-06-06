@@ -6,6 +6,9 @@ import {ToastService} from "../../utility/service/toast-service";
 import {InfaktService, InvoiceResponse} from "../../utility/service/infakt.service";
 import {InvoiceInfo, Order, OrderStatus, PaymentStatus} from "./model/orders-model";
 import {environment} from '../../../environments/environment';
+import {MatDialog} from '@angular/material/dialog';
+import {InvoiceGenerationDialogComponent} from './dialogs/invoice-generation-dialog/invoice-generation-dialog.component';
+import {AllegroAttachmentDialogComponent} from './dialogs/allegro-attachment-dialog/allegro-attachment-dialog.component';
 
 export interface OrdersPageResponse {
   content: Order[];
@@ -58,7 +61,7 @@ export class OrdersComponent implements OnInit {
 
   allExpanded: boolean = false;
 
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService, private dialog: MatDialog) {}
 
   ngOnInit(): void {
     this.fetchOrders();
@@ -253,6 +256,30 @@ export class OrdersComponent implements OnInit {
   }
 
   generateInvoice(order: Order, template: TemplateRef<any>): void {
+    // Check if it's a foreign market (not allegro-pl)
+    if (!order.market.toLowerCase().includes('pl')) {
+      this.toastService.show({
+        template: template,
+        classname: 'bg-warning text-dark',
+        delay: 3000,
+        text: 'Generowanie faktur jest dostępne tylko dla rynku polskiego (Allegro PL).',
+      });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(InvoiceGenerationDialogComponent, {
+      width: '650px',
+      data: { order }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.performInvoiceGeneration(order, template);
+      }
+    });
+  }
+
+  private performInvoiceGeneration(order: Order, template: TemplateRef<any>): void {
     order.isInvoiceGenerating = true;
 
     this.infaktService.generateInvoice(order).subscribe({
@@ -315,6 +342,19 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
+    const dialogRef = this.dialog.open(AllegroAttachmentDialogComponent, {
+      width: '550px',
+      data: { order, invoice }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.performAllegroAttachment(order, invoice, template, token);
+      }
+    });
+  }
+
+  private performAllegroAttachment(order: Order, invoice: InvoiceInfo, template: TemplateRef<any>, token: string): void {
     invoice.isAttachingToAllegro = true;
     invoice.allegroAttachmentError = undefined;
 
@@ -518,10 +558,17 @@ export class OrdersComponent implements OnInit {
   }
 
   getInvoiceButtonText(order: Order): string {
+    if (!order.market.toLowerCase().includes('pl')) {
+      return 'Niedostępne dla rynków zagranicznych';
+    }
     if (this.isInvoiceRequired(order)) {
       return 'Wystaw fakturę wymaganą';
     }
     return 'Wystaw fakturę';
+  }
+
+  isInvoiceGenerationDisabled(order: Order): boolean {
+    return !order.market.toLowerCase().includes('pl');
   }
 
   isInvoiceRequired(order: Order): boolean {
