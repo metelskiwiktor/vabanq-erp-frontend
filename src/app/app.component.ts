@@ -1,35 +1,67 @@
-import {Component, inject} from '@angular/core';
-import {environment} from "../environments/environment";
-import {ToastService} from "./utility/service/toast-service";
+import { Component, inject, OnInit, OnDestroy, Renderer2 } from '@angular/core';
+import { environment } from "../environments/environment";
+import { ToastService } from "./utility/service/toast-service";
+import { Subscription } from 'rxjs';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styles: [`
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1050;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .toast-container ngb-toast {
-      max-height: 100px;
-    }
-
-    body {
-      background-color: #121212;
-      color: #ffffff;
-    }
-  `]
+  styleUrls: ['./app.component.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   toastService = inject(ToastService);
+  private sidebarSubscription?: Subscription;
 
-  constructor() {
-    console.log(environment.backendUrl)
-    console.log(environment.keycloakUrl)
+  constructor(private renderer: Renderer2) {
+    console.log(environment.backendUrl);
+    console.log(environment.keycloakUrl);
+  }
+
+  ngOnInit() {
+    // Listen for sidebar state changes and update body class
+    this.updateBodyClass();
+
+    // Listen for changes in localStorage (sidebar state)
+    window.addEventListener('storage', this.handleStorageChange.bind(this));
+
+    // Check initial sidebar state
+    this.checkSidebarState();
+  }
+
+  ngOnDestroy() {
+    window.removeEventListener('storage', this.handleStorageChange.bind(this));
+    if (this.sidebarSubscription) {
+      this.sidebarSubscription.unsubscribe();
+    }
+  }
+
+  private handleStorageChange(event: StorageEvent) {
+    if (event.key === 'sidebar_state') {
+      this.updateBodyClass();
+    }
+  }
+
+  private checkSidebarState() {
+    // Check every 100ms for sidebar state changes (for real-time updates)
+    setInterval(() => {
+      this.updateBodyClass();
+    }, 100);
+  }
+
+  private updateBodyClass() {
+    try {
+      const sidebarState = localStorage.getItem('sidebar_state');
+      if (sidebarState) {
+        const state = JSON.parse(sidebarState);
+        if (state.isOpen) {
+          this.renderer.addClass(document.body, 'sidebar-open');
+        } else {
+          this.renderer.removeClass(document.body, 'sidebar-open');
+        }
+      }
+    } catch (e) {
+      // Handle parsing errors gracefully
+      this.renderer.removeClass(document.body, 'sidebar-open');
+    }
   }
 }

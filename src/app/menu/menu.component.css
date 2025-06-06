@@ -12,13 +12,14 @@
   position: fixed;
   left: 0;
   top: 0;
-  height: 100%;
+  height: 100vh;
   width: 78px;
   background: linear-gradient(180deg, #11101d 0%, #1d1b31 100%);
   padding: 6px 14px;
-  z-index: 99;
+  z-index: 1000;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
 }
 
 .sidebar.open {
@@ -160,11 +161,12 @@
   background: transparent;
   position: relative;
   overflow: hidden;
+  margin: 0;
 }
 
 .sidebar li a:hover {
   background: linear-gradient(135deg, #8064A2 0%, #9575D4 100%);
-  transform: translateX(5px);
+  transform: translateX(0);
 }
 
 .sidebar li a.active {
@@ -259,7 +261,7 @@
 
 .subcategories li a:hover {
   background: rgba(128, 100, 162, 0.2);
-  transform: translateX(3px);
+  transform: translateX(0);
 }
 
 .subcategories li a i {
@@ -292,7 +294,7 @@
 
 .integration-item:hover {
   background: rgba(128, 100, 162, 0.2);
-  transform: translateX(3px);
+  transform: translateX(0);
 }
 
 .integration-info {

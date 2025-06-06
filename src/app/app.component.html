@@ -1,8 +1,11 @@
-<div style="display: flex; background-color: white; ">
-  <div class="sidebar open" style="flex: 0 0 250px;">
-    <app-menu></app-menu>
-  </div>
-  <div style="flex-grow: 1;">
+<!-- src/app/app.component.html -->
+<div class="app-container">
+  <!-- Sidebar Menu -->
+  <app-menu></app-menu>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Toast Container -->
     <div class="toast-container">
       <ngb-toast *ngFor="let toast of toastService.toasts"
                  [class]="toast.classname"
@@ -13,7 +16,9 @@
       </ngb-toast>
     </div>
 
-    <router-outlet></router-outlet>
+    <!-- Page Content -->
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
   </div>
 </div>
-

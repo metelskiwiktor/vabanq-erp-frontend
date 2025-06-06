@@ -1,16 +1,105 @@
-/* You can add global styles to this file, and also import other style files */
+/* src/styles.css - Global fixes */
 @import "~@ng-select/ng-select/themes/default.theme.css";
+
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  overflow: hidden; /* Prevent double scrollbars */
 }
 
 body {
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f5f5;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
+/* Primary button styling */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:visited {
   background-color: #8064A2 !important;
   border-color: #8064A2 !important;
+}
+
+/* Material button overrides */
+.mat-raised-button.mat-primary,
+.mat-fab.mat-primary,
+.mat-mini-fab.mat-primary {
+  background-color: #8064A2;
+}
+
+.mat-raised-button.mat-primary:hover,
+.mat-fab.mat-primary:hover,
+.mat-mini-fab.mat-primary:hover {
+  background-color: #70559a;
+}
+
+/* Ensure all content containers don't overlap with sidebar */
+.container,
+.container-fluid {
+  width: 100%;
+  max-width: none;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Fix for Angular Material components */
+.mat-drawer-container {
+  background-color: transparent;
+}
+
+/* Custom scrollbar for the entire app */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8064A2;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #70559a;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8064A2 #f1f1f1;
+}
+
+/* Responsive font sizes */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 13px;
+  }
+}
+
+/* Animation performance */
+* {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Fix for any overlapping issues */
+app-root {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
 }
