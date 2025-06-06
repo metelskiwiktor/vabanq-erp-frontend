@@ -6,12 +6,17 @@
   </div>
 </h1>
 
-<div mat-dialog-content>
+<div mat-dialog-content class="dialog-content">
   <div class="confirmation-content">
-    <div class="warning-section" *ngIf="isInvoiceRequired(data.order)">
-      <div class="warning-badge">
-        <mat-icon>warning</mat-icon>
+    <!-- Invoice Required Status -->
+    <div class="invoice-requirement-section">
+      <div class="requirement-badge required" *ngIf="isInvoiceRequired(data.order)">
+        <mat-icon>receipt</mat-icon>
         <span>Faktura wymagana przez kupującego</span>
+      </div>
+      <div class="requirement-badge not-required" *ngIf="!isInvoiceRequired(data.order)">
+        <mat-icon>receipt_long</mat-icon>
+        <span>Faktura nie jest wymagana przez kupującego</span>
       </div>
     </div>
 
@@ -21,7 +26,11 @@
       <div class="summary-grid">
         <div class="summary-item">
           <label>Numer zamówienia:</label>
-          <span class="order-number">#{{ data.order.orderId.substring(0, 16) }}...</span>
+          <a [href]="orderAllegroUrl(data.order.orderId)"
+             target="_blank"
+             class="order-number">
+            #{{ data.order.orderId.substring(0, 16) }}...
+          </a>
         </div>
 
         <div class="summary-item">

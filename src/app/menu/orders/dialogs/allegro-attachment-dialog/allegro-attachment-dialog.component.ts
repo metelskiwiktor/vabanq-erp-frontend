@@ -2,6 +2,7 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Order, InvoiceInfo } from '../../model/orders-model';
+import { environment } from '../../../../../environments/environment';
 
 export interface AllegroAttachmentDialogData {
   order: Order;
@@ -65,5 +66,9 @@ export class AllegroAttachmentDialogComponent {
 
   isInvoiceRequired(order: Order): boolean {
     return order.invoice?.invoiceRequired === true;
+  }
+
+  orderAllegroUrl(orderId: string): string {
+    return `${environment.allegroSalesCenterUrl}/orders/${orderId}`;
   }
 }
