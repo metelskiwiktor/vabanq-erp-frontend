@@ -2,6 +2,7 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Order } from '../../model/orders-model';
+import { environment } from '../../../../../environments/environment';
 
 export interface InvoiceGenerationDialogData {
   order: Order;
@@ -46,5 +47,9 @@ export class InvoiceGenerationDialogComponent {
     if (market.toLowerCase().includes('sk')) return 'Allegro SK';
     if (market.toLowerCase().includes('hu')) return 'Allegro HU';
     return market;
+  }
+
+  orderAllegroUrl(orderId: string): string {
+    return `${environment.allegroSalesCenterUrl}/orders/${orderId}`;
   }
 }
