@@ -78,7 +78,6 @@ export class MenuComponent implements OnInit, OnDestroy {
 
     // Set initial route and categories
     this.currentRoute = this.router.url;
-    this.updateActiveCategories();
 
     // Load subcategories state from localStorage
     this.loadSubcategoriesState();

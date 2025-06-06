@@ -12,28 +12,21 @@
   position: fixed;
   left: 0;
   top: 0;
-  width: 280px;
+  width: 300px;
   height: 100vh;
   background: rgba(30, 30, 46, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(139, 92, 246, 0.2);
   z-index: 1000;
-  overflow-y: auto;
+  overflow: hidden;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3);
-  border-radius: 2px;
+  display: none;
 }
 
 /* Header */
@@ -88,10 +81,24 @@
 
 /* Navigation */
 .nav-list {
-  padding: 20px 0 120px 0; /* Bottom padding for profile space */
-  height: calc(100vh - 100px);
+  flex: 1;
+  padding: 20px 0 100px 0;
   overflow-y: auto;
   overflow-x: hidden;
+  min-height: 0;
+}
+
+.nav-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nav-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-list::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 2px;
 }
 
 .nav-section {
@@ -109,7 +116,7 @@
 
 .sidebar li {
   position: relative;
-  margin: 0 12px 8px;
+  margin: 0 16px 8px 16px;
   list-style: none;
   min-width: 0;
 }
@@ -119,7 +126,7 @@
 .sidebar li button {
   display: flex;
   align-items: center;
-  width: 100%;
+  width: calc(100% - 16px);
   padding: 12px 16px;
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
@@ -231,8 +238,8 @@
   overflow: hidden;
   transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: 4px;
-  width: calc(100% - 12px);
-  margin-left: 12px;
+  width: 100%;
+  margin-left: 0;
 }
 
 .subcategories.show {
@@ -240,7 +247,7 @@
 }
 
 .subcategories li {
-  margin: 5px 0;
+  margin: 5px 16px 5px 32px;
 }
 
 .subcategories li a {
@@ -249,14 +256,16 @@
   border-left: 2px solid rgba(139, 92, 246, 0.3);
   border-radius: 0 12px 12px 0;
   background: rgba(255, 255, 255, 0.02);
-  margin-left: 20px;
+  margin-left: 0;
   margin-right: 0;
+  width: calc(100% - 16px);
 }
 
 .subcategories li a:hover {
   border-left-color: #8b5cf6;
   background: rgba(139, 92, 246, 0.1);
   transform: translateX(4px);
+  width: calc(100% - 20px);
 }
 
 .subcategories li a i {
@@ -268,12 +277,13 @@
 
 /* Profile Section */
 .sidebar li.profile {
-  position: fixed;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: auto;
   min-height: auto;
-  width: 248px;
-  left: 16px;
-  bottom: 0;
+  width: 100%;
   margin: 0;
   background: rgba(20, 20, 32, 0.8);
   backdrop-filter: blur(10px);
@@ -281,6 +291,7 @@
   border-radius: 0;
   box-sizing: border-box;
   padding: 0;
+  z-index: 10;
 }
 
 .sidebar li .profile-details {
@@ -523,7 +534,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .sidebar {
-    width: 280px;
+    width: 300px;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
@@ -535,21 +546,11 @@
   .sidebar li .tooltip {
     display: none;
   }
-
-  .sidebar li.profile {
-    width: 248px;
-    left: 16px;
-  }
 }
 
 @media (max-width: 420px) {
   .sidebar {
     width: 100vw;
-  }
-
-  .sidebar li.profile {
-    width: calc(100vw - 32px);
-    left: 16px;
   }
 }
 

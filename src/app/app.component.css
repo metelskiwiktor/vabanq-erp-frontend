@@ -103,3 +103,30 @@ body.sidebar-open .main-content {
 .page-content::-webkit-scrollbar-thumb:hover {
   background: #70559a;
 }
+
+
+/* Main content adjustment for wider sidebar */
+.main-content {
+  margin-left: 300px; /* Zwiększone z 280px do 300px */
+  transition: margin-left 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* Ensure content doesn't overlap with sidebar */
+.content-container {
+  margin-left: 300px;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .content-container {
+    margin-left: 0;
+  }
+}

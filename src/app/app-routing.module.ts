@@ -20,7 +20,6 @@ import {AccountingExpensesComponent} from "./menu/accounting/accounting-expenses
 
 
 const routes: Routes = [
-  { path: '', component: MenuComponent, canActivate: [AuthGuard] }, // Zabezpieczamy komponent MenuComponent
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'add-item', component: AddItemComponent, canActivate: [AuthGuard] },
   { path: 'items', component: ListItemsComponent, canActivate: [AuthGuard] },
