@@ -36,16 +36,15 @@ export class OfferEditDialogComponent implements OnInit {
   offerId: string = '';
   assignedItems = new MatTableDataSource<ProductItem>([]);
   selectedProducts: ProductItem[] = [];
+  selectedProductIds: string[] = [];
   allProducts: ProductItem[] = [];
 
   // Packaging related properties
   packagingOptions: PackagingAccessoryResponse[] = [];
   selectedPackagings: PackagingItem[] = [];
+  selectedPackagingIds: string[] = [];
   assignedPackagings = new MatTableDataSource<PackagingItem>([]);
 
-  // Table columns
-  displayedColumns: string[] = ['name', 'quantity', 'actions'];
-  packagingDisplayedColumns: string[] = ['name', 'quantity', 'actions'];
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     private dialogRef: MatDialogRef<OfferEditDialogComponent>,
@@ -80,6 +79,7 @@ export class OfferEditDialogComponent implements OnInit {
 
         this.assignedPackagings.data = assignedPackagingData;
         this.selectedPackagings = [...assignedPackagingData];
+        this.selectedPackagingIds = assignedPackagingData.map((p: PackagingItem) => p.id);
       }
       // For backward compatibility - handle single packaging
       else if (this.data.offer.packaging && this.data.offer.packaging.id) {
@@ -91,6 +91,7 @@ export class OfferEditDialogComponent implements OnInit {
 
         this.assignedPackagings.data = [packagingItem];
         this.selectedPackagings = [packagingItem];
+        this.selectedPackagingIds = [packagingItem.id];
       }
     });
 
@@ -104,11 +105,14 @@ export class OfferEditDialogComponent implements OnInit {
 
     this.assignedItems.data = assignedData;
     this.selectedProducts = [...assignedData];
+    this.selectedProductIds = assignedData.map((p: ProductItem) => p.id);
   }
 
-  onProductChange(selected: ProductItem[]) {
-    // Synchronize selected products with assignedItems
-    const selectedIds = selected.map(p => p.id);
+  onProductChange(selectedIds: string[]) {
+    // Find products by IDs
+    const selected = selectedIds.map(id =>
+      this.allProducts.find((p: ProductItem) => p.id === id)
+    ).filter((p): p is ProductItem => p !== undefined);
 
     // Add new items to assignedItems
     selected.forEach(item => {
@@ -120,14 +124,23 @@ export class OfferEditDialogComponent implements OnInit {
       }
     });
 
+    // Remove items that are no longer selected
     this.assignedItems.data = this.assignedItems.data.filter(item =>
       selectedIds.includes(item.id)
     );
+
+    this.selectedProducts = [...this.assignedItems.data];
   }
 
-  onPackagingChange(selected: PackagingItem[]) {
-    // Synchronize selected packagings with assignedPackagings
-    const selectedIds = selected.map(p => p.id);
+  onPackagingChange(selectedIds: string[]) {
+    // Find packagings by IDs
+    const selected = selectedIds.map(id =>
+      this.packagingOptions.find((p: PackagingAccessoryResponse) => p.id === id)
+    ).filter((p): p is PackagingAccessoryResponse => p !== undefined).map((p: PackagingAccessoryResponse) => ({
+      id: p.id,
+      name: p.name,
+      quantity: 1
+    }));
 
     // Add new items to assignedPackagings
     selected.forEach(item => {
@@ -139,19 +152,24 @@ export class OfferEditDialogComponent implements OnInit {
       }
     });
 
+    // Remove items that are no longer selected
     this.assignedPackagings.data = this.assignedPackagings.data.filter(item =>
       selectedIds.includes(item.id)
     );
+
+    this.selectedPackagings = [...this.assignedPackagings.data];
   }
 
   removeItem(row: ProductItem) {
     this.assignedItems.data = this.assignedItems.data.filter(item => item.id !== row.id);
     this.selectedProducts = this.selectedProducts.filter(item => item.id !== row.id);
+    this.selectedProductIds = this.selectedProductIds.filter(id => id !== row.id);
   }
 
   removePackaging(row: PackagingItem) {
     this.assignedPackagings.data = this.assignedPackagings.data.filter(item => item.id !== row.id);
     this.selectedPackagings = this.selectedPackagings.filter(item => item.id !== row.id);
+    this.selectedPackagingIds = this.selectedPackagingIds.filter(id => id !== row.id);
   }
 
   addQuantity(row: ProductItem) {

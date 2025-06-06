@@ -38,7 +38,7 @@
           <input
             type="text"
             class="search-input"
-            placeholder="Szukaj po nazwie, numerze oferty lub EAN..."
+            placeholder="Szukaj po nazwie, numerze oferty..."
             [(ngModel)]="searchTerm"
             (input)="onSearchChange()"
           >
@@ -96,17 +96,14 @@
                    (error)="onImageError($event)">
               <div class="offer-info">
                 <div class="offer-title">{{ offer.auctionName }}</div>
-                <div class="offer-id">{{ offer.offerNumber }}</div>
+                <a [href]="offerAllegroUrl(offer.offerNumber)"
+                   target="_blank"
+                   class="offer-id"
+                   (click)="$event.stopPropagation()">
+                  #{{ offer.offerNumber }}
+                </a>
               </div>
             </div>
-          </td>
-        </ng-container>
-
-        <!-- EAN Column -->
-        <ng-container matColumnDef="ean">
-          <th mat-header-cell *matHeaderCellDef>EAN</th>
-          <td mat-cell *matCellDef="let offer">
-            <span class="ean-code">{{ offer.ean || '-' }}</span>
           </td>
         </ng-container>
 
@@ -129,15 +126,21 @@
         <ng-container matColumnDef="price">
           <th mat-header-cell *matHeaderCellDef>Cena</th>
           <td mat-cell *matCellDef="let offer">
-            <span class="price-value">{{ offer.price | currency:'PLN':'symbol':'1.2-2' }}</span>
+            <div class="price-cell">
+              <div class="price-amount">{{ offer.price | currency:'PLN':'symbol':'1.2-2' }}</div>
+              <div class="price-currency">PLN</div>
+            </div>
           </td>
         </ng-container>
 
         <!-- Quantity Column -->
         <ng-container matColumnDef="quantity">
-          <th mat-header-cell *matHeaderCellDef>Ilość</th>
+          <th mat-header-cell *matHeaderCellDef>Dostępność</th>
           <td mat-cell *matCellDef="let offer">
-            <span class="quantity-badge">{{ offer.allegroQuantity }}</span>
+            <div class="quantity-info">
+              <span class="quantity-badge">{{ offer.allegroQuantity }}</span>
+              <div class="quantity-label">dostępne/wszystkie</div>
+            </div>
           </td>
         </ng-container>
 

@@ -6,6 +6,7 @@ import {MatDialog} from "@angular/material/dialog";
 import {OfferEditDialogComponent} from "./offer-edit-dialog/offer-edit-dialog.component";
 import {ToastService} from "../../utility/service/toast-service";
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import {environment} from '../../../environments/environment';
 
 export interface Offer {
   number: number;
@@ -60,7 +61,6 @@ export class AllegroSynchronizedComponent implements OnInit {
 
   displayedColumns: string[] = [
     'offer',
-    'ean',
     'products',
     'price',
     'quantity',
@@ -171,7 +171,8 @@ export class AllegroSynchronizedComponent implements OnInit {
 
   openEditDialog(offer: Offer): void {
     const dialogRef = this.dialog.open(OfferEditDialogComponent, {
-      width: '500px',
+      width: '800px',
+      maxWidth: '90vw',
       data: { offer }
     });
 
@@ -209,8 +210,6 @@ export class AllegroSynchronizedComponent implements OnInit {
       this.loadOffers();
     }
   }
-
-// W allegro-synchronized.component.ts - zaktualizuj metodę getPageNumbers()
 
   getPageNumbers(): (number | string)[] {
     const pages: (number | string)[] = [];
@@ -292,5 +291,10 @@ export class AllegroSynchronizedComponent implements OnInit {
       }
       return total;
     }, 0);
+  }
+
+  // Helper method for offer URLs
+  offerAllegroUrl(offerNumber: string): string {
+    return `${environment.allegroUrl}/oferta/${offerNumber}`;
   }
 }

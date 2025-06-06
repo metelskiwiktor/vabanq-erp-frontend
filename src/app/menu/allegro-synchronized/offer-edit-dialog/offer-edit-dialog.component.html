@@ -1,100 +1,157 @@
-<h1 mat-dialog-title>Edytowanie oferty: {{ offerId }}</h1>
-
-<mat-dialog-content>
-
-  <!-- Packaging Section -->
-  <h2>Opakowania</h2>
-  <div style="margin-bottom: 10px;">
-    <label>Zarządzaj opakowaniami:</label>
-    <ng-select
-      [items]="packagingOptions"
-      bindLabel="name"
-      [multiple]="true"
-      [(ngModel)]="selectedPackagings"
-      (ngModelChange)="onPackagingChange($event)">
-    </ng-select>
+<div class="dialog-container">
+  <div class="dialog-header">
+    <div class="dialog-title">
+      <i class="bx bx-edit"></i>
+      <h2>Edytowanie oferty</h2>
+    </div>
+    <div class="offer-info">
+      <span class="offer-number">#{{ offerId }}</span>
+    </div>
   </div>
 
-  <table mat-table [dataSource]="assignedPackagings" class="mat-elevation-z8" style="margin-bottom: 20px;">
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef> Opakowanie </th>
-      <td mat-cell *matCellDef="let row"> {{ row.name }} </td>
-    </ng-container>
+  <div class="dialog-content">
+    <!-- Products Section -->
+    <div class="section">
+      <div class="section-header">
+        <i class="bx bx-box"></i>
+        <h3>Produkty</h3>
+      </div>
 
-    <ng-container matColumnDef="quantity">
-      <th mat-header-cell *matHeaderCellDef> Ilość </th>
-      <td mat-cell *matCellDef="let row">
-        {{ row.quantity }}
-        <button mat-icon-button (click)="addPackagingQuantity(row)">
-          <mat-icon>add</mat-icon>
-        </button>
-        <button mat-icon-button (click)="subtractPackagingQuantity(row)">
-          <mat-icon>remove</mat-icon>
-        </button>
-      </td>
-    </ng-container>
+      <div class="section-content">
+        <div class="form-group">
+          <label class="form-label">Zarządzaj produktami:</label>
+          <ng-select
+            [items]="allProducts"
+            bindLabel="name"
+            bindValue="id"
+            [multiple]="true"
+            [(ngModel)]="selectedProductIds"
+            (ngModelChange)="onProductChange($event)"
+            placeholder="Wybierz produkty..."
+            class="custom-select">
+          </ng-select>
+        </div>
 
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef> Usuń </th>
-      <td mat-cell *matCellDef="let row">
-        <button mat-icon-button color="warn" (click)="removePackaging(row)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
+        <div class="items-table-container" *ngIf="assignedItems.data.length > 0">
+          <table class="items-table">
+            <thead>
+            <tr>
+              <th>Produkt</th>
+              <th>Ilość</th>
+              <th>Akcje</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let row of assignedItems.data">
+              <td>
+                <div class="item-info">
+                  <span class="item-name">{{ row.name }}</span>
+                  <span class="item-ean">EAN: {{ row.ean }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="quantity-controls">
+                  <button type="button" class="quantity-btn" (click)="subtractQuantity(row)">
+                    <i class="bx bx-minus"></i>
+                  </button>
+                  <span class="quantity-display">{{ row.quantity }}</span>
+                  <button type="button" class="quantity-btn" (click)="addQuantity(row)">
+                    <i class="bx bx-plus"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <button type="button" class="remove-btn" (click)="removeItem(row)">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
 
-    <tr mat-header-row *matHeaderRowDef="packagingDisplayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: packagingDisplayedColumns;"></tr>
-  </table>
+        <div class="empty-state" *ngIf="assignedItems.data.length === 0">
+          <i class="bx bx-box"></i>
+          <p>Brak przypisanych produktów</p>
+        </div>
+      </div>
+    </div>
 
-  <!-- Products Section -->
-  <h2>Produkty</h2>
-  <div style="margin-bottom: 10px;">
-    <label>Zarządzaj produktami:</label>
-    <ng-select
-      [items]="allProducts"
-      bindLabel="name"
-      [multiple]="true"
-      [(ngModel)]="selectedProducts"
-      (ngModelChange)="onProductChange($event)">
-    </ng-select>
+    <!-- Packaging Section -->
+    <div class="section">
+      <div class="section-header">
+        <i class="bx bx-package"></i>
+        <h3>Opakowania</h3>
+      </div>
+
+      <div class="section-content">
+        <div class="form-group">
+          <label class="form-label">Zarządzaj opakowaniami:</label>
+          <ng-select
+            [items]="packagingOptions"
+            bindLabel="name"
+            bindValue="id"
+            [multiple]="true"
+            [(ngModel)]="selectedPackagingIds"
+            (ngModelChange)="onPackagingChange($event)"
+            placeholder="Wybierz opakowania..."
+            class="custom-select">
+          </ng-select>
+        </div>
+
+        <div class="items-table-container" *ngIf="assignedPackagings.data.length > 0">
+          <table class="items-table">
+            <thead>
+            <tr>
+              <th>Opakowanie</th>
+              <th>Ilość</th>
+              <th>Akcje</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let row of assignedPackagings.data">
+              <td>
+                <div class="item-info">
+                  <span class="item-name">{{ row.name }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="quantity-controls">
+                  <button type="button" class="quantity-btn" (click)="subtractPackagingQuantity(row)">
+                    <i class="bx bx-minus"></i>
+                  </button>
+                  <span class="quantity-display">{{ row.quantity }}</span>
+                  <button type="button" class="quantity-btn" (click)="addPackagingQuantity(row)">
+                    <i class="bx bx-plus"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <button type="button" class="remove-btn" (click)="removePackaging(row)">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" *ngIf="assignedPackagings.data.length === 0">
+          <i class="bx bx-package"></i>
+          <p>Brak przypisanych opakowań</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <table mat-table [dataSource]="assignedItems" class="mat-elevation-z8">
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef> Produkt </th>
-      <td mat-cell *matCellDef="let row"> {{ row.name }} (EAN: {{ row.ean }}) </td>
-    </ng-container>
-
-    <ng-container matColumnDef="quantity">
-      <th mat-header-cell *matHeaderCellDef> Ilość </th>
-      <td mat-cell *matCellDef="let row">
-        {{ row.quantity }}
-        <button mat-icon-button (click)="addQuantity(row)">
-          <mat-icon>add</mat-icon>
-        </button>
-        <button mat-icon-button (click)="subtractQuantity(row)">
-          <mat-icon>remove</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef> Usuń </th>
-      <td mat-cell *matCellDef="let row">
-        <button mat-icon-button color="warn" (click)="removeItem(row)">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table>
-
-</mat-dialog-content>
-
-<mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Anuluj</button>
-  <button mat-raised-button color="primary" (click)="onSave()">Zapisz</button>
-</mat-dialog-actions>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-secondary" (click)="onCancel()">
+      <i class="bx bx-x"></i>
+      Anuluj
+    </button>
+    <button type="button" class="btn btn-primary" (click)="onSave()">
+      <i class="bx bx-check"></i>
+      Zapisz zmiany
+    </button>
+  </div>
+</div>

@@ -523,3 +523,95 @@
 .mat-header-cell {
   border-bottom-color: #f3f4f6;
 }
+
+/* Dodaj te style do istniejącego allegro-synchronized.component.css */
+
+/* Offer Link Styling */
+.offer-id {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+  color: #8064A2;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.offer-id:hover {
+  color: #6d5596;
+  text-decoration: underline;
+}
+
+/* Price Cell Updates */
+.price-cell {
+  text-align: right;
+}
+
+.price-amount {
+  font-weight: 600;
+  color: #059669;
+  font-size: 15px;
+  display: block;
+}
+
+.price-currency {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Quantity Info Updates */
+.quantity-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.quantity-badge {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.quantity-label {
+  font-size: 10px;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Responsive updates for mobile */
+@media (max-width: 768px) {
+  .offer-info {
+    min-width: 0;
+  }
+
+  .offer-title {
+    max-width: 150px;
+  }
+
+  .offer-id {
+    font-size: 11px;
+  }
+
+  .price-amount {
+    font-size: 14px;
+  }
+
+  .quantity-info {
+    align-items: flex-start;
+  }
+
+  .quantity-badge {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+
+  .quantity-label {
+    font-size: 9px;
+  }
+}
