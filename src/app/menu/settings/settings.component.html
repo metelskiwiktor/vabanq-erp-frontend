@@ -94,17 +94,6 @@
               Łączenie z Allegro...
             </button>
 
-            <!-- Refresh Button -->
-            <button
-              type="button"
-              class="btn btn-success btn-lg"
-              (click)="refreshToken()"
-              *ngIf="!connectingAllegro && tokenDetails && (tokenDetails.status === 'warning' || tokenDetails.status === 'expired')"
-            >
-              <i class="bx bx-refresh"></i>
-              Odśwież token
-            </button>
-
             <!-- Disconnect Button -->
             <button
               type="button"
