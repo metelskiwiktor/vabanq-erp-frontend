@@ -1179,3 +1179,119 @@
   }
 }
 
+/* Dodatkowe style do dodania do istniejącego orders.component.css */
+
+/* Filter Invoice Button */
+.filter-invoice-btn {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  color: #374151;
+  min-width: 120px;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.filter-invoice-btn:hover {
+  border-color: #8064A2;
+  background: #f8f4ff;
+}
+
+.filter-invoice-btn.active {
+  background: #8064A2;
+  border-color: #8064A2;
+  color: white;
+}
+
+.filter-invoice-btn.active:hover {
+  background: #6d5596;
+}
+
+.filter-invoice-btn:focus {
+  outline: none;
+  border-color: #8064A2;
+  box-shadow: 0 0 0 2px rgba(128, 100, 162, 0.1);
+}
+
+/* Enhanced buyer name display */
+.order-id {
+  font-weight: 600;
+  color: #111827;
+  font-size: 14px;
+  word-break: break-word;
+  max-width: 180px;
+}
+
+/* Better currency display */
+.price-amount {
+  font-weight: 600;
+  color: #111827;
+  font-size: 15px;
+  font-feature-settings: 'tnum' 1; /* Monospaced numbers */
+}
+
+.price-currency {
+  font-size: 12px;
+  color: #6b7280;
+  display: block;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Enhanced details field display */
+.details-field-value {
+  color: #111827;
+  font-size: 13px;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Better invoice address display */
+.details-field-value div {
+  margin-bottom: 2px;
+}
+
+.details-field-value div:last-child {
+  margin-bottom: 0;
+}
+
+/* Products table currency display */
+.products-table td {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-feature-settings: 'tnum' 1; /* Monospaced numbers for prices */
+}
+
+/* Order summary enhanced */
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-feature-settings: 'tnum' 1;
+}
+
+.summary-line.total {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Address styling improvements */
+.address-line {
+  margin-bottom: 2px;
+}
+
+.address-line:last-child {
+  margin-bottom: 0;
+}

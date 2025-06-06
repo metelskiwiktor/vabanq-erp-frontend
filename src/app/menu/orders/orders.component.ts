@@ -369,6 +369,7 @@ export class OrdersComponent implements OnInit {
     this.fetchOrders();
   }
 
+  // Nowa metoda do filtrowania po fakturach
   toggleInvoiceFilter(): void {
     this.filterMustHasInvoice = !this.filterMustHasInvoice;
     this.currentPage = 0;
@@ -532,6 +533,22 @@ export class OrdersComponent implements OnInit {
       return 'Wyślij do allegro (wymagana)';
     }
     return 'Wyślij do allegro';
+  }
+
+  // Metoda do wyświetlania nazwy kupującego
+  getBuyerDisplayName(buyer: any): string {
+    if (buyer.firstName && buyer.lastName) {
+      return `${buyer.firstName} ${buyer.lastName}`;
+    }
+    if (buyer.companyName) {
+      return buyer.companyName;
+    }
+    return 'Brak danych';
+  }
+
+  // Metoda do wyświetlania waluty
+  formatCurrency(amount: number, currency: string): string {
+    return `${amount.toFixed(2)} ${currency}`;
   }
 
   offerAllegroUrl(productId: string): string {

@@ -20,19 +20,25 @@ export enum OrderStatus {
 }
 
 export interface BuyerOrder {
+  buyerId: string;
   login: string;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
   language: string;
+  companyName: string;
 }
 
 export interface AddressOrder {
+  addressFirstName?: string;
+  addressLastName?: string;
   street?: string;
   city: string;
   postCode: string;
   countryCode: string;
+  companyName?: string;
+  addressPhoneNumber?: string;
 }
 
 export interface DeliveryOrder {
@@ -51,6 +57,7 @@ export interface ProductOrder {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  currency: string;
 }
 
 export interface InvoiceInfo {
@@ -68,6 +75,9 @@ export interface InvoiceInfo {
 export interface InvoiceOrder {
   invoiceRequired: boolean;
   nip?: string;
+  hasNip: boolean;
+  companyName?: string;
+  address?: AddressOrder;
 }
 
 export interface Order {
@@ -80,6 +90,7 @@ export interface Order {
   delivery: DeliveryOrder;
   products: ProductOrder[];
   totalAmount: number;
+  currency: string;
   sellerId: string;
   invoice: InvoiceOrder;
   isExpanded?: boolean;

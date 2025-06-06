@@ -129,6 +129,17 @@
           <input type="date" class="filter-input" (change)="filterByDateTo($event)">
         </div>
 
+        <div class="filter-group">
+          <label class="filter-label">Z fakturami</label>
+          <button class="filter-invoice-btn"
+                  [class.active]="filterMustHasInvoice"
+                  (click)="toggleInvoiceFilter()"
+                  title="Pokaż tylko zamówienia z fakturami">
+            <i class="bx bx-receipt"></i>
+            {{ filterMustHasInvoice ? 'Tak' : 'Wszystkie' }}
+          </button>
+        </div>
+
         <button class="btn btn-outline" (click)="clearFilters()">
           <i class="bx bx-filter-alt"></i>
           Wyczyść
@@ -158,7 +169,6 @@
       </div>
 
       <!-- Orders Table -->
-      <!-- Orders Table -->
       <table class="orders-table" *ngIf="!isLoading">
         <thead>
         <tr>
@@ -179,7 +189,7 @@
             <!-- Buyer Info -->
             <td>
               <div class="order-info">
-                <div class="order-id">{{ order.buyer.login }}</div>
+                <div class="order-id">{{ getBuyerDisplayName(order.buyer) }}</div>
                 <a [href]=orderAllegroUrl(order.orderId)
                    target="_blank"
                    class="order-number"
@@ -220,8 +230,8 @@
             <!-- Price -->
             <td>
               <div class="price-cell">
-                <div class="price-amount">{{ order.totalAmount | currency:'PLN':'symbol':'1.2-2' }}</div>
-                <div class="price-currency">PLN</div>
+                <div class="price-amount">{{ formatCurrency(order.totalAmount, order.currency) }}</div>
+                <div class="price-currency">{{ order.currency }}</div>
               </div>
             </td>
 
@@ -347,13 +357,17 @@
                       </div>
                       <div class="details-field">
                         <div class="details-field-label">Kupujący:</div>
-                        <div class="details-field-value">{{ order.buyer.firstName }} {{ order.buyer.lastName }}</div>
+                        <div class="details-field-value">{{ getBuyerDisplayName(order.buyer) }}</div>
                       </div>
                       <div class="details-field">
+                        <div class="details-field-label">Login:</div>
+                        <div class="details-field-value">{{ order.buyer.login }}</div>
+                      </div>
+                      <div class="details-field" *ngIf="order.buyer.email">
                         <div class="details-field-label">Email:</div>
                         <div class="details-field-value">{{ order.buyer.email }}</div>
                       </div>
-                      <div class="details-field">
+                      <div class="details-field" *ngIf="order.buyer.phoneNumber">
                         <div class="details-field-label">Telefon:</div>
                         <div class="details-field-value">{{ order.buyer.phoneNumber }}</div>
                       </div>
@@ -385,14 +399,25 @@
                       </div>
                       <div class="details-field">
                         <div class="details-field-label">Koszt dostawy:</div>
-                        <div class="details-field-value">{{ order.delivery.cost | currency:'PLN':'symbol':'1.2-2' }}</div>
+                        <div class="details-field-value">{{ formatCurrency(order.delivery.cost, order.currency) }}</div>
                       </div>
                       <div class="details-field">
                         <div class="details-field-label">Adres dostawy:</div>
                         <div class="details-field-value">
                           <div *ngIf="order.delivery.deliveryAddress">
-                            {{ order.delivery.deliveryAddress.street }}<br>
+                            <div *ngIf="order.delivery.deliveryAddress.addressFirstName || order.delivery.deliveryAddress.addressLastName">
+                              {{ order.delivery.deliveryAddress.addressFirstName }} {{ order.delivery.deliveryAddress.addressLastName }}<br>
+                            </div>
+                            <div *ngIf="order.delivery.deliveryAddress.companyName">
+                              {{ order.delivery.deliveryAddress.companyName }}<br>
+                            </div>
+                            <div *ngIf="order.delivery.deliveryAddress.street">
+                              {{ order.delivery.deliveryAddress.street }}<br>
+                            </div>
                             {{ order.delivery.deliveryAddress.postCode }} {{ order.delivery.deliveryAddress.city }} {{ order.delivery.deliveryAddress.countryCode }}
+                            <div *ngIf="order.delivery.deliveryAddress.addressPhoneNumber">
+                              Tel: {{ order.delivery.deliveryAddress.addressPhoneNumber }}
+                            </div>
                           </div>
                           <div *ngIf="!order.delivery.deliveryAddress">
                             Brak adresu dostawy
@@ -420,17 +445,41 @@
                       <div class="details-field">
                         <div class="details-field-label">Rodzaj faktury:</div>
                         <div class="details-field-value">
-                          {{ order.invoice.nip ? 'Firma' : 'Osoba prywatna' }}
+                          {{ order.invoice.hasNip ? 'Firma' : 'Osoba prywatna' }}
                         </div>
                       </div>
-                      <div *ngIf="order.invoice.nip" class="details-field">
-                        <div class="details-field-label">NIP:</div>
-                        <div class="details-field-value">{{ order.invoice.nip }}</div>
-                      </div>
-                      <div *ngIf="!order.invoice.nip" class="details-field">
-                        <div class="details-field-label">Imię i nazwisko:</div>
-                        <div class="details-field-value">{{ order.buyer.firstName }} {{ order.buyer.lastName }}</div>
-                      </div>
+
+                      <!-- Dane firmy gdy hasNip = true -->
+                      <ng-container *ngIf="order.invoice.hasNip">
+                        <div *ngIf="order.invoice.nip" class="details-field">
+                          <div class="details-field-label">NIP:</div>
+                          <div class="details-field-value">{{ order.invoice.nip }}</div>
+                        </div>
+                        <div *ngIf="order.invoice.companyName" class="details-field">
+                          <div class="details-field-label">Nazwa firmy:</div>
+                          <div class="details-field-value">{{ order.invoice.companyName }}</div>
+                        </div>
+                        <div *ngIf="order.invoice.address" class="details-field">
+                          <div class="details-field-label">Adres faktury:</div>
+                          <div class="details-field-value">
+                            <div *ngIf="order.invoice.address.street">
+                              {{ order.invoice.address.street }}<br>
+                            </div>
+                            {{ order.invoice.address.postCode }} {{ order.invoice.address.city }} {{ order.invoice.address.countryCode }}
+                            <div *ngIf="order.invoice.address.addressPhoneNumber">
+                              Tel: {{ order.invoice.address.addressPhoneNumber }}
+                            </div>
+                          </div>
+                        </div>
+                      </ng-container>
+
+                      <!-- Dane osoby prywatnej gdy hasNip = false -->
+                      <ng-container *ngIf="!order.invoice.hasNip">
+                        <div class="details-field">
+                          <div class="details-field-label">Imię i nazwisko:</div>
+                          <div class="details-field-value">{{ getBuyerDisplayName(order.buyer) }}</div>
+                        </div>
+                      </ng-container>
                     </div>
                   </div>
                 </div>
@@ -461,23 +510,23 @@
                           </a>
                         </td>
                         <td>{{ product.quantity }}</td>
-                        <td>{{ product.unitPrice | currency:'PLN':'symbol':'1.2-2' }}</td>
-                        <td>{{ product.totalPrice | currency:'PLN':'symbol':'1.2-2' }}</td>
+                        <td>{{ formatCurrency(product.unitPrice, product.currency) }}</td>
+                        <td>{{ formatCurrency(product.totalPrice, product.currency) }}</td>
                       </tr>
                       </tbody>
                     </table>
                     <div class="order-summary">
                       <div class="summary-line">
                         <span>Suma produktów:</span>
-                        <span>{{ (order.totalAmount - order.delivery.cost) | currency:'PLN':'symbol':'1.2-2' }}</span>
+                        <span>{{ formatCurrency((order.totalAmount - order.delivery.cost), order.currency) }}</span>
                       </div>
                       <div class="summary-line">
                         <span>Dostawa:</span>
-                        <span>{{ order.delivery.cost | currency:'PLN':'symbol':'1.2-2' }}</span>
+                        <span>{{ formatCurrency(order.delivery.cost, order.currency) }}</span>
                       </div>
                       <div class="summary-line total">
                         <span><strong>Suma całkowita:</strong></span>
-                        <span><strong>{{ order.totalAmount | currency:'PLN':'symbol':'1.2-2' }}</strong></span>
+                        <span><strong>{{ formatCurrency(order.totalAmount, order.currency) }}</strong></span>
                       </div>
                     </div>
                   </div>
