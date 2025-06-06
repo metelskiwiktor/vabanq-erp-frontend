@@ -15,7 +15,7 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
   animations: [
     trigger('slideInOut', [
       state('in', style({
-        maxHeight: '500px',
+        maxHeight: '300px',
         opacity: 1,
         overflow: 'hidden'
       })),
@@ -24,8 +24,8 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
         opacity: 0,
         overflow: 'hidden'
       })),
-      transition('in => out', animate('300ms ease-in-out')),
-      transition('out => in', animate('300ms ease-in-out'))
+      transition('in => out', animate('400ms cubic-bezier(0.4, 0, 0.2, 1)')),
+      transition('out => in', animate('400ms cubic-bezier(0.4, 0, 0.2, 1)'))
     ])
   ]
 })
@@ -43,7 +43,6 @@ export class MenuComponent implements OnInit, OnDestroy {
     products: true,
     auctions: true,
     accounting: true,
-    integrations: false,
   };
 
   constructor(
@@ -130,23 +129,17 @@ export class MenuComponent implements OnInit, OnDestroy {
     return this.currentRoute.startsWith(route);
   }
 
-  get activeIntegrations(): boolean {
-    return this.currentRoute.includes('/settings') && this.allegroTokenDetails?.isValid!;
+  // User initials for avatar
+  getUserInitials(): string {
+    if (!this.userProfile) return 'U';
+
+    const firstName = this.userProfile.firstName || '';
+    const lastName = this.userProfile.lastName || '';
+
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U';
   }
 
-  // Allegro methods
-  getAllegroStatusClass(): string {
-    if (!this.allegroTokenDetails) return 'allegro-status-unknown';
-
-    switch (this.allegroTokenDetails.status) {
-      case 'connected': return 'allegro-status-connected';
-      case 'warning': return 'allegro-status-warning';
-      case 'expired': return 'allegro-status-expired';
-      case 'not_connected': return 'allegro-status-not-connected';
-      default: return 'allegro-status-unknown';
-    }
-  }
-
+  // Allegro status methods
   getAllegroStatusTooltip(): string {
     if (!this.allegroTokenDetails) return 'Status Allegro nieznany';
 
@@ -161,15 +154,42 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  onAllegroClick(): void {
+  // Profile avatar status class
+  getProfileAllegroStatusClass(): string {
+    if (!this.allegroTokenDetails) return 'profile-status-unknown';
+
+    switch (this.allegroTokenDetails.status) {
+      case 'connected': return 'profile-status-connected';
+      case 'warning': return 'profile-status-warning';
+      case 'expired': return 'profile-status-expired';
+      case 'not_connected': return 'profile-status-not-connected';
+      default: return 'profile-status-unknown';
+    }
+  }
+
+  // Menu status dot class
+  getMenuAllegroStatusClass(): string {
+    if (!this.allegroTokenDetails) return '';
+
+    switch (this.allegroTokenDetails.status) {
+      case 'connected': return 'status-connected';
+      case 'warning': return 'status-warning';
+      case 'expired': return 'status-error';
+      case 'not_connected': return '';
+      default: return '';
+    }
+  }
+
+  // Profile menu methods
+  goToSettings(): void {
+    this.showProfileMenu = false;
     this.router.navigate(['/settings']);
   }
 
-  // Profile methods
-  viewProfile(): void {
+  goToIntegrations(): void {
     this.showProfileMenu = false;
-    // Navigate to profile page or open profile modal
-    console.log('View profile clicked');
+    // Redirect to settings page since integrations are handled there
+    this.router.navigate(['/settings']);
   }
 
   logout(): void {

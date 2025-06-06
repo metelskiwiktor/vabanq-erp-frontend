@@ -3,31 +3,44 @@
   <!-- Header -->
   <div class="logo-details">
     <i class="bx bxl-c-plus-plus icon"></i>
-    <div class="logo_name">VaBanQ ERP</div>
+    <div class="logo-content">
+      <div class="logo_name">VaBanQ ERP</div>
+      <div class="logo-subtitle">System zarządzania</div>
+    </div>
   </div>
 
   <ul class="nav-list">
+    <!-- Main Section -->
+    <li class="nav-section">
+      <div class="nav-title">Główne</div>
+    </li>
+
     <!-- Dashboard -->
     <li>
       <a routerLink="/dashboard"
          routerLinkActive="active"
          [routerLinkActiveOptions]="{ exact: true }"
          (click)="onItemClick('/dashboard')">
-        <i class="bx bx-grid-alt"></i>
+        <i class="bx bx-grid-alt nav-icon"></i>
         <span class="links_name">Dashboard</span>
       </a>
       <span class="tooltip">Dashboard</span>
     </li>
 
+    <!-- Management Section -->
+    <li class="nav-section">
+      <div class="nav-title">Zarządzanie</div>
+    </li>
+
     <!-- Products Category -->
     <li class="category">
-      <a (click)="toggleCategory('products')"
-         [class.active]="isRouteActive('/items') || isRouteActive('/add-item') || isRouteActive('/wms') || isRouteActive('/generate-eans')">
-        <i class="bx bx-cube"></i>
+      <button (click)="toggleCategory('products')"
+              [class.active]="isRouteActive('/items') || isRouteActive('/add-item') || isRouteActive('/wms') || isRouteActive('/generate-eans')">
+        <i class="bx bx-cube nav-icon"></i>
         <span class="links_name">Produkty</span>
         <i class="bx bx-chevron-down arrow"
            [class.rotate]="subcategories['products']"></i>
-      </a>
+      </button>
       <span class="tooltip">Produkty</span>
     </li>
 
@@ -50,7 +63,7 @@
            [routerLinkActiveOptions]="{ exact: true }"
            (click)="onItemClick('/add-item')">
           <i class="bx bx-plus-circle"></i>
-          <span class="links_name">Stwórz produkt</span>
+          <span class="links_name">Nowy produkt</span>
         </a>
         <span class="tooltip">Stwórz nowy produkt</span>
       </li>
@@ -60,7 +73,7 @@
            [routerLinkActiveOptions]="{ exact: true }"
            (click)="onItemClick('/wms')">
           <i class="bx bx-package"></i>
-          <span class="links_name">Stany magazynowe</span>
+          <span class="links_name">Magazyn</span>
         </a>
         <span class="tooltip">Stany magazynowe</span>
       </li>
@@ -70,22 +83,22 @@
            [routerLinkActiveOptions]="{ exact: true }"
            (click)="onItemClick('/generate-eans')">
           <i class="bx bx-barcode"></i>
-          <span class="links_name">Generowanie EAN</span>
+          <span class="links_name">Kody EAN</span>
         </a>
         <span class="tooltip">Generowanie EAN</span>
       </li>
     </ul>
 
-    <!-- Auctions Category -->
+    <!-- Sales Category -->
     <li class="category">
-      <a (click)="toggleCategory('auctions')"
-         [class.active]="isRouteActive('/offers') || isRouteActive('/orders')">
-        <i class="bx bx-store"></i>
-        <span class="links_name">Aukcje</span>
+      <button (click)="toggleCategory('auctions')"
+              [class.active]="isRouteActive('/offers') || isRouteActive('/orders')">
+        <i class="bx bx-store nav-icon"></i>
+        <span class="links_name">Sprzedaż</span>
         <i class="bx bx-chevron-down arrow"
            [class.rotate]="subcategories['auctions']"></i>
-      </a>
-      <span class="tooltip">Aukcje</span>
+      </button>
+      <span class="tooltip">Sprzedaż</span>
     </li>
 
     <ul class="subcategories"
@@ -113,16 +126,16 @@
       </li>
     </ul>
 
-    <!-- Accounting Category -->
+    <!-- Finance Category -->
     <li class="category">
-      <a (click)="toggleCategory('accounting')"
-         [class.active]="isRouteActive('/accounting')">
-        <i class="bx bx-calculator"></i>
-        <span class="links_name">Księgowość</span>
+      <button (click)="toggleCategory('accounting')"
+              [class.active]="isRouteActive('/accounting')">
+        <i class="bx bx-calculator nav-icon"></i>
+        <span class="links_name">Finanse</span>
         <i class="bx bx-chevron-down arrow"
            [class.rotate]="subcategories['accounting']"></i>
-      </a>
-      <span class="tooltip">Księgowość</span>
+      </button>
+      <span class="tooltip">Finanse</span>
     </li>
 
     <ul class="subcategories"
@@ -134,7 +147,7 @@
            [routerLinkActiveOptions]="{ exact: true }"
            (click)="onItemClick('/accounting/dashboard')">
           <i class="bx bx-tachometer"></i>
-          <span class="links_name">Dashboard</span>
+          <span class="links_name">Raporty</span>
         </a>
         <span class="tooltip">Dashboard księgowości</span>
       </li>
@@ -154,40 +167,9 @@
            [routerLinkActiveOptions]="{ exact: true }"
            (click)="onItemClick('/accounting/expenses')">
           <i class="bx bx-money"></i>
-          <span class="links_name">Koszty</span>
+          <span class="links_name">Wydatki</span>
         </a>
-        <span class="tooltip">Koszty</span>
-      </li>
-    </ul>
-
-    <!-- Integrations -->
-    <li class="integrations-section">
-      <a (click)="toggleCategory('integrations')"
-         [class.active]="activeIntegrations">
-        <i class="bx bx-link-alt"></i>
-        <span class="links_name">Integracje</span>
-        <i class="bx bx-chevron-down arrow"
-           [class.rotate]="subcategories['integrations']"></i>
-      </a>
-      <span class="tooltip">Integracje</span>
-    </li>
-
-    <ul class="subcategories"
-        [class.show]="subcategories['integrations']"
-        [@slideInOut]="subcategories['integrations'] ? 'in' : 'out'">
-      <li>
-        <div class="integration-item" (click)="onAllegroClick()">
-          <div class="integration-info">
-            <i class="bx bxl-shopify"></i>
-            <span class="links_name">Allegro</span>
-          </div>
-          <div class="allegro-status-indicator"
-               [ngClass]="getAllegroStatusClass()"
-               [title]="getAllegroStatusTooltip()">
-            <div class="status-dot"></div>
-          </div>
-        </div>
-        <span class="tooltip">{{ getAllegroStatusTooltip() }}</span>
+        <span class="tooltip">Wydatki</span>
       </li>
     </ul>
 
@@ -197,7 +179,7 @@
          routerLinkActive="active"
          [routerLinkActiveOptions]="{ exact: true }"
          (click)="onItemClick('/settings')">
-        <i class="bx bx-cog"></i>
+        <i class="bx bx-cog nav-icon"></i>
         <span class="links_name">Ustawienia</span>
       </a>
       <span class="tooltip">Ustawienia</span>
@@ -207,7 +189,11 @@
     <li class="profile">
       <div class="profile-details" (click)="toggleProfileMenu()">
         <div class="profile-avatar">
-          <i class="bx bx-user"></i>
+          <span>{{getUserInitials()}}</span>
+          <!-- Allegro Status Dot on Avatar -->
+          <div class="profile-status-dot"
+               [ngClass]="getProfileAllegroStatusClass()"
+               [title]="getAllegroStatusTooltip()"></div>
         </div>
         <div class="name_job">
           <div class="name">{{userProfile?.firstName! + " " + userProfile?.lastName!}}</div>
@@ -220,13 +206,19 @@
       <div class="profile-menu"
            [class.show]="showProfileMenu"
            [@slideInOut]="showProfileMenu ? 'in' : 'out'">
-        <div class="profile-menu-item" (click)="viewProfile()">
-          <i class="bx bx-user"></i>
-          <span>Profil</span>
+        <div class="profile-menu-item" (click)="goToSettings()">
+          <i class="bx bx-cog"></i>
+          <span>Ustawienia</span>
+        </div>
+        <div class="profile-menu-item" (click)="goToIntegrations()">
+          <i class="bx bx-link-alt"></i>
+          <span>Integracje</span>
+          <div class="menu-status-dot"
+               [ngClass]="getMenuAllegroStatusClass()"></div>
         </div>
         <div class="profile-menu-item" (click)="logout()">
           <i class="bx bx-log-out"></i>
-          <span>Wyloguj</span>
+          <span>Wyloguj się</span>
         </div>
       </div>
     </li>
