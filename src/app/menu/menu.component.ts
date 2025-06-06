@@ -32,7 +32,6 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 export class MenuComponent implements OnInit, OnDestroy {
   public userProfile: KeycloakProfile | null = null;
   public allegroTokenDetails: AllegroTokenDetails | null = null;
-  public isOpen: boolean = true;
   public searchTerm: string = '';
   public showProfileMenu: boolean = false;
   public currentRoute: string = '';
@@ -42,9 +41,9 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   // Subcategories state
   public subcategories: { [key: string]: boolean } = {
-    products: false,
-    auctions: false,
-    accounting: false,
+    products: true,
+    auctions: true,
+    accounting: true,
     integrations: false,
   };
 
@@ -83,8 +82,8 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.currentRoute = this.router.url;
     this.updateActiveCategories();
 
-    // Load sidebar state from localStorage
-    this.loadSidebarState();
+    // Load subcategories state from localStorage
+    this.loadSubcategoriesState();
   }
 
   ngOnDestroy(): void {
@@ -96,36 +95,8 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    // Auto-collapse on mobile
-    if (event.target.innerWidth < 768) {
-      this.isOpen = false;
-    }
-  }
-
-  toggleSidebar(): void {
-    this.isOpen = !this.isOpen;
-    this.saveSidebarState();
-
-    // Close profile menu when collapsing sidebar
-    if (!this.isOpen) {
-      this.showProfileMenu = false;
-    }
-  }
-
   toggleCategory(category: string): void {
     this.subcategories[category] = !this.subcategories[category];
-
-    // Close other categories if on mobile
-    if (window.innerWidth < 768) {
-      Object.keys(this.subcategories).forEach(key => {
-        if (key !== category) {
-          this.subcategories[key] = false;
-        }
-      });
-    }
-
     this.saveSubcategoriesState();
   }
 
@@ -134,10 +105,6 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   onItemClick(route: string): void {
-    // Close sidebar on mobile after navigation
-    if (window.innerWidth < 768) {
-      this.isOpen = false;
-    }
     this.showProfileMenu = false;
   }
 
@@ -215,30 +182,11 @@ export class MenuComponent implements OnInit, OnDestroy {
   logout(): void {
     this.showProfileMenu = false;
     localStorage.removeItem('auth_token');
-    localStorage.removeItem('sidebar_state');
     localStorage.removeItem('subcategories_state');
     this.keycloak.logout();
   }
 
   // State persistence
-  private saveSidebarState(): void {
-    localStorage.setItem('sidebar_state', JSON.stringify({
-      isOpen: this.isOpen
-    }));
-  }
-
-  private loadSidebarState(): void {
-    try {
-      const saved = localStorage.getItem('sidebar_state');
-      if (saved) {
-        const state = JSON.parse(saved);
-        this.isOpen = state.isOpen !== undefined ? state.isOpen : true;
-      }
-    } catch (e) {
-      console.error('Error loading sidebar state:', e);
-    }
-  }
-
   private saveSubcategoriesState(): void {
     localStorage.setItem('subcategories_state', JSON.stringify(this.subcategories));
   }

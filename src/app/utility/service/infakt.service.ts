@@ -44,22 +44,6 @@ export class InfaktService {
   }
 
   /**
-   * Get invoice for specific order
-   */
-  getInvoiceForOrder(orderId: string): Observable<InvoiceResponse | null> {
-    return this.http.get<InvoiceResponse>(`${this.apiUrl}/order/${orderId}`)
-      .pipe(
-        catchError(error => {
-          if (error.status === 404) {
-            return of(null);
-          }
-          console.error('Error fetching invoice:', error);
-          return of(null);
-        })
-      );
-  }
-
-  /**
    * Get invoices for multiple orders
    */
   getInvoicesForOrders(orderIds: string[]): Observable<InvoiceResponse[]> {

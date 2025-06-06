@@ -1,14 +1,9 @@
 <!-- src/app/menu/menu.component.html -->
-<div class="sidebar" [class.open]="isOpen">
+<div class="sidebar">
   <!-- Header -->
   <div class="logo-details">
     <i class="bx bxl-c-plus-plus icon"></i>
     <div class="logo_name">VaBanQ ERP</div>
-    <i class="bx"
-       [class.bx-menu-alt-right]="!isOpen"
-       [class.bx-menu]="isOpen"
-       id="btn"
-       (click)="toggleSidebar()"></i>
   </div>
 
   <ul class="nav-list">
