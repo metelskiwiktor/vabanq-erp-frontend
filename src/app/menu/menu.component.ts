@@ -32,7 +32,6 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 export class MenuComponent implements OnInit, OnDestroy {
   public userProfile: KeycloakProfile | null = null;
   public allegroTokenDetails: AllegroTokenDetails | null = null;
-  public searchTerm: string = '';
   public showProfileMenu: boolean = false;
   public currentRoute: string = '';
 
@@ -106,12 +105,6 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   onItemClick(route: string): void {
     this.showProfileMenu = false;
-  }
-
-  onSearch(event: any): void {
-    const term = event.target.value.toLowerCase();
-    // Implement search functionality here
-    console.log('Searching for:', term);
   }
 
   updateActiveCategories(): void {
