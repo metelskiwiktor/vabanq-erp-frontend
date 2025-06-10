@@ -72,59 +72,63 @@
         </button>
       </div>
 
-      <table class="backup-table">
-        <thead>
-        <tr>
-          <th>ID Kopii</th>
-          <th>Moduły</th>
-          <th>Data utworzenia</th>
-          <th>Rozmiar</th>
-          <th>Liczba elementów</th>
-          <th>Status</th>
-          <th>Akcje</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let backup of backupList">
-          <td>{{ backup.id }}</td>
-          <td>
-            <div class="module-badges">
+      <div *ngIf="backupList.length > 0">
+        <table class="backup-table">
+          <thead>
+          <tr>
+            <th>ID Kopii</th>
+            <th>Moduły</th>
+            <th>Data utworzenia</th>
+            <th>Rozmiar</th>
+            <th>Liczba elementów</th>
+            <th>Akcje</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let backup of backupList">
+            <td>
+              <code class="backup-id">{{ backup.id }}</code>
+            </td>
+            <td>
+              <div class="module-badges">
                 <span
                   *ngFor="let module of getModuleBadges(backup.modules)"
                   class="module-badge">
                   {{ module }}
                 </span>
-            </div>
-          </td>
-          <td>{{ formatDate(backup.createdAt) }}</td>
-          <td>{{ formatFileSize(getTotalSize(backup.modules)) }}</td>
-          <td>{{ getItemCount(backup.modules) | number }}</td>
-          <td>
-              <span class="status-badge" [ngClass]="getStatusBadgeClass(backup.status)">
-                {{ getStatusText(backup.status) }}
-              </span>
-          </td>
-          <td>
-            <div class="actions-group">
-              <button
-                class="btn btn-success btn-sm"
-                (click)="downloadBackup(backup.id)"
-                [disabled]="backup.status !== 'COMPLETED'">
-                <i class="bx bx-download"></i>
-                Pobierz
-              </button>
-              <button
-                class="btn btn-warning btn-sm"
-                (click)="showRestoreDialog(backup.id)"
-                [disabled]="backup.status !== 'COMPLETED'">
-                <i class="bx bx-reset"></i>
-                Przywróć
-              </button>
-            </div>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+              </div>
+            </td>
+            <td>{{ formatDate(backup.createdAt) }}</td>
+            <td>{{ formatFileSize(getBackupTotalBytes(backup)) }}</td>
+            <td>{{ getItemCount(backup.modules) | number }}</td>
+            <td>
+              <div class="actions-group">
+                <button
+                  class="btn btn-success btn-sm"
+                  (click)="downloadBackup(backup.id)"
+                  title="Pobierz kopię zapasową">
+                  <i class="bx bx-download"></i>
+                  Pobierz
+                </button>
+                <button
+                  class="btn btn-warning btn-sm"
+                  (click)="showRestoreDialog(backup.id)"
+                  title="Przywróć kopię zapasową">
+                  <i class="bx bx-reset"></i>
+                  Przywróć
+                </button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="backupList.length === 0" class="empty-state">
+        <i class="bx bx-archive"></i>
+        <h3>Brak kopii zapasowych</h3>
+        <p>Utwórz pierwszą kopię zapasową, aby zapewnić bezpieczeństwo danych.</p>
+      </div>
     </section>
 
     <!-- Przywracanie z pliku -->
@@ -150,6 +154,7 @@
         <p>{{ selectedFile ? 'Rozmiar: ' + formatFileSize(selectedFile.size) : 'Przeciągnij i upuść plik .zip lub kliknij aby wybrać' }}</p>
         <input
           #fileInput
+          id="fileInput"
           type="file"
           class="file-input"
           accept=".zip"
@@ -157,31 +162,43 @@
       </div>
 
       <div *ngIf="backupMetadata && showRestoreOptions">
-        <h4>Metadane kopii zapasowej:</h4>
+        <h4>Zawartość kopii zapasowej:</h4>
         <div class="metadata-grid">
           <div *ngFor="let entry of getMetadataEntries()" class="metadata-item">
             <div class="metadata-label">{{ entry.key }}</div>
-            <div class="metadata-value">{{ entry.value.itemCount }} elementów</div>
-            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+            <div class="metadata-value">{{ entry.value.itemCount | number }} elementów</div>
+            <div class="metadata-date">
               {{ formatDate(entry.value.timestamp) }}
+            </div>
+            <div class="metadata-size">
+              {{ formatFileSize(entry.value.sizeBytes) }}
             </div>
           </div>
         </div>
       </div>
 
-      <div *ngIf="showRestoreOptions" style="margin-top: 16px;">
-        <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-          <label style="display: flex; align-items: flex-start; gap: 8px;">
-            <input type="checkbox" [(ngModel)]="overwriteExisting" style="margin-top: 2px;">
-            <div>
-              <span style="font-weight: 500;">Nadpisz istniejące dane</span>
-              <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280; line-height: 1.4;">
+      <div *ngIf="showRestoreOptions" class="restore-options">
+        <div class="restore-warning">
+          <i class="bx bx-info-circle"></i>
+          <div>
+            <h4>Uwaga!</h4>
+            <p>Przywracanie kopii zapasowej wpłynie na <strong>wszystkie moduły</strong> zawarte w pliku. Operacja nie może być cofnięta.</p>
+          </div>
+        </div>
+
+        <div class="restore-setting">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="overwriteExisting">
+            <div class="checkbox-content">
+              <span class="checkbox-title">Nadpisz istniejące dane</span>
+              <p class="checkbox-description">
                 Jeśli w kopii zapasowej istnieją dane, które już istnieją w systemie, to dane z kopii zapasowej je nadpiszą.
                 Pozostałe dane w systemie zostaną bez zmian.
               </p>
             </div>
           </label>
         </div>
+
         <button
           class="btn btn-warning"
           (click)="restoreFromFile()"
@@ -191,11 +208,11 @@
         </button>
       </div>
 
-      <div *ngIf="isRestoringBackup">
+      <div *ngIf="isRestoringBackup" class="progress-section">
         <div class="progress-bar">
           <div class="progress-fill" [style.width.%]="restoreProgress"></div>
         </div>
-        <p style="text-align: center; color: #6b7280;">Trwa przywracanie kopii zapasowej...</p>
+        <p class="progress-text">Trwa przywracanie kopii zapasowej... {{ restoreProgress | number:'1.0-0' }}%</p>
       </div>
     </section>
   </main>
@@ -204,35 +221,56 @@
 <!-- Modal dla przywracania z listy -->
 <div *ngIf="showRestoreModal" class="modal-overlay" (click)="hideRestoreDialog()">
   <div class="modal-content" (click)="$event.stopPropagation()">
-    <h3>
-      <i class="bx bx-reset"></i>
-      Przywróć kopię zapasową
-    </h3>
-    <p>
-      Czy na pewno chcesz przywrócić kopię zapasową <strong>{{ currentRestoreBackupId }}</strong>?
-    </p>
+    <div class="modal-header">
+      <h3>
+        <i class="bx bx-reset"></i>
+        Przywróć kopię zapasową
+      </h3>
+    </div>
 
-    <div class="modal-option">
-      <label>
-        <input type="checkbox" [(ngModel)]="modalOverwriteExisting">
+    <div class="modal-body">
+      <p>
+        Czy na pewno chcesz przywrócić kopię zapasową <code>{{ currentRestoreBackupId }}</code>?
+      </p>
+
+      <div class="modal-warning">
+        <i class="bx bx-error-circle"></i>
         <div>
-          <span>Nadpisz istniejące dane</span>
-          <p>
-            Jeśli w kopii zapasowej istnieją dane, które już istnieją w systemie, to dane z kopii zapasowej je nadpiszą.
-            Pozostałe dane w systemie zostaną bez zmian.
-          </p>
+          <strong>Uwaga!</strong> Ta operacja przywróci wszystkie moduły zawarte w kopii zapasowej i nie może być cofnięta.
         </div>
-      </label>
+      </div>
+
+      <div class="modal-option">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="modalOverwriteExisting">
+          <div class="checkbox-content">
+            <span class="checkbox-title">Nadpisz istniejące dane</span>
+            <p class="checkbox-description">
+              Jeśli w kopii zapasowej istnieją dane, które już istnieją w systemie, to dane z kopii zapasowej je nadpiszą.
+              Pozostałe dane w systemie zostaną bez zmian.
+            </p>
+          </div>
+        </label>
+      </div>
     </div>
 
     <div class="modal-actions">
       <button class="btn btn-outline" (click)="hideRestoreDialog()">
+        <i class="bx bx-x"></i>
         Anuluj
       </button>
-      <button class="btn btn-warning" (click)="confirmRestoreBackup()">
-        <i class="bx bx-reset"></i>
-        Przywróć
+      <button class="btn btn-warning" (click)="confirmRestoreBackup()" [disabled]="isRestoringBackup">
+        <i class="bx" [ngClass]="isRestoringBackup ? 'bx-loader-alt spinner' : 'bx-reset'"></i>
+        {{ isRestoringBackup ? 'Przywracanie...' : 'Przywróć' }}
       </button>
+    </div>
+
+    <!-- Progress w modalu -->
+    <div *ngIf="isRestoringBackup" class="modal-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="restoreProgress"></div>
+      </div>
+      <p class="progress-text">Przywracanie w toku... {{ restoreProgress | number:'1.0-0' }}%</p>
     </div>
   </div>
 </div>

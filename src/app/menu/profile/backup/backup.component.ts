@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import {BackupInfo, BackupModule, BackupService, MultiBackupInfo} from "../../../utility/service/backup.service";
+import {BackupInfo, BackupModule, BackupService, MultiBackupInfo, BackupModuleInfo} from "../../../utility/service/backup.service";
 
 @Component({
   selector: 'app-backup',
@@ -175,7 +175,7 @@ export class BackupComponent implements OnInit, OnDestroy {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `${backupId}.zip`;
+          link.download = `backup-${backupId}.zip`;
           link.click();
           window.URL.revokeObjectURL(url);
         }
@@ -202,23 +202,32 @@ export class BackupComponent implements OnInit, OnDestroy {
   async confirmRestoreBackup(): Promise<void> {
     if (!this.currentRestoreBackupId) return;
 
+    this.isRestoringBackup = true;
+    this.restoreProgress = 0;
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      this.restoreProgress += Math.random() * 15;
+      if (this.restoreProgress > 90) this.restoreProgress = 90;
+    }, 300);
+
     try {
-      // Since we have a multi-backup, we need to restore each module
-      const backup = this.backupList.find(b => b.id === this.currentRestoreBackupId);
-      if (!backup) {
-        throw new Error('Backup not found');
-      }
+      await this.backupService.restoreBackupById(this.currentRestoreBackupId, this.modalOverwriteExisting).toPromise();
 
-      for (const module of Object.keys(backup.modules) as BackupModule[]) {
-        await this.backupService.restoreBackupById(module, this.currentRestoreBackupId, this.modalOverwriteExisting).toPromise();
-      }
+      clearInterval(progressInterval);
+      this.restoreProgress = 100;
 
-      alert('Kopia zapasowa została przywrócona pomyślnie!');
-      this.hideRestoreDialog();
+      setTimeout(() => {
+        alert('Kopia zapasowa została przywrócona pomyślnie!');
+        this.hideRestoreDialog();
+        this.resetRestoreProgress();
+      }, 500);
 
     } catch (error) {
+      clearInterval(progressInterval);
       console.error('Error restoring backup:', error);
       alert('Błąd podczas przywracania kopii zapasowej: ' + error);
+      this.resetRestoreProgress();
     }
   }
 
@@ -272,7 +281,7 @@ export class BackupComponent implements OnInit, OnDestroy {
 
     const confirmMessage = `Czy na pewno chcesz przywrócić dane z pliku ${this.selectedFile.name}?\n\n${
       this.overwriteExisting ? 'Istniejące dane zostaną nadpisane!' : 'Istniejące dane będą zachowane.'
-    }`;
+    }\n\nZostaną przywrócone wszystkie moduły zawarte w kopii zapasowej.`;
 
     if (!confirm(confirmMessage)) {
       return;
@@ -288,10 +297,7 @@ export class BackupComponent implements OnInit, OnDestroy {
     }, 300);
 
     try {
-      // Restore each module from the file
-      for (const module of Object.keys(this.backupMetadata) as BackupModule[]) {
-        await this.backupService.restoreBackupFromFile(module, this.selectedFile, this.overwriteExisting).toPromise();
-      }
+      await this.backupService.restoreBackupFromFile(this.selectedFile, this.overwriteExisting).toPromise();
 
       clearInterval(progressInterval);
       this.restoreProgress = 100;
@@ -323,36 +329,12 @@ export class BackupComponent implements OnInit, OnDestroy {
     }
   }
 
+  private resetRestoreProgress(): void {
+    this.isRestoringBackup = false;
+    this.restoreProgress = 0;
+  }
+
   // Utility methods
-  getStatusBadgeClass(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-      case 'ready':
-        return 'status-success';
-      case 'processing':
-      case 'creating':
-        return 'status-processing';
-      case 'error':
-      case 'failed':
-        return 'status-error';
-      default:
-        return 'status-processing';
-    }
-  }
-
-  getStatusText(status: string): string {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-        return 'Gotowa';
-      case 'processing':
-        return 'Tworzenie';
-      case 'error':
-        return 'Błąd';
-      default:
-        return status || 'Nieznany';
-    }
-  }
-
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -365,20 +347,26 @@ export class BackupComponent implements OnInit, OnDestroy {
     return new Date(dateString).toLocaleString('pl-PL');
   }
 
-  getModuleBadges(modules: { [key: string]: BackupInfo }): string[] {
+  getModuleBadges(modules: { [key: string]: BackupModuleInfo }): string[] {
     return Object.keys(modules);
   }
 
-  getItemCount(modules: { [key: string]: BackupInfo }): number {
+  getItemCount(modules: { [key: string]: BackupModuleInfo }): number {
     return Object.values(modules).reduce((sum, info) => sum + info.itemCount, 0);
   }
 
-  getTotalSize(modules: { [key: string]: BackupInfo }): number {
+  getTotalSize(modules: { [key: string]: BackupModuleInfo }): number {
     return Object.values(modules).reduce((sum, info) => sum + info.sizeBytes, 0);
   }
 
+  // Updated method to work with new BackupInfo structure
   getMetadataEntries(): { key: string; value: BackupInfo }[] {
     if (!this.backupMetadata) return [];
     return Object.entries(this.backupMetadata).map(([key, value]) => ({ key, value }));
+  }
+
+  // Helper method to get backup total size for display
+  getBackupTotalBytes(backup: MultiBackupInfo): number {
+    return backup.totalBytes || this.getTotalSize(backup.modules);
   }
 }

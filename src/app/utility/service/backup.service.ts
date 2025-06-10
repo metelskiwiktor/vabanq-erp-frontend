@@ -20,11 +20,17 @@ export interface BackupInfo {
   sizeBytes: number;
 }
 
+export interface BackupModuleInfo {
+  schemaVersion: number;
+  itemCount: number;
+  sizeBytes: number;
+}
+
 export interface MultiBackupInfo {
   id: string;
   createdAt: string;
-  status: string;
-  modules: { [key: string]: BackupInfo };
+  totalBytes: number;
+  modules: { [key: string]: BackupModuleInfo };
 }
 
 @Injectable({
@@ -63,25 +69,22 @@ export class BackupService {
   }
 
   /**
-   * Restore backup by ID for a specific module
+   * Restore entire multi-backup by ID
    */
   restoreBackupById(
-    module: BackupModule,
     backupId: string,
     overwriteExisting: boolean = true
   ): Observable<void> {
     const params = new HttpParams()
-      .set('backupId', backupId)
       .set('overwriteExisting', overwriteExisting.toString());
 
-    return this.http.post<void>(`${this.apiUrl}/restore/${module}`, null, { params });
+    return this.http.post<void>(`${this.apiUrl}/backup/${backupId}/restore`, null, { params });
   }
 
   /**
-   * Restore backup from file for a specific module
+   * Restore entire multi-backup from file
    */
   restoreBackupFromFile(
-    module: BackupModule,
     file: File,
     overwriteExisting: boolean = true
   ): Observable<void> {
@@ -91,7 +94,7 @@ export class BackupService {
     const params = new HttpParams()
       .set('overwriteExisting', overwriteExisting.toString());
 
-    return this.http.post<void>(`${this.apiUrl}/restore/${module}`, formData, { params });
+    return this.http.post<void>(`${this.apiUrl}/backup/restore`, formData, { params });
   }
 
   /**
@@ -104,5 +107,3 @@ export class BackupService {
     return this.http.post<{ [key: string]: BackupInfo }>(`${this.apiUrl}/backup/meta`, formData);
   }
 }
-
-// Import map operator
