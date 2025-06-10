@@ -216,6 +216,10 @@
           <div class="menu-status-dot"
                [ngClass]="getMenuAllegroStatusClass()"></div>
         </div>
+        <div class="profile-menu-item" (click)="goToBackups()">
+          <i class="bx bx-save"></i>
+          <span>Kopie zapasowe</span>
+        </div>
         <div class="profile-menu-item" (click)="logout()">
           <i class="bx bx-log-out"></i>
           <span>Wyloguj się</span>

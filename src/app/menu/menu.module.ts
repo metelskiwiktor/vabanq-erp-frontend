@@ -24,6 +24,7 @@ import {SummaryDialogModule} from "./summary-dialog/summary-dialog.module";
 import {DashboardModule} from "./dashboard/dashboard.module";
 import {OrdersModule} from "./orders/orders.module";
 import {AllegroTokenService} from "../utility/service/allegro-token.service";
+import {BackupModule} from "./profile/backup/backup.module";
 
 @NgModule({
   imports: [
@@ -49,7 +50,8 @@ import {AllegroTokenService} from "../utility/service/allegro-token.service";
     MatInputModule,
     MatCardModule,
     MatButtonModule,
-    OrdersModule
+    OrdersModule,
+    BackupModule
   ],
   declarations: [
     MenuComponent

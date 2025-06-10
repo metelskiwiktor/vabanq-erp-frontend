@@ -1,0 +1,238 @@
+<div class="layout">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="page-title">
+        <div class="icon">
+          <i class="bx bx-save"></i>
+        </div>
+        <h1>Zarządzanie Kopiami Zapasowymi</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Tworzenie nowego backupu -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="bx bx-plus-circle"></i>
+          Utwórz kopię zapasową
+        </h2>
+        <button
+          class="btn btn-primary"
+          (click)="createBackup()"
+          [disabled]="isCreatingBackup">
+          <i class="bx" [ngClass]="isCreatingBackup ? 'bx-loader-alt spinner' : 'bx-save'"></i>
+          {{ isCreatingBackup ? 'Tworzenie...' : 'Utwórz kopię' }}
+        </button>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <button class="btn btn-outline" (click)="toggleAllModules()">
+          <i class="bx" [ngClass]="getAllSelectButtonIcon()"></i>
+          {{ getAllSelectButtonText() }}
+        </button>
+      </div>
+
+      <div class="modules-grid">
+        <div
+          *ngFor="let module of availableModules"
+          class="module-item"
+          [class.selected]="isModuleSelected(module.key)"
+          (click)="toggleModule(module.key)">
+          <div class="module-checkbox"></div>
+          <i class="bx module-icon" [ngClass]="module.icon"></i>
+          <div class="module-info">
+            <h4>{{ module.title }}</h4>
+            <p>{{ module.description }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="createProgress" *ngIf="isCreatingBackup">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="createProgress"></div>
+        </div>
+        <p style="text-align: center; color: #6b7280;">Trwa tworzenie kopii zapasowej...</p>
+      </div>
+    </section>
+
+    <!-- Lista istniejących backupów -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="bx bx-archive"></i>
+          Istniejące kopie zapasowe
+        </h2>
+        <button class="btn btn-outline" (click)="refreshBackupList()">
+          <i class="bx bx-refresh"></i>
+          Odśwież
+        </button>
+      </div>
+
+      <table class="backup-table">
+        <thead>
+        <tr>
+          <th>ID Kopii</th>
+          <th>Moduły</th>
+          <th>Data utworzenia</th>
+          <th>Rozmiar</th>
+          <th>Liczba elementów</th>
+          <th>Status</th>
+          <th>Akcje</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let backup of backupList">
+          <td>{{ backup.id }}</td>
+          <td>
+            <div class="module-badges">
+                <span
+                  *ngFor="let module of getModuleBadges(backup.modules)"
+                  class="module-badge">
+                  {{ module }}
+                </span>
+            </div>
+          </td>
+          <td>{{ formatDate(backup.createdAt) }}</td>
+          <td>{{ formatFileSize(getTotalSize(backup.modules)) }}</td>
+          <td>{{ getItemCount(backup.modules) | number }}</td>
+          <td>
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(backup.status)">
+                {{ getStatusText(backup.status) }}
+              </span>
+          </td>
+          <td>
+            <div class="actions-group">
+              <button
+                class="btn btn-success btn-sm"
+                (click)="downloadBackup(backup.id)"
+                [disabled]="backup.status !== 'COMPLETED'">
+                <i class="bx bx-download"></i>
+                Pobierz
+              </button>
+              <button
+                class="btn btn-warning btn-sm"
+                (click)="showRestoreDialog(backup.id)"
+                [disabled]="backup.status !== 'COMPLETED'">
+                <i class="bx bx-reset"></i>
+                Przywróć
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Przywracanie z pliku -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="bx bx-upload"></i>
+          Przywróć z pliku
+        </h2>
+      </div>
+
+      <div
+        class="upload-area"
+        [class.has-file]="selectedFile"
+        (click)="fileInput.click()"
+        (drop)="onFileDrop($event)"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)">
+        <div class="upload-icon">
+          <i class="bx" [ngClass]="selectedFile ? 'bx-check-circle' : 'bx-cloud-upload'"></i>
+        </div>
+        <h3>{{ selectedFile ? selectedFile.name : 'Wybierz plik kopii zapasowej' }}</h3>
+        <p>{{ selectedFile ? 'Rozmiar: ' + formatFileSize(selectedFile.size) : 'Przeciągnij i upuść plik .zip lub kliknij aby wybrać' }}</p>
+        <input
+          #fileInput
+          type="file"
+          class="file-input"
+          accept=".zip"
+          (change)="onFileSelected($event)">
+      </div>
+
+      <div *ngIf="backupMetadata && showRestoreOptions">
+        <h4>Metadane kopii zapasowej:</h4>
+        <div class="metadata-grid">
+          <div *ngFor="let entry of getMetadataEntries()" class="metadata-item">
+            <div class="metadata-label">{{ entry.key }}</div>
+            <div class="metadata-value">{{ entry.value.itemCount }} elementów</div>
+            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+              {{ formatDate(entry.value.timestamp) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="showRestoreOptions" style="margin-top: 16px;">
+        <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+          <label style="display: flex; align-items: flex-start; gap: 8px;">
+            <input type="checkbox" [(ngModel)]="overwriteExisting" style="margin-top: 2px;">
+            <div>
+              <span style="font-weight: 500;">Nadpisz istniejące dane</span>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280; line-height: 1.4;">
+                Jeśli w kopii zapasowej istnieją dane, które już istnieją w systemie, to dane z kopii zapasowej je nadpiszą.
+                Pozostałe dane w systemie zostaną bez zmian.
+              </p>
+            </div>
+          </label>
+        </div>
+        <button
+          class="btn btn-warning"
+          (click)="restoreFromFile()"
+          [disabled]="isRestoringBackup">
+          <i class="bx" [ngClass]="isRestoringBackup ? 'bx-loader-alt spinner' : 'bx-reset'"></i>
+          {{ isRestoringBackup ? 'Przywracanie...' : 'Przywróć z pliku' }}
+        </button>
+      </div>
+
+      <div *ngIf="isRestoringBackup">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="restoreProgress"></div>
+        </div>
+        <p style="text-align: center; color: #6b7280;">Trwa przywracanie kopii zapasowej...</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal dla przywracania z listy -->
+<div *ngIf="showRestoreModal" class="modal-overlay" (click)="hideRestoreDialog()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>
+      <i class="bx bx-reset"></i>
+      Przywróć kopię zapasową
+    </h3>
+    <p>
+      Czy na pewno chcesz przywrócić kopię zapasową <strong>{{ currentRestoreBackupId }}</strong>?
+    </p>
+
+    <div class="modal-option">
+      <label>
+        <input type="checkbox" [(ngModel)]="modalOverwriteExisting">
+        <div>
+          <span>Nadpisz istniejące dane</span>
+          <p>
+            Jeśli w kopii zapasowej istnieją dane, które już istnieją w systemie, to dane z kopii zapasowej je nadpiszą.
+            Pozostałe dane w systemie zostaną bez zmian.
+          </p>
+        </div>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" (click)="hideRestoreDialog()">
+        Anuluj
+      </button>
+      <button class="btn btn-warning" (click)="confirmRestoreBackup()">
+        <i class="bx bx-reset"></i>
+        Przywróć
+      </button>
+    </div>
+  </div>
+</div>

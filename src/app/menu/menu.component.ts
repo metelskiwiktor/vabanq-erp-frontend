@@ -198,6 +198,11 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.keycloak.logout();
   }
 
+  goToBackups(): void {
+    this.showProfileMenu = false;
+    this.router.navigate(['/backups']);
+  }
+
   // State persistence
   private saveSubcategoriesState(): void {
     localStorage.setItem('subcategories_state', JSON.stringify(this.subcategories));
