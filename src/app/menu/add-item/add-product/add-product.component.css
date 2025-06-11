@@ -1122,3 +1122,35 @@ textarea.form-control {
 .form-control.error {
   border-color: #ef4444;
 }
+/* Materials Select Styles */
+.materials-select {
+  width: 100%;
+}
+
+.materials-select .mat-mdc-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.materials-select .mat-mdc-form-field-flex {
+  border-radius: 8px;
+  background: white;
+}
+
+.materials-select.mat-focused .mat-mdc-form-field-flex {
+  border-color: #8064A2;
+}
+
+.materials-select .mat-mdc-select-placeholder {
+  color: #9ca3af;
+}
+
+.materials-select.mat-form-field-disabled {
+  opacity: 0.6;
+}
+
+.materials-select.mat-form-field-disabled .mat-mdc-form-field-flex {
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+/* Custom Select Styles */

@@ -37,16 +37,6 @@
           <i class="bx bx-x"></i>
           Anuluj
         </button>
-        <button type="button"
-                (click)="onProductSubmit(successTpl, errorTpl)"
-                class="btn btn-primary"
-                [disabled]="isViewMode">
-          <i class="bx" [ngClass]="{
-            'bx-plus': !isEditMode,
-            'bx-save': isEditMode
-          }"></i>
-          {{ buttonText }}
-        </button>
       </div>
     </div>
   </header>
@@ -219,23 +209,21 @@
               <i class="bx bx-list-check"></i>
               Wybierz materiały
             </label>
-            <ng-select [items]="dataSource"
-                       bindLabel="name"
-                       [groupBy]="groupMaterialsByFn"
-                       [groupValue]="groupMaterialsValueFn"
-                       [multiple]="true"
-                       [closeOnSelect]="false"
-                       (change)="onMaterialsChangeTable($event)"
-                       [compareWith]="compareFn"
-                       [disabled]="isViewMode"
-                       [ngModelOptions]="{standalone: true}"
-                       [(ngModel)]="selectedListedMaterials"
-                       placeholder="Wybierz materiały potrzebne do produkcji"
-                       class="custom-select">
-              <ng-template ng-optgroup-tmp let-item="item">
-                <span>{{ item.name }}</span>
-              </ng-template>
-            </ng-select>
+            <mat-form-field appearance="outline" class="custom-mat-select materials-select">
+              <mat-label>Wybierz materiały potrzebne do produkcji</mat-label>
+              <mat-select [multiple]="true"
+                          [disabled]="isViewMode"
+                          [(ngModel)]="selectedListedMaterials"
+                          (selectionChange)="onMaterialsChangeTable($event.value)"
+                          [compareWith]="compareFn"
+                          [ngModelOptions]="{standalone: true}">
+                <mat-optgroup *ngFor="let group of groupedMaterials" [label]="group.name">
+                  <mat-option *ngFor="let material of group.materials" [value]="material">
+                    {{ material.name }}
+                  </mat-option>
+                </mat-optgroup>
+              </mat-select>
+            </mat-form-field>
           </div>
 
           <!-- Materials Tables -->

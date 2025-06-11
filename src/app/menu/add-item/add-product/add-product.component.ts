@@ -42,10 +42,7 @@ export class AddProductComponent implements OnInit, OnDestroy {
   tags: string[] = [];
 
   originalPreview: File[] = [];
-
-  groupMaterialsByFn = (item: { type: any }) => item.type;
-  groupMaterialsValueFn = (_: string, children: any[]) => ({name: children[0].type});
-
+  groupedMaterials: {name: string, materials: any[]}[] = [];
   files: FileWithId[] = [];
   originalFiles: FileWithId[] = [];
   preview: File[] = [];
@@ -102,6 +99,19 @@ export class AddProductComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
   }
 
+  private updateGroupedMaterials(): void {
+    this.groupedMaterials = [
+      {
+        name: 'Elementy złączne',
+        materials: this.dataSource.filter(item => item.type === 'Elementy złączne')
+      },
+      {
+        name: 'Filament',
+        materials: this.dataSource.filter(item => item.type === 'Filament')
+      }
+    ].filter(group => group.materials.length > 0);
+  }
+
   fetchData(): void {
     this.productService.getMaterials().subscribe(
       (response: GroupedAccessoriesResponse) => {
@@ -122,6 +132,9 @@ export class AddProductComponent implements OnInit, OnDestroy {
 
         this.dataSource = [...fasteners, ...filaments];
         this.dataSource.sort((a, b) => a.name.localeCompare(b.name));
+
+        this.updateGroupedMaterials();
+
         if (this.isEditMode || this.isViewMode) {
           this.populateFormWithData(this.data.product!);
           this.generateEANImage();
