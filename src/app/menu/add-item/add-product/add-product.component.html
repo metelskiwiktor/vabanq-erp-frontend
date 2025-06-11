@@ -208,13 +208,13 @@
 
     <!-- Materials Selection Card -->
     <section class="materials-section">
-      <div class="section-card materials-card">
+      <div class="section-card">
         <div class="section-header">
           <i class="bx bx-package"></i>
           <h2>Materiały i komponenty</h2>
         </div>
         <div class="section-content">
-          <div class="form-group materials-select-group">
+          <div class="form-group">
             <label class="form-label">
               <i class="bx bx-list-check"></i>
               Wybierz materiały
@@ -231,8 +231,7 @@
                        [ngModelOptions]="{standalone: true}"
                        [(ngModel)]="selectedListedMaterials"
                        placeholder="Wybierz materiały potrzebne do produkcji"
-                       class="custom-select materials-select"
-                       appendTo="body">
+                       class="custom-select">
               <ng-template ng-optgroup-tmp let-item="item">
                 <span>{{ item.name }}</span>
               </ng-template>
@@ -373,24 +372,33 @@
               <i class="bx bx-purchase-tag"></i>
               Tagi produktu
             </label>
-            <ng-select [items]="tags"
-                       [multiple]="true"
-                       [addTag]="true"
-                       [hideSelected]="true"
-                       placeholder="Wybierz lub dodaj tag"
-                       [disabled]="isViewMode"
-                       [ngModelOptions]="{standalone: true}"
-                       [(ngModel)]="addProductRequest.tags"
-                       [closeOnSelect]="true"
-                       (add)="addNewTag($event)"
-                       class="custom-select">
-              <ng-template ng-tag-tmp let-search="searchTerm">
-                <div class="add-tag-template">
+            <mat-form-field appearance="outline" class="custom-mat-select tags-select">
+              <mat-label>Wybierz lub dodaj tag</mat-label>
+              <mat-select [multiple]="true"
+                          [disabled]="isViewMode"
+                          [(ngModel)]="addProductRequest.tags"
+                          [ngModelOptions]="{standalone: true}">
+                <mat-option *ngFor="let tag of tags" [value]="tag">
+                  {{ tag }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div class="tag-input-section" *ngIf="!isViewMode">
+              <div class="add-tag-input">
+                <input type="text"
+                       class="form-control"
+                       placeholder="Dodaj nowy tag"
+                       #newTagInput
+                       (keyup.enter)="addNewTagFromInput(newTagInput.value); newTagInput.value=''">
+                <button type="button"
+                        class="btn btn-outline btn-sm"
+                        (click)="addNewTagFromInput(newTagInput.value); newTagInput.value=''"
+                        [disabled]="!newTagInput.value.trim()">
                   <i class="bx bx-plus"></i>
-                  <strong>Dodaj nowy tag: "{{ search }}"</strong>
-                </div>
-              </ng-template>
-            </ng-select>
+                  Dodaj
+                </button>
+              </div>
+            </div>
             <small class="form-help">Dodaj tagi aby ułatwić wyszukiwanie produktu</small>
           </div>
         </div>

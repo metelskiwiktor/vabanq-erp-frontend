@@ -360,6 +360,50 @@ textarea.form-control {
   color: #8064A2;
 }
 
+/* Custom Select Styles */
+.custom-select {
+  border-radius: 8px;
+  position: relative;
+  z-index: 10;
+}
+
+.custom-select .ng-select-container {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  min-height: 48px;
+  background: white;
+}
+
+.custom-select.ng-select.ng-select-focused .ng-select-container {
+  border-color: #8064A2;
+  box-shadow: 0 0 0 3px rgba(128, 100, 162, 0.1);
+}
+
+.custom-select.ng-select.ng-select-opened {
+  z-index: 1050;
+}
+
+.custom-select .ng-select-container .ng-value-container {
+  padding: 0 16px;
+}
+
+.custom-select .ng-placeholder {
+  color: #9ca3af;
+}
+
+.custom-select.ng-select.ng-select-disabled .ng-select-container {
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+/* Add Tag Template */
+.add-tag-template {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8064A2;
+}
+
 /* Dropdown Panel Styles */
 .ng-dropdown-panel {
   background: white !important;
@@ -402,24 +446,93 @@ textarea.form-control {
   color: white;
 }
 
+/* Materials Tables Container */
+.materials-tables-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.materials-tables-container.side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.materials-tables-container.side-by-side .materials-table-section {
+  margin-bottom: 0;
+}
+
+/* Materials Tables */
+.materials-tables {
+  margin-top: 24px;
+}
+
 /* Materials Section Improvements */
 .materials-card {
   position: relative;
   z-index: 1;
+  overflow: visible !important;
 }
 
 .materials-select-group {
   position: relative;
-  z-index: 100;
+  z-index: 1000;
+  overflow: visible !important;
 }
 
 .materials-select {
   position: relative;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .materials-select.ng-select.ng-select-opened {
-  z-index: 1060 !important;
+  z-index: 9999 !important;
+}
+
+.materials-select .ng-select-container {
+  position: relative;
+  z-index: 1000;
+}
+
+/* Tags Section Improvements */
+.tags-card {
+  position: relative;
+  z-index: 1;
+  overflow: visible !important;
+}
+
+.tags-select-group {
+  position: relative;
+  z-index: 900;
+  overflow: visible !important;
+}
+
+.tags-select {
+  position: relative;
+  z-index: 900;
+}
+
+.tags-select.ng-select.ng-select-opened {
+  z-index: 9998 !important;
+}
+
+.tags-select .ng-select-container {
+  position: relative;
+  z-index: 900;
+}
+
+/* Ensure sections don't clip the dropdown */
+.section-card {
+  overflow: visible !important;
+}
+
+.section-content {
+  overflow: visible !important;
+}
+
+.main-content {
+  overflow: visible !important;
 }
 
 /* Materials Tables Container */
@@ -427,6 +540,9 @@ textarea.form-control {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
 }
 
 .materials-tables-container.side-by-side {

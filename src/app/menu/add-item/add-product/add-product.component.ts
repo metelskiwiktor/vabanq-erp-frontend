@@ -586,31 +586,8 @@ export class AddProductComponent implements OnInit, OnDestroy {
     this.toastService.show({template, classname: 'bg-danger text-light', delay: 4000, text: errorMessage});
   }
 
-  onMaterialsChangeTable(event: any): void {
-    this.selectedListedMaterials = event;
-    this.selectedListedMaterials.sort((a, b) => a.name.localeCompare(b.name));
-
-    this.filamentMaterials = this.selectedListedMaterials.filter(item => item.type === 'Filament');
-    this.fastenerMaterials = this.selectedListedMaterials.filter(item => item.type === 'Elementy złączne');
-    this.calculateMaterialsPrice();
-  }
-
   compareFn(item1: any, item2: any): boolean {
     return item1 && item2 && item1.id === item2.id;
-  }
-
-  calculateMaterialsPrice() {
-    this.materialsPrice = this.selectedListedMaterials.map(material => {
-      if (material.q && !isNaN(Number(material.q))) {
-        let q = Number(material.q);
-        if (material.type == 'Filament') {
-          q = q / 1000;
-        }
-        return Number(material.price) * q;
-      } else {
-        return 0;
-      }
-    }).reduce((total, current) => total + current, 0);
   }
 
   total() {
@@ -752,6 +729,8 @@ export class AddProductComponent implements OnInit, OnDestroy {
 
 // Dodaj te metody do add-product.component.ts
 
+// Dodaj te metody do add-product.component.ts
+
 // Metoda do obliczania kosztu pojedynczego materiału
   getMaterialCost(material: any): string {
     if (!material.q || isNaN(Number(material.q))) {
@@ -794,6 +773,48 @@ export class AddProductComponent implements OnInit, OnDestroy {
         return 0;
       })
       .reduce((total, current) => total + current, 0);
+  }
+
+// Zaktualizowana metoda calculateMaterialsPrice()
+  calculateMaterialsPrice() {
+    this.materialsPrice = this.getFilamentsCost() + this.getFastenersCost();
+  }
+
+// Nowa metoda dla grupowania materiałów dla mat-select
+  getGroupedMaterials(): {name: string, materials: any[]}[] {
+    const groups = [
+      {
+        name: 'Elementy złączne',
+        materials: this.dataSource.filter(item => item.type === 'Elementy złączne')
+      },
+      {
+        name: 'Filament',
+        materials: this.dataSource.filter(item => item.type === 'Filament')
+      }
+    ];
+
+    return groups.filter(group => group.materials.length > 0);
+  }
+
+// Nowa metoda do dodawania tagów z input'a
+  addNewTagFromInput(tagName: string): void {
+    if (tagName && tagName.trim() && !this.tags.includes(tagName.trim())) {
+      this.tags.push(tagName.trim());
+      if (!this.addProductRequest.tags) {
+        this.addProductRequest.tags = [];
+      }
+      this.addProductRequest.tags.push(tagName.trim());
+    }
+  }
+
+// Zaktualizowana metoda onMaterialsChangeTable dla mat-select
+  onMaterialsChangeTable(selectedMaterials: any[]): void {
+    this.selectedListedMaterials = selectedMaterials || [];
+    this.selectedListedMaterials.sort((a, b) => a.name.localeCompare(b.name));
+
+    this.filamentMaterials = this.selectedListedMaterials.filter(item => item.type === 'Filament');
+    this.fastenerMaterials = this.selectedListedMaterials.filter(item => item.type === 'Elementy złączne');
+    this.calculateMaterialsPrice();
   }
 
 }

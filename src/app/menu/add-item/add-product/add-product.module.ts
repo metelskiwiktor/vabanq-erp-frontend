@@ -17,8 +17,9 @@ import {TimeMaskDirective} from "../../../utility/directive/time-mask.directive"
 import {DegreeMaskDirective} from "../../../utility/directive/degree-mask.directive";
 import {PackageDimensionsDirective} from "../../../utility/directive/package-dimensions.directive";
 import {UiMaskDirective} from "../../../utility/directive/ui-mask.directive";
-import {MatInput} from "@angular/material/input";
+import {MatInput, MatInputModule} from "@angular/material/input";
 import {ToastsContainer} from "../../../utility/service/toasts-container.component";
+import {MatSelectModule} from "@angular/material/select";
 
 @NgModule({
   imports: [
@@ -37,6 +38,9 @@ import {ToastsContainer} from "../../../utility/service/toasts-container.compone
     MatTableModule,
     ColorSketchModule,
     MatInput,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   declarations: [
     AddProductComponent,
