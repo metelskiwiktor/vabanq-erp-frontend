@@ -1,191 +1,341 @@
-<ng-template #successTpl></ng-template>
-<ng-template #errorTpl></ng-template>
+<!-- Nowoczesny widok komponentu add-material -->
+<ng-template #successTpl let-toast>
+  <div class="toast-header">
+    <strong class="toast-title">Komunikat</strong>
+    <button type="button" class="toast-close" (click)="toast.remove()">&times;</button>
+  </div>
+  <div class="toast-body">
+    {{ toastSuccessMessage }}
+  </div>
+</ng-template>
 
-<div class="container-fluid" style="width: 80%;">
-  <br>
-  <h2>{{ dialogTitle }}</h2>
-  <hr>
+<ng-template #errorTpl let-toast>
+  <div class="toast-header">
+    <strong class="toast-title">Błąd</strong>
+    <button type="button" class="toast-close" (click)="toast.remove()">&times;</button>
+  </div>
+  <div class="toast-body">
+    {{ toastSuccessMessage }}
+  </div>
+</ng-template>
 
-  <form>
-    <div class="container-fluid">
-      <div class="row align-items-end">
-        <div class="form-group col-md-6" style="padding: 0">
-          <h2><label for="materials">Nazwa</label></h2>
-          <input type="text" class="form-control" id="materials" name="materials-name"
-                 [(ngModel)]="addMaterialRequest.name" autocomplete="off" placeholder="Nazwa materiału">
+<div class="layout">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="page-title">
+        <div class="icon">
+          <i class="bx bx-package"></i>
         </div>
+        <h1>{{ dialogTitle }}</h1>
       </div>
     </div>
+  </header>
 
-    <br>
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Material Type Selection Card -->
+    <section class="material-type-section">
+      <div class="section-card">
+        <div class="section-header">
+          <i class="bx bx-category"></i>
+          <h2>Typ materiału</h2>
+        </div>
+        <div class="section-content">
+          <div class="material-type-grid">
+            <div class="material-type-option"
+                 *ngFor="let type of accessoryTypes"
+                 [class.active]="addMaterialRequest.accessoryType === type.name"
+                 [class.disabled]="isEditMode"
+                 (click)="!isEditMode && onMaterialsChange(type)">
+              <div class="material-icon">
+                <i class="bx"
+                   [ngClass]="{
+                     'bx-wrench': type.name === 'FASTENERS',
+                     'bx-dna': type.name === 'FILAMENT',
+                     'bx-box': type.name === 'PACKAGING'
+                   }"></i>
+              </div>
+              <div class="material-info">
+                <div class="material-name">{{ type.translation }}</div>
+                <div class="material-description"
+                     [ngSwitch]="type.name">
+                  <span *ngSwitchCase="'FASTENERS'">Śruby, nakrętki, podkładki</span>
+                  <span *ngSwitchCase="'FILAMENT'">Materiały do druku 3D</span>
+                  <span *ngSwitchCase="'PACKAGING'">Opakowania i kartony</span>
+                </div>
+              </div>
+              <div class="material-check" *ngIf="addMaterialRequest.accessoryType === type.name">
+                <i class="bx bx-check"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <div class="form-group">
-      <h2><label>Typ</label></h2>
-      <ng-select [items]="accessoryTypes"
-                 bindLabel="translation"
-                 bindValue="name"
-                 [clearable]="false"
-                 [multiple]="false"
-                 [closeOnSelect]="true"
-                 [ngModelOptions]="{standalone: true}"
-                 (change)="onMaterialsChange($event)"
-                 [disabled]="isEditMode"
-                 [(ngModel)]="addMaterialRequest.accessoryType">
-      </ng-select>
-    </div>
-
-    <br>
-
-    <div class="container-fluid">
-      <div class="row" *ngIf='showFilamentOptions'>
-        <div class="col-md-6" style="padding-left: 0">
-          <form [formGroup]="form">
-            <!-- Producent -->
-            <div class="form-group">
-              <h2><label for="producer">Producent</label></h2>
-              <input type="text" class="form-control" id="producer" [ngModelOptions]="{standalone: true}" required
-                     [(ngModel)]="addMaterialRequest.producer" autocomplete="off"
-                     #name="ngModel">
+    <!-- Basic Information Card -->
+    <section class="basic-info-section">
+      <div class="section-card">
+        <div class="section-header">
+          <i class="bx bx-info-circle"></i>
+          <h2>Podstawowe informacje</h2>
+        </div>
+        <div class="section-content">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label class="form-label" for="materials">
+                <i class="bx bx-tag"></i>
+                Nazwa materiału
+              </label>
+              <input type="text"
+                     class="form-control"
+                     id="materials"
+                     name="materials-name"
+                     [(ngModel)]="addMaterialRequest.name"
+                     autocomplete="off"
+                     placeholder="Wprowadź nazwę materiału">
             </div>
 
-            <br>
+            <div class="form-group" *ngIf="!showFilamentOptions">
+              <label class="form-label" for="price2">
+                <i class="bx bx-money"></i>
+                Cena za sztukę
+              </label>
+              <div class="input-group">
+                <input type="text"
+                       id="price2"
+                       name="price"
+                       [(ngModel)]="addMaterialRequest.price"
+                       class="form-control"
+                       autocomplete="off"
+                       mask="separator.2"
+                       thousandSeparator=""
+                       placeholder="0.00" />
+                <span class="input-group-addon">zł/szt</span>
+              </div>
+            </div>
 
-            <!-- Typ filamentu -->
+            <div class="form-group full-width">
+              <label class="form-label" for="description">
+                <i class="bx bx-text"></i>
+                Opis (opcjonalnie)
+              </label>
+              <textarea class="form-control"
+                        id="description"
+                        rows="3"
+                        [(ngModel)]="addMaterialRequest.description"
+                        name="description"
+                        placeholder="Dodatkowy opis materiału"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filament Specific Options -->
+    <section class="filament-section" *ngIf="showFilamentOptions">
+      <div class="section-card filament-card">
+        <div class="section-header">
+          <i class="bx bx-dna"></i>
+          <h2>Parametry filamentu</h2>
+        </div>
+        <div class="section-content">
+          <div class="filament-grid">
+            <!-- Left Column -->
+            <div class="filament-column">
+              <div class="form-group">
+                <label class="form-label" for="producer">
+                  <i class="bx bx-buildings"></i>
+                  Producent
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="producer"
+                       [(ngModel)]="addMaterialRequest.producer"
+                       autocomplete="off"
+                       placeholder="Nazwa producenta">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="bx bx-category-alt"></i>
+                  Typ filamentu
+                </label>
+                <ng-select [items]="filamentTypes"
+                           [multiple]="false"
+                           [closeOnSelect]="true"
+                           [ngModelOptions]="{standalone: true}"
+                           [(ngModel)]="addMaterialRequest.filamentType"
+                           placeholder="Wybierz typ filamentu"
+                           class="custom-select">
+                </ng-select>
+              </div>
+
+              <div class="temperature-group">
+                <div class="form-group temp-group">
+                  <label class="form-label" for="temp1">
+                    <i class="bx bx-droplet"></i>
+                    Temperatura dyszy
+                  </label>
+                  <div class="input-group">
+                    <input class="form-control"
+                           [(ngModel)]="addMaterialRequest.temperaturePrint"
+                           [ngModelOptions]="{standalone: true}"
+                           autocomplete="off"
+                           type="text"
+                           id="temp1"
+                           mask="separator.2"
+                           thousandSeparator=""
+                           placeholder="200">
+                    <span class="input-group-addon">&deg;C</span>
+                  </div>
+                </div>
+
+                <div class="form-group temp-group">
+                  <label class="form-label" for="temp2">
+                    <i class="bx bx-target-lock"></i>
+                    Temperatura stołu
+                  </label>
+                  <div class="input-group">
+                    <input class="form-control"
+                           [(ngModel)]="addMaterialRequest.temperatureDesk"
+                           [ngModelOptions]="{standalone: true}"
+                           autocomplete="off"
+                           type="text"
+                           id="temp2"
+                           mask="separator.2"
+                           thousandSeparator=""
+                           placeholder="60">
+                    <span class="input-group-addon">&deg;C</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="price">
+                  <i class="bx bx-money"></i>
+                  Cena za kilogram
+                </label>
+                <div class="input-group">
+                  <input type="text"
+                         id="price"
+                         [ngModelOptions]="{standalone: true}"
+                         [(ngModel)]="addMaterialRequest.price"
+                         class="form-control"
+                         autocomplete="off"
+                         mask="separator.2"
+                         thousandSeparator=""
+                         placeholder="0.00" />
+                  <span class="input-group-addon">zł/kg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column - Color Picker -->
+            <div class="filament-column color-column">
+              <div class="color-picker-container">
+                <label class="form-label">
+                  <i class="bx bx-palette"></i>
+                  Kolor filamentu
+                </label>
+                <div class="color-picker-wrapper">
+                  <color-sketch [color]="addMaterialRequest.color || '#ffffff'"
+                                (onChange)="handleChange($event)"
+                                class="color-picker"></color-sketch>
+                  <div class="color-preview">
+                    <div class="color-swatch"
+                         [style.background-color]="addMaterialRequest.color || '#ffffff'"></div>
+                    <span class="color-value">{{ addMaterialRequest.color || '#FFFFFF' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Packaging Specific Options -->
+    <section class="packaging-section" *ngIf="showPackageOptions">
+      <div class="section-card packaging-card">
+        <div class="section-header">
+          <i class="bx bx-box"></i>
+          <h2>Parametry opakowania</h2>
+        </div>
+        <div class="section-content">
+          <div class="packaging-grid">
             <div class="form-group">
-              <h2><label>Typ filamentu</label></h2>
-              <ng-select [items]="filamentTypes"
+              <label class="form-label">
+                <i class="bx bx-package"></i>
+                Gabaryt InPost
+              </label>
+              <ng-select [items]="packageSize"
                          [multiple]="false"
                          [closeOnSelect]="true"
                          [ngModelOptions]="{standalone: true}"
-                         [(ngModel)]="addMaterialRequest.filamentType">
+                         [(ngModel)]="addMaterialRequest.packagingSize"
+                         placeholder="Wybierz gabaryt"
+                         class="custom-select">
               </ng-select>
             </div>
 
-            <br>
-
-            <!-- Temperatura druku -->
             <div class="form-group">
-              <h2><label for="temp2">Temperatura dyszy</label></h2>
-              <div class="input-group mb-3">
-                <input class="form-control" [(ngModel)]="addMaterialRequest.temperaturePrint"
-                       [ngModelOptions]="{standalone: true}" autocomplete="off"
-                       type="text" id="temp1" mask="separator.2" thousandSeparator="">
-                <span class="input-group-text" style="margin-right: 16px">&deg;C</span>
-              </div>
+              <label class="form-label">
+                <i class="bx bx-ruler"></i>
+                Wymiary (długość × szerokość × wysokość)
+              </label>
+              <input type="text"
+                     [(ngModel)]="addMaterialRequest.dimensions"
+                     class="form-control"
+                     placeholder="00.00×00.00×00.00"
+                     name="dimensions"
+                     autocomplete="off">
+              <small class="form-help">Format: długość×szerokość×wysokość w cm</small>
             </div>
 
-            <br>
-
-            <!-- Temperatura stołu -->
             <div class="form-group">
-              <h2><label for="temp2">Temperatura stołu</label></h2>
-              <div class="input-group mb-3">
-                <input class="form-control" [(ngModel)]="addMaterialRequest.temperatureDesk"
-                       [ngModelOptions]="{standalone: true}" autocomplete="off"
-                       type="text" id="temp2" mask="separator.2" thousandSeparator="">
-                <span class="input-group-text" style="margin-right: 16px">&deg;C</span>
+              <label class="form-label" for="package-price">
+                <i class="bx bx-money"></i>
+                Cena za sztukę
+              </label>
+              <div class="input-group">
+                <input type="text"
+                       id="package-price"
+                       [(ngModel)]="addMaterialRequest.price"
+                       class="form-control"
+                       autocomplete="off"
+                       mask="separator.2"
+                       thousandSeparator=""
+                       placeholder="0.00" />
+                <span class="input-group-addon">zł/szt</span>
               </div>
             </div>
-
-            <br>
-
-            <!-- Cena -->
-            <div>
-              <h2><label *ngIf="showFilamentOptions; else elseBlock" for="price">Cena</label></h2>
-              <ng-template #elseBlock><h2><label for="price">Cena</label></h2></ng-template>
-              <div class="input-group mb-3">
-                <input
-                  type="text"
-                  id="price"
-                  [ngModelOptions]="{standalone: true}"
-                  [(ngModel)]="addMaterialRequest.price"
-                  class="form-control"
-                  autocomplete="off"
-                  aria-describedby="basic-addon2"
-                  mask="separator.2"
-                  thousandSeparator=""
-                />
-                <span class="input-group-text" style="margin-right: 16px">zł za kilogram</span>
-              </div>
-            </div>
-
-          </form>
-        </div>
-
-        <div class="col-md-6">
-          <div class="form-group" style="margin-left: 100px">
-            <h2><label>Kolor</label></h2>
-            <!-- Ustawiamy domyślny kolor, jeśli jest undefined -->
-            <color-sketch [color]="addMaterialRequest.color || '#ffffff'"
-                          (onChange)="handleChange($event)"></color-sketch>
           </div>
         </div>
-
       </div>
-    </div>
+    </section>
 
-    <div *ngIf='showPackageOptions'>
-      <!-- Gabaryt InPost -->
-      <div class="form-group">
-        <h2><label>Gabaryt InPost</label></h2>
-        <ng-select [items]="packageSize"
-                   [multiple]="false"
-                   [closeOnSelect]="true"
-                   [ngModelOptions]="{standalone: true}"
-                   [(ngModel)]="addMaterialRequest.packagingSize">
-        </ng-select>
+    <!-- Action Section -->
+    <section class="action-section">
+      <div class="action-buttons">
+        <button type="button"
+                class="btn btn-outline"
+                *ngIf="dialogRef"
+                (click)="dialogRef.close()">
+          <i class="bx bx-x"></i>
+          Anuluj
+        </button>
+        <button type="button"
+                (click)="onMaterialSubmit(successTpl, errorTpl)"
+                class="btn btn-primary">
+          <i class="bx" [ngClass]="{
+            'bx-plus': !isEditMode,
+            'bx-save': isEditMode
+          }"></i>
+          {{ buttonText }}
+        </button>
       </div>
-
-      <br>
-
-      <!-- Wymiary -->
-      <div class="form-group">
-        <h2><label>Wymiary (długość x szerokość x wysokość)</label></h2>
-        <input type="text" [(ngModel)]="addMaterialRequest.dimensions"
-               class="form-control"
-               placeholder="00.00x00.00x00.00"
-               name="dimensions"
-               autocomplete="off"
-               >
-      </div>
-
-    </div>
-
-    <!-- Cena netto za sztukę -->
-    <div *ngIf='!showFilamentOptions'>
-      <h2><label>Cena</label></h2>
-      <div class="input-group mb-3">
-        <input
-          type="text"
-          id="price2"
-          name="price"
-          [(ngModel)]="addMaterialRequest.price"
-          class="form-control"
-          autocomplete="off"
-          aria-describedby="basic-addon2"
-          mask="separator.2"
-          thousandSeparator=""
-        />
-        <span class="input-group-text" style="margin-right: 16px">zł za sztukę</span>
-      </div>
-    </div>
-
-    <br>
-
-    <!-- Pole Opis dostępne dla każdego typu akcesorium -->
-    <div class="form-group">
-      <h2><label for="description">Opis</label></h2>
-      <textarea class="form-control" id="description" rows="3"
-                [(ngModel)]="addMaterialRequest.description"
-                name="description" placeholder="Opcjonalny opis materiału"></textarea>
-    </div>
-
-    <br>
-
-    <div class="text-right">
-      <button type="submit" (click)="onMaterialSubmit(successTpl, errorTpl)" class="btn btn-primary">{{ buttonText }}
-      </button>
-    </div>
-  </form>
-  <br>
+    </section>
+  </main>
 </div>
