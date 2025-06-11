@@ -402,9 +402,48 @@ textarea.form-control {
   color: white;
 }
 
+/* Materials Section Improvements */
+.materials-card {
+  position: relative;
+  z-index: 1;
+}
+
+.materials-select-group {
+  position: relative;
+  z-index: 100;
+}
+
+.materials-select {
+  position: relative;
+  z-index: 100;
+}
+
+.materials-select.ng-select.ng-select-opened {
+  z-index: 1060 !important;
+}
+
+/* Materials Tables Container */
+.materials-tables-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.materials-tables-container.side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.materials-tables-container.side-by-side .materials-table-section {
+  margin-bottom: 0;
+}
+
 /* Materials Tables */
 .materials-tables {
   margin-top: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .materials-table-section {
@@ -458,6 +497,10 @@ textarea.form-control {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.materials-table th:last-child {
+  text-align: right;
+}
+
 .materials-table td {
   padding: 12px 16px;
   border-bottom: 1px solid #f3f4f6;
@@ -477,6 +520,17 @@ textarea.form-control {
 
 .material-quantity {
   text-align: center;
+}
+
+.material-cost {
+  text-align: right;
+}
+
+.cost-value {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  color: #059669;
+  font-size: 13px;
 }
 
 .quantity-input {
@@ -826,6 +880,11 @@ textarea.form-control {
 
   .files-grid {
     grid-template-columns: 1fr;
+  }
+
+  .materials-tables-container.side-by-side {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 

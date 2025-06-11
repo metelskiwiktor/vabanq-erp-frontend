@@ -749,4 +749,51 @@ export class AddProductComponent implements OnInit, OnDestroy {
       this.eanImageUrl = '';
     }
   }
+
+// Dodaj te metody do add-product.component.ts
+
+// Metoda do obliczania kosztu pojedynczego materiału
+  getMaterialCost(material: any): string {
+    if (!material.q || isNaN(Number(material.q))) {
+      return '0.00';
+    }
+
+    let quantity = Number(material.q);
+    let price = Number(material.price);
+
+    // Dla filamentów przelicz gramy na kilogramy
+    if (material.type === 'Filament') {
+      quantity = quantity / 1000;
+    }
+
+    const cost = price * quantity;
+    return cost.toFixed(2);
+  }
+
+// Metoda do obliczania łącznego kosztu filamentów
+  getFilamentsCost(): number {
+    return this.filamentMaterials
+      .map(material => {
+        if (material.q && !isNaN(Number(material.q))) {
+          const quantity = Number(material.q) / 1000; // gramy na kilogramy
+          return Number(material.price) * quantity;
+        }
+        return 0;
+      })
+      .reduce((total, current) => total + current, 0);
+  }
+
+// Metoda do obliczania łącznego kosztu elementów złącznych
+  getFastenersCost(): number {
+    return this.fastenerMaterials
+      .map(material => {
+        if (material.q && !isNaN(Number(material.q))) {
+          const quantity = Number(material.q);
+          return Number(material.price) * quantity;
+        }
+        return 0;
+      })
+      .reduce((total, current) => total + current, 0);
+  }
+
 }
