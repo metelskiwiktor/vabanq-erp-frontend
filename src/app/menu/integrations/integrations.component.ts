@@ -14,6 +14,8 @@ interface InfaktCredentials {
   apiKey: string;
   isValid: boolean;
   lastChecked?: Date;
+  companyName?: string;
+  userEmail?: string;
 }
 
 @Component({
@@ -30,6 +32,7 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
     clientSecret: ''
   };
   showAllegroCredentials: boolean = false;
+  showAllegroSecret: boolean = false; // Dodane dla toggle hasła
 
   // Infakt integration
   infaktCredentials: InfaktCredentials = {
@@ -39,6 +42,7 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
   checkingInfakt: boolean = false;
   infaktMessage: string = '';
   showInfaktCredentials: boolean = false;
+  showInfaktSecret: boolean = false; // Dodane dla toggle hasła
 
   private tokenSubscription?: Subscription;
 
@@ -169,12 +173,16 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.infaktCredentials.isValid = true;
         this.infaktCredentials.lastChecked = new Date();
+        this.infaktCredentials.companyName = response.companyName;
+        this.infaktCredentials.userEmail = response.userEmail;
         this.infaktMessage = response.message || 'Połączenie z Infakt zostało nawiązane pomyślnie';
         this.saveInfaktCredentialsAfterCheck();
         this.checkingInfakt = false;
       },
       error: (error) => {
         this.infaktCredentials.isValid = false;
+        this.infaktCredentials.companyName = undefined;
+        this.infaktCredentials.userEmail = undefined;
         this.infaktMessage = error.error?.message || 'Błąd połączenia z Infakt. Sprawdź klucz API.';
         this.saveInfaktCredentialsAfterCheck();
         this.checkingInfakt = false;
@@ -226,7 +234,7 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
       case 'warning':
         return 'status-warning';
       case 'expired':
-        return 'status-expired';
+        return 'status-error';
       case 'not_connected':
         return 'status-not-connected';
       default:
@@ -257,5 +265,19 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
   formatLastChecked(): string {
     if (!this.infaktCredentials.lastChecked) return 'Nigdy';
     return new Date(this.infaktCredentials.lastChecked).toLocaleString('pl-PL');
+  }
+
+  // Nowa metoda dla klasy CSS daty wygaśnięcia
+  getExpiryClass(): string {
+    if (!this.tokenDetails) return '';
+
+    switch (this.tokenDetails.status) {
+      case 'warning':
+        return 'text-warning';
+      case 'expired':
+        return 'text-danger';
+      default:
+        return '';
+    }
   }
 }
