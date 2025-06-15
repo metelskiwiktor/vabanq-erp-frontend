@@ -1,4 +1,3 @@
-// infakt.service.ts - Updated to use backend API
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable, of} from 'rxjs';
@@ -20,6 +19,13 @@ export interface InvoiceResponse {
   attachedToAllegro: boolean;
 }
 
+export interface InfaktCheckResponse {
+  message: string;
+  isValid: boolean;
+  companyName?: string;
+  userEmail?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -27,6 +33,21 @@ export class InfaktService {
   private apiUrl = `${environment.backendUrl}/api/invoices`;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Check if Infakt API key is valid
+   */
+  checkApiKey(apiKey: string): Observable<InfaktCheckResponse> {
+    const headers = new HttpHeaders().set('infakt-api-key', apiKey);
+
+    return this.http.get<InfaktCheckResponse>(`${this.apiUrl}/check-me`, { headers })
+      .pipe(
+        catchError(error => {
+          console.error('Error checking Infakt API key:', error);
+          throw error;
+        })
+      );
+  }
 
   /**
    * Generate invoice for order via backend

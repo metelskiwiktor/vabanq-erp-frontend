@@ -1,4 +1,4 @@
-// src/app/menu/menu.component.ts
+// src/app/menu/menu.component.ts - Updated to redirect integrations
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { KeycloakService } from "keycloak-angular";
 import { KeycloakProfile } from "keycloak-js";
@@ -187,8 +187,8 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   goToIntegrations(): void {
     this.showProfileMenu = false;
-    // Redirect to settings page since integrations are handled there
-    this.router.navigate(['/settings']);
+    // Navigate to integrations page instead of settings
+    this.router.navigate(['/integrations']);
   }
 
   logout(): void {

@@ -9,6 +9,7 @@ import {BrowserModule} from "@angular/platform-browser";
 import {HttpClientModule} from "@angular/common/http";
 import {AppRoutingModule} from "../app-routing.module";
 import {SettingsModule} from "./settings/settings.module";
+import {IntegrationsModule} from "./integrations/integrations.module";
 import {AllegroSynchronizedModule} from "./allegro-synchronized/allegro-synchronized.module";
 import {AddItemModule} from "./add-item/add-item.module";
 import {MatTabsModule} from "@angular/material/tabs";
@@ -36,6 +37,7 @@ import {BackupModule} from "./profile/backup/backup.module";
     SummaryDialogModule,
     DashboardModule,
     SettingsModule,
+    IntegrationsModule,
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,

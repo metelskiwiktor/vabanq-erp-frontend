@@ -186,8 +186,15 @@ export class ProductService {
     return this.http.get<any>(this.apiAllegroUrl + "/synchronization/my-offers", {headers: new HttpHeaders().set('allegro-api', token)});
   }
 
-  getAllegroAuthUrl() {
-    return this.http.get(this.apiAllegroUrl + "/connect", {responseType: 'text'});
+  getAllegroAuthUrl(clientId: string, clientSecret: string) {
+    const headers = new HttpHeaders()
+      .set('allegro-client-id', clientId)
+      .set('allegro-client-secret', clientSecret);
+
+    return this.http.get(this.apiAllegroUrl + "/connect", {
+      headers,
+      responseType: 'text'
+    });
   }
 
   getAuthToken() {

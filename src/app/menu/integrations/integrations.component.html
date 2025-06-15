@@ -1,0 +1,292 @@
+<!-- src/app/menu/integrations/integrations.component.html -->
+<div class="container-fluid" style="width: 100%; padding: 20px;">
+  <h1>Integracje</h1>
+  <p class="page-description">Zarządzaj integracjami z zewnętrznymi usługami</p>
+
+  <!-- Allegro Integration Section -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <div class="integration-header">
+        <div class="integration-title">
+          <img src="assets/images/allegro-logo.png" alt="Allegro" class="integration-logo" onerror="this.style.display='none'">
+          <h3>Allegro</h3>
+        </div>
+        <div class="status-indicator" [ngClass]="getAllegroStatusClass()">
+          <div class="status-circle"></div>
+          <span class="status-text">{{ getAllegroStatusText() }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- Credentials Section -->
+      <div class="credentials-section">
+        <div class="credentials-header">
+          <h5>
+            <i class="bx bx-key"></i>
+            Dane logowania
+          </h5>
+          <button
+            class="btn btn-outline btn-sm"
+            (click)="showAllegroCredentials = !showAllegroCredentials">
+            <i class="bx" [ngClass]="showAllegroCredentials ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+            {{ showAllegroCredentials ? 'Ukryj' : 'Pokaż' }}
+          </button>
+        </div>
+
+        <div class="credentials-form" [class.show]="showAllegroCredentials">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="allegroClientId">Client ID</label>
+              <input
+                type="text"
+                id="allegroClientId"
+                class="form-control"
+                [(ngModel)]="allegroCredentials.clientId"
+                placeholder="Wprowadź Client ID z Allegro">
+            </div>
+            <div class="form-group">
+              <label for="allegroClientSecret">Client Secret</label>
+              <input
+                type="password"
+                id="allegroClientSecret"
+                class="form-control"
+                [(ngModel)]="allegroCredentials.clientSecret"
+                placeholder="Wprowadź Client Secret z Allegro">
+            </div>
+          </div>
+          <button
+            class="btn btn-primary"
+            (click)="saveAllegroCredentials()">
+            <i class="bx bx-save"></i>
+            Zapisz dane logowania
+          </button>
+        </div>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="connection-status" *ngIf="tokenDetails && tokenDetails.isValid">
+        <div class="status-details">
+          <div class="status-grid">
+            <div class="status-item" *ngIf="tokenDetails.user_name">
+              <span class="label">Użytkownik:</span>
+              <span class="value">{{ tokenDetails.user_name }}</span>
+            </div>
+            <div class="status-item" *ngIf="tokenDetails.client_id">
+              <span class="label">Client ID:</span>
+              <span class="value">{{ tokenDetails.client_id }}</span>
+            </div>
+            <div class="status-item" *ngIf="tokenDetails.scope">
+              <span class="label">Uprawnienia:</span>
+              <span class="value">{{ tokenDetails.scope }}</span>
+            </div>
+            <div class="status-item">
+              <span class="label">Wygasa:</span>
+              <span class="value" [ngClass]="{ 'text-warning': tokenDetails.status === 'warning', 'text-danger': tokenDetails.status === 'expired' }">
+                {{ formatExpiryDate(tokenDetails.expiryDate) }}
+              </span>
+            </div>
+            <div class="status-item">
+              <span class="label">Pozostało:</span>
+              <span class="value" [ngClass]="{ 'text-warning': tokenDetails.status === 'warning', 'text-danger': tokenDetails.status === 'expired' }">
+                {{ getTimeRemaining() }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Connection Info -->
+      <div class="no-connection" *ngIf="!tokenDetails || !tokenDetails.isValid">
+        <div class="alert alert-info">
+          <i class="bx bx-info-circle"></i>
+          <div>
+            <strong>Brak aktywnego połączenia</strong>
+            <p>Skonfiguruj dane logowania i połącz się z Allegro aby korzystać z funkcji integracji.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <!-- Connect Button -->
+        <button
+          type="button"
+          class="btn btn-warning btn-lg"
+          (click)="connectAllegro()"
+          *ngIf="!connectingAllegro && (!tokenDetails || !tokenDetails.isValid)">
+          <i class="bx bx-link"></i>
+          Połącz się z Allegro
+        </button>
+
+        <!-- Connecting Button -->
+        <button
+          class="btn btn-warning btn-lg"
+          type="button"
+          disabled
+          *ngIf="connectingAllegro">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Łączenie z Allegro...
+        </button>
+
+        <!-- Refresh Button -->
+        <button
+          type="button"
+          class="btn btn-primary btn-lg"
+          (click)="refreshAllegroToken()"
+          *ngIf="tokenDetails && tokenDetails.isValid && (tokenDetails.status === 'warning' || tokenDetails.status === 'expired')">
+          <i class="bx bx-refresh"></i>
+          Odśwież połączenie
+        </button>
+
+        <!-- Disconnect Button -->
+        <button
+          type="button"
+          class="btn btn-danger btn-lg"
+          (click)="disconnectAllegro()"
+          *ngIf="tokenDetails && tokenDetails.isValid">
+          <i class="bx bx-unlink"></i>
+          Odłącz
+        </button>
+      </div>
+
+      <!-- Warning Messages -->
+      <div class="warnings" *ngIf="tokenDetails">
+        <div class="alert alert-warning" *ngIf="tokenDetails.status === 'warning'">
+          <i class="bx bx-time"></i>
+          <div>
+            <strong>Uwaga!</strong>
+            <p>Token wygaśnie za mniej niż godzinę. Rozważ odświeżenie połączenia.</p>
+          </div>
+        </div>
+        <div class="alert alert-danger" *ngIf="tokenDetails.status === 'expired'">
+          <i class="bx bx-error"></i>
+          <div>
+            <strong>Token wygasł!</strong>
+            <p>Musisz ponownie połączyć się z Allegro aby korzystać z funkcji integracji.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infakt Integration Section -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <div class="integration-header">
+        <div class="integration-title">
+          <img src="assets/images/infakt-logo.png" alt="Infakt" class="integration-logo" onerror="this.style.display='none'">
+          <h3>Infakt</h3>
+        </div>
+        <div class="status-indicator" [ngClass]="getInfaktStatusClass()">
+          <div class="status-circle"></div>
+          <span class="status-text">{{ getInfaktStatusText() }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- Credentials Section -->
+      <div class="credentials-section">
+        <div class="credentials-header">
+          <h5>
+            <i class="bx bx-key"></i>
+            Klucz API
+          </h5>
+          <button
+            class="btn btn-outline btn-sm"
+            (click)="showInfaktCredentials = !showInfaktCredentials">
+            <i class="bx" [ngClass]="showInfaktCredentials ? 'bx-chevron-up' : 'bx-chevron-down'"></i>
+            {{ showInfaktCredentials ? 'Ukryj' : 'Pokaż' }}
+          </button>
+        </div>
+
+        <div class="credentials-form" [class.show]="showInfaktCredentials">
+          <div class="form-group">
+            <label for="infaktApiKey">Klucz API Infakt</label>
+            <input
+              type="password"
+              id="infaktApiKey"
+              class="form-control"
+              [(ngModel)]="infaktCredentials.apiKey"
+              placeholder="Wprowadź klucz API z Infakt">
+            <small class="form-text">
+              Klucz API możesz znaleźć w panelu Infakt w sekcji Ustawienia → API
+            </small>
+          </div>
+          <div class="button-group">
+            <button
+              class="btn btn-primary"
+              (click)="saveInfaktCredentials()">
+              <i class="bx bx-save"></i>
+              Zapisz klucz
+            </button>
+            <button
+              class="btn btn-success"
+              (click)="checkInfaktApi()"
+              [disabled]="checkingInfakt || !infaktCredentials.apiKey.trim()">
+              <i class="bx" [ngClass]="checkingInfakt ? 'bx-loader-alt spinner' : 'bx-check-circle'"></i>
+              {{ checkingInfakt ? 'Sprawdzanie...' : 'Sprawdź połączenie' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="connection-status" *ngIf="infaktCredentials.apiKey">
+        <div class="status-details">
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="label">Status połączenia:</span>
+              <span class="value" [ngClass]="infaktCredentials.isValid ? 'text-success' : 'text-danger'">
+                {{ infaktCredentials.isValid ? 'Aktywne' : 'Nieaktywne' }}
+              </span>
+            </div>
+            <div class="status-item" *ngIf="infaktCredentials.lastChecked">
+              <span class="label">Ostatnie sprawdzenie:</span>
+              <span class="value">{{ formatLastChecked() }}</span>
+            </div>
+          </div>
+
+          <div class="status-message" *ngIf="infaktMessage">
+            <div class="alert" [ngClass]="infaktCredentials.isValid ? 'alert-success' : 'alert-danger'">
+              <i class="bx" [ngClass]="infaktCredentials.isValid ? 'bx-check-circle' : 'bx-error-circle'"></i>
+              <span>{{ infaktMessage }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Connection Info -->
+      <div class="no-connection" *ngIf="!infaktCredentials.apiKey">
+        <div class="alert alert-info">
+          <i class="bx bx-info-circle"></i>
+          <div>
+            <strong>Brak konfiguracji</strong>
+            <p>Wprowadź klucz API Infakt aby umożliwić automatyczne generowanie faktur.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons" *ngIf="infaktCredentials.apiKey && infaktCredentials.isValid">
+        <button
+          type="button"
+          class="btn btn-success"
+          (click)="checkInfaktApi()"
+          [disabled]="checkingInfakt">
+          <i class="bx" [ngClass]="checkingInfakt ? 'bx-loader-alt spinner' : 'bx-refresh'"></i>
+          {{ checkingInfakt ? 'Sprawdzanie...' : 'Sprawdź ponownie' }}
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="disconnectInfakt()">
+          <i class="bx bx-unlink"></i>
+          Odłącz integrację
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
