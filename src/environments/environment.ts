@@ -4,4 +4,5 @@ export const environment = {
   keycloakUrl: 'http://localhost:8081',
   allegroUrl: 'https://allegro.pl.allegrosandbox.pl',
   allegroSalesCenterUrl: 'https://salescenter.allegro.com.allegrosandbox.pl',
+  infaktUrl: 'https://app.infakt.pl',
 };
