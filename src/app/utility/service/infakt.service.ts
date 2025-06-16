@@ -4,6 +4,7 @@ import {Observable, of} from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 import {Order} from "../../menu/orders/model/orders-model";
 import {environment} from "../../../environments/environment";
+import {LocalStorageService} from "../../local-storage.service";
 
 export interface InvoiceResponse {
   id: string;
@@ -32,7 +33,39 @@ export interface InfaktCheckResponse {
 export class InfaktService {
   private apiUrl = `${environment.backendUrl}/api/invoices`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private localStorageService: LocalStorageService
+  ) {}
+
+  /**
+   * Get Infakt API key from localStorage
+   */
+  private getInfaktApiKey(): string | null {
+    const infaktData = this.localStorageService.getItem('infakt-credentials');
+    if (infaktData) {
+      try {
+        const credentials = JSON.parse(infaktData);
+        return credentials.apiKey || null;
+      } catch (e) {
+        console.error('Error parsing Infakt credentials:', e);
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Create headers with Infakt API key
+   */
+  private createHeadersWithApiKey(): HttpHeaders {
+    const apiKey = this.getInfaktApiKey();
+    if (!apiKey) {
+      console.warn('Infakt API key not found in localStorage');
+      return new HttpHeaders();
+    }
+    return new HttpHeaders().set('infakt-api-key', apiKey);
+  }
 
   /**
    * Check if Infakt API key is valid
@@ -54,8 +87,9 @@ export class InfaktService {
    */
   generateInvoice(order: Order): Observable<InvoiceResponse> {
     const requestBody = { orderId: order.orderId };
+    const headers = this.createHeadersWithApiKey();
 
-    return this.http.post<InvoiceResponse>(this.apiUrl, requestBody)
+    return this.http.post<InvoiceResponse>(this.apiUrl, requestBody, { headers })
       .pipe(
         catchError(error => {
           console.error('Error generating invoice:', error);
@@ -65,7 +99,7 @@ export class InfaktService {
   }
 
   /**
-   * Get invoices for multiple orders
+   * Get invoices for multiple orders - ten endpoint nie potrzebuje API key
    */
   getInvoicesForOrders(orderIds: string[]): Observable<InvoiceResponse[]> {
     if (orderIds.length === 0) {

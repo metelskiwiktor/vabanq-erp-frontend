@@ -205,9 +205,6 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // =============== UI HELPER METHODS ===============
-
-  // Allegro status methods
   getAllegroStatusText(): string {
     if (!this.tokenDetails) return 'Nieznany';
 
@@ -267,7 +264,6 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
     return new Date(this.infaktCredentials.lastChecked).toLocaleString('pl-PL');
   }
 
-  // Nowa metoda dla klasy CSS daty wygaśnięcia
   getExpiryClass(): string {
     if (!this.tokenDetails) return '';
 
@@ -279,5 +275,27 @@ export class IntegrationsComponent implements OnInit, OnDestroy {
       default:
         return '';
     }
+  }
+
+  getEnvironmentText(): string {
+    if (!this.tokenDetails?.iss) return 'Nieznane';
+
+    if (this.tokenDetails.iss.includes('sandbox')) {
+      return 'Sandbox (Test)';
+    } else if (this.tokenDetails.iss.includes('allegro.pl')) {
+      return 'Produkcja';
+    }
+    return 'Nieznane';
+  }
+
+  getEnvironmentClass(): string {
+    if (!this.tokenDetails?.iss) return '';
+
+    if (this.tokenDetails.iss.includes('sandbox')) {
+      return 'env-sandbox';
+    } else if (this.tokenDetails.iss.includes('allegro.pl')) {
+      return 'env-production';
+    }
+    return '';
   }
 }

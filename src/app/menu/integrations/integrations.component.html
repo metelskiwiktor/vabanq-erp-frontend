@@ -102,6 +102,12 @@
             <div class="status-label">Client ID</div>
             <div class="status-value code-text">{{ tokenDetails.client_id }}</div>
           </div>
+          <div class="status-item" *ngIf="tokenDetails.iss">
+            <div class="status-label">Środowisko</div>
+            <div class="status-value environment-badge" [ngClass]="getEnvironmentClass()">
+              {{ getEnvironmentText() }}
+            </div>
+          </div>
           <div class="status-item" *ngIf="tokenDetails.scope">
             <div class="status-label">Uprawnienia</div>
             <div class="status-value">{{ tokenDetails.scope }}</div>

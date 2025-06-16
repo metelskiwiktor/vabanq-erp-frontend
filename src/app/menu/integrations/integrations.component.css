@@ -40,7 +40,7 @@
 
 .page-header h1 {
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 600; /* Zmniejszone z 700 */
   color: #1e293b;
   margin: 0 0 8px 0;
   background: linear-gradient(135deg, #1e293b, #475569);
@@ -68,8 +68,8 @@
 }
 
 .integration-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px); /* Zmniejszone z -2px */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); /* Delikatniej */
 }
 
 .card-header {
@@ -132,7 +132,7 @@
 
 .integration-details h2 {
   font-size: 1.75rem;
-  font-weight: 700;
+  font-weight: 600; /* Zmniejszone z 700 */
   color: #1e293b;
   margin: 0 0 6px 0;
 }
@@ -150,7 +150,7 @@
   gap: 10px;
   padding: 12px 20px;
   border-radius: 25px;
-  font-weight: 600;
+  font-weight: 500; /* Zmniejszone z 600 */
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -278,7 +278,7 @@
   align-items: center;
   gap: 12px;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 500; /* Zmniejszone z 600 */
   color: #334155;
 }
 
@@ -335,7 +335,7 @@
 
 .form-label {
   display: block;
-  font-weight: 600;
+  font-weight: 500; /* Zmniejszone z 600 */
   color: #374151;
   margin-bottom: 10px;
   font-size: 0.95rem;
@@ -485,8 +485,8 @@
 }
 
 .status-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px); /* Zmniejszone z -2px */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08); /* Delikatniej */
 }
 
 .status-item:hover::before {
@@ -496,7 +496,7 @@
 .status-label {
   font-size: 0.85rem;
   color: #64748b;
-  font-weight: 600;
+  font-weight: 500; /* Zmniejszone z 600 */
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -505,7 +505,7 @@
 .status-value {
   font-size: 1.1rem;
   color: #1e293b;
-  font-weight: 600;
+  font-weight: 500; /* Zmniejszone z 600 */
   word-break: break-all;
 }
 
@@ -515,6 +515,27 @@
   padding: 6px 8px;
   border-radius: 6px;
   font-size: 0.9rem;
+}
+
+.environment-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.env-sandbox {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.env-production {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+  border: 1px solid #22c55e;
 }
 
 .text-success {
