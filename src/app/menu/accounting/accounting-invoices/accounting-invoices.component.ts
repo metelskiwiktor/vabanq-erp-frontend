@@ -3,6 +3,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { environment } from '../../../../environments/environment';
 import {CostInvoice, CostInvoiceService, CostInvoiceCategory, CostInvoicePage} from "../../../utility/service/cost-invoice.service";
 
+interface CurrencyTotal {
+  currency: string;
+  netTotal: number;
+  grossTotal: number;
+}
+
 @Component({
   selector: 'app-accounting-invoices',
   templateUrl: './accounting-invoices.component.html',
@@ -29,10 +35,17 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   // Filters
   filterText: string = '';
   filterCategory: CostInvoiceCategory | '' = '';
+  filterCurrency: string = '';
   selectedMonth: Date = new Date();
 
-  // Available categories from enum
+  // Custom date range filters
+  dateFrom: Date | null = null;
+  dateTo: Date | null = null;
+  useCustomDateRange: boolean = false;
+
+  // Available options
   availableCategories: { key: CostInvoiceCategory; displayName: string }[] = [];
+  availableCurrencies: string[] = ['PLN', 'EUR', 'USD', 'GBP', 'CZK', 'HUF'];
 
   // Search timeout for debouncing
   private searchTimeout: any;
@@ -56,22 +69,35 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Get effective date range for filtering
+  private getEffectiveDateRange(): { startDate: Date; endDate: Date } {
+    if (this.useCustomDateRange && this.dateFrom && this.dateTo) {
+      return {
+        startDate: new Date(this.dateFrom),
+        endDate: new Date(this.dateTo.getTime() + 24 * 60 * 60 * 1000 - 1) // End of day
+      };
+    } else {
+      // Use selected month
+      const startOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1);
+      const endOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+      return { startDate: startOfMonth, endDate: endOfMonth };
+    }
+  }
+
   // Load invoices from backend with pagination
   loadInvoices(): void {
     this.isLoading = true;
 
-    // Calculate date range from selected month
-    const startOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1);
-    const endOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+    const { startDate, endDate } = this.getEffectiveDateRange();
 
     this.costInvoiceService.getCostInvoices(
       this.currentPage,
       this.pageSize,
       this.filterText || undefined,
-      undefined, // currency filter
+      this.filterCurrency || undefined,
       this.filterCategory || undefined,
-      startOfMonth,
-      endOfMonth
+      startDate,
+      endDate
     ).subscribe({
       next: (page: CostInvoicePage) => {
         this.invoices = page.content.map(invoice => ({
@@ -146,18 +172,16 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // Check first page to see if total count changed
-      const startOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1);
-      const endOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+      const { startDate, endDate } = this.getEffectiveDateRange();
 
       this.costInvoiceService.getCostInvoices(
         0, // first page
         this.pageSize,
         this.filterText || undefined,
-        undefined,
+        this.filterCurrency || undefined,
         this.filterCategory || undefined,
-        startOfMonth,
-        endOfMonth
+        startDate,
+        endDate
       ).subscribe({
         next: (page: CostInvoicePage) => {
           if (page.totalElements !== this.lastKnownTotalElements) {
@@ -194,13 +218,44 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   previousMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() - 1, 1);
     this.currentPage = 0;
-    this.loadInvoices();
+    if (!this.useCustomDateRange) {
+      this.loadInvoices();
+    }
   }
 
   nextMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 1);
     this.currentPage = 0;
-    this.loadInvoices();
+    if (!this.useCustomDateRange) {
+      this.loadInvoices();
+    }
+  }
+
+  // Toggle between month selector and custom date range
+  toggleDateRangeMode(): void {
+    this.useCustomDateRange = !this.useCustomDateRange;
+    if (!this.useCustomDateRange) {
+      this.dateFrom = null;
+      this.dateTo = null;
+    }
+    this.applyFilters();
+  }
+
+  // Date range change handlers
+  onDateFromChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.dateFrom = target.value ? new Date(target.value) : null;
+    if (this.useCustomDateRange) {
+      this.applyFilters();
+    }
+  }
+
+  onDateToChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.dateTo = target.value ? new Date(target.value) : null;
+    if (this.useCustomDateRange) {
+      this.applyFilters();
+    }
   }
 
   // Pagination
@@ -235,10 +290,20 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  onCurrencyFilterChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.filterCurrency = target.value;
+    this.applyFilters();
+  }
+
   clearFilters(): void {
     this.filterText = '';
     this.filterCategory = '';
+    this.filterCurrency = '';
     this.selectedMonth = new Date();
+    this.dateFrom = null;
+    this.dateTo = null;
+    this.useCustomDateRange = false;
     this.currentPage = 0;
     this.loadInvoices();
   }
@@ -274,16 +339,38 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     });
   }
 
+  getDateRangeDisplayName(): string {
+    if (this.useCustomDateRange && this.dateFrom && this.dateTo) {
+      return `${this.formatDate(this.dateFrom.toISOString())} - ${this.formatDate(this.dateTo.toISOString())}`;
+    }
+    return this.getMonthDisplayName();
+  }
+
   getCategoryDisplayName(category: CostInvoiceCategory | string | undefined): string {
     return this.costInvoiceService.getCategoryDisplayName(category as CostInvoiceCategory);
   }
 
-  getTotalNetAmount(): number {
-    return this.invoices.reduce((sum, invoice) => sum + invoice.netPrice, 0);
-  }
+  // Calculate totals by currency
+  getCurrencyTotals(): CurrencyTotal[] {
+    const totalsMap = new Map<string, CurrencyTotal>();
 
-  getTotalGrossAmount(): number {
-    return this.invoices.reduce((sum, invoice) => sum + invoice.grossPrice, 0);
+    this.invoices.forEach(invoice => {
+      const currency = invoice.currency || 'PLN';
+
+      if (!totalsMap.has(currency)) {
+        totalsMap.set(currency, {
+          currency: currency,
+          netTotal: 0,
+          grossTotal: 0
+        });
+      }
+
+      const total = totalsMap.get(currency)!;
+      total.netTotal += invoice.netPrice;
+      total.grossTotal += invoice.grossPrice;
+    });
+
+    return Array.from(totalsMap.values()).sort((a, b) => a.currency.localeCompare(b.currency));
   }
 
   getPageNumbers(): number[] {

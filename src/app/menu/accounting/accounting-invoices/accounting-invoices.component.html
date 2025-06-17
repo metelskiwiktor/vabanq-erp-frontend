@@ -34,8 +34,16 @@
           (input)="onFilterTextChange($event)">
       </div>
 
-      <!-- Month selector -->
-      <div class="month-selector">
+      <!-- Date Range Toggle -->
+      <div class="filter-group">
+        <label class="filter-checkbox">
+          <input type="checkbox" [checked]="useCustomDateRange" (change)="toggleDateRangeMode()">
+          <span class="checkbox-label">Własny zakres dat</span>
+        </label>
+      </div>
+
+      <!-- Month selector (when not using custom range) -->
+      <div *ngIf="!useCustomDateRange" class="month-selector">
         <button class="month-nav-btn" (click)="previousMonth()">
           <mat-icon>chevron_left</mat-icon>
         </button>
@@ -43,6 +51,37 @@
         <button class="month-nav-btn" (click)="nextMonth()">
           <mat-icon>chevron_right</mat-icon>
         </button>
+      </div>
+
+      <!-- Custom date range inputs -->
+      <div *ngIf="useCustomDateRange" class="date-range-inputs">
+        <div class="filter-group">
+          <label class="filter-label">Od:</label>
+          <input
+            type="date"
+            class="filter-select date-input"
+            [value]="dateFrom!.toISOString().split('T')[0] || ''"
+            (change)="onDateFromChange($event)">
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Do:</label>
+          <input
+            type="date"
+            class="filter-select date-input"
+            [value]="dateTo!.toISOString().split('T')[0] || ''"
+            (change)="onDateToChange($event)">
+        </div>
+      </div>
+
+      <!-- Currency filter -->
+      <div class="filter-group">
+        <label class="filter-label">Waluta:</label>
+        <select class="filter-select" [value]="filterCurrency" (change)="onCurrencyFilterChange($event)">
+          <option value="">Wszystkie waluty</option>
+          <option *ngFor="let currency of availableCurrencies" [value]="currency">
+            {{ currency }}
+          </option>
+        </select>
       </div>
 
       <!-- Category filter -->
@@ -56,14 +95,6 @@
         </select>
       </div>
 
-      <!-- Page size selector -->
-      <div class="filter-group">
-        <label class="filter-label">Pokaż:</label>
-        <select class="filter-select" [value]="pageSize" (change)="changePageSize($event)">
-          <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
-        </select>
-      </div>
-
       <!-- Clear filters -->
       <button class="btn btn-outline clear-filters-btn" (click)="clearFilters()">
         <mat-icon>filter_alt_off</mat-icon>
@@ -74,16 +105,16 @@
     <!-- Summary -->
     <div class="filters-summary">
       <div class="summary-item">
-        <span class="summary-label">Znalezione faktury:</span>
-        <span class="summary-value">{{ totalElements }}</span>
+        <span class="summary-label">Okres:</span>
+        <span class="summary-value">{{ getDateRangeDisplayName() }}</span>
       </div>
-      <div class="summary-item">
-        <span class="summary-label">Wartość netto:</span>
-        <span class="summary-value">{{ formatCurrency(getTotalNetAmount()) }}</span>
+      <div *ngFor="let total of getCurrencyTotals()" class="summary-item">
+        <span class="summary-label">Netto {{ total.currency }}:</span>
+        <span class="summary-value">{{ formatCurrency(total.netTotal, total.currency) }}</span>
       </div>
-      <div class="summary-item">
-        <span class="summary-label">Wartość brutto:</span>
-        <span class="summary-value">{{ formatCurrency(getTotalGrossAmount()) }}</span>
+      <div *ngFor="let total of getCurrencyTotals()" class="summary-item">
+        <span class="summary-label">Brutto {{ total.currency }}:</span>
+        <span class="summary-value">{{ formatCurrency(total.grossTotal, total.currency) }}</span>
       </div>
     </div>
   </div>
@@ -123,7 +154,7 @@
         <td>
           <div class="invoice-info">
             <div class="invoice-number">{{ invoice.number }}</div>
-            <div class="invoice-id" *ngIf="invoice.sellerTaxCode">
+            <div class="invoice-id" *ngIf="invoice.sellerTaxCode !== 'null'">
               NIP: {{ invoice.sellerTaxCode }}
             </div>
           </div>
@@ -132,8 +163,13 @@
         <!-- Seller -->
         <td>
           <div class="seller-info">
-            <div class="seller-name">{{ invoice.sellerName }}</div>
-            <div class="seller-description" *ngIf="invoice.description">
+            <div class="seller-name" *ngIf="invoice.sellerName !== 'null'; else noSellerName">
+              {{ invoice.sellerName }}
+            </div>
+            <ng-template #noSellerName>
+              <div class="seller-name no-seller">Nie sprecyzowano</div>
+            </ng-template>
+            <div class="seller-description" *ngIf="invoice.description !== 'null'">
               {{ invoice.description }}
             </div>
           </div>
@@ -248,6 +284,14 @@
         (click)="goToPage(currentPage + 1)">
         <mat-icon>chevron_right</mat-icon>
       </button>
+
+      <!-- Page size selector moved here -->
+      <div class="page-size-group">
+        <label class="page-size-label">Pokaż:</label>
+        <select class="page-size-select" [value]="pageSize" (change)="changePageSize($event)">
+          <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+        </select>
+      </div>
     </div>
   </div>
 </div>
