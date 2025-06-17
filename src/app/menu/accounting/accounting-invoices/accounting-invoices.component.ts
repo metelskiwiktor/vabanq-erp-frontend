@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { environment } from '../../../../environments/environment';
-import {CostInvoice, CostInvoiceService} from "../../../utility/service/cost-invoice.service";
+import {CostInvoice, CostInvoiceService, CostInvoiceCategory, CostInvoicePage} from "../../../utility/service/cost-invoice.service";
 
 @Component({
   selector: 'app-accounting-invoices',
@@ -10,9 +10,8 @@ import {CostInvoice, CostInvoiceService} from "../../../utility/service/cost-inv
 })
 export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   invoices: CostInvoice[] = [];
-  filteredInvoices: CostInvoice[] = [];
 
-  // Pagination
+  // Pagination - controlled by backend
   currentPage: number = 0;
   pageSize: number = 15;
   totalElements: number = 0;
@@ -25,15 +24,18 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   synchronizeAttempts: number = 0;
   maxSynchronizeAttempts: number = 10;
   synchronizeInterval: any;
-  initialInvoiceCount: number = 0;
+  lastKnownTotalElements: number = 0;
 
   // Filters
   filterText: string = '';
-  filterCategory: string = '';
+  filterCategory: CostInvoiceCategory | '' = '';
   selectedMonth: Date = new Date();
 
-  // Available categories from data
-  availableCategories: string[] = [];
+  // Available categories from enum
+  availableCategories: { key: CostInvoiceCategory; displayName: string }[] = [];
+
+  // Search timeout for debouncing
+  private searchTimeout: any;
 
   constructor(
     private dialog: MatDialog,
@@ -41,6 +43,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.availableCategories = this.costInvoiceService.getAvailableCategories();
     this.loadInvoices();
   }
 
@@ -48,40 +51,50 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     if (this.synchronizeInterval) {
       clearInterval(this.synchronizeInterval);
     }
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
   }
 
-  // Load invoices from backend
+  // Load invoices from backend with pagination
   loadInvoices(): void {
     this.isLoading = true;
 
-    this.costInvoiceService.getCostInvoices().subscribe({
-      next: (invoices) => {
-        this.invoices = invoices.map(invoice => ({
+    // Calculate date range from selected month
+    const startOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1);
+    const endOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+
+    this.costInvoiceService.getCostInvoices(
+      this.currentPage,
+      this.pageSize,
+      this.filterText || undefined,
+      undefined, // currency filter
+      this.filterCategory || undefined,
+      startOfMonth,
+      endOfMonth
+    ).subscribe({
+      next: (page: CostInvoicePage) => {
+        this.invoices = page.content.map(invoice => ({
           ...invoice,
           netPrice: Number(invoice.netPrice),
           grossPrice: Number(invoice.grossPrice)
         }));
-        this.extractCategories();
-        this.applyFilters();
+
+        this.totalElements = page.totalElements;
+        this.totalPages = page.totalPages;
+        this.currentPage = page.number;
         this.isLoading = false;
-        console.log('Loaded invoices:', this.invoices);
+
+        console.log(`Loaded ${this.invoices.length} invoices from page ${this.currentPage + 1}/${this.totalPages}`);
       },
       error: (error) => {
         console.error('Error loading invoices:', error);
         this.isLoading = false;
+        this.invoices = [];
+        this.totalElements = 0;
+        this.totalPages = 0;
       }
     });
-  }
-
-  // Extract unique categories from invoices
-  extractCategories(): void {
-    const categories = new Set<string>();
-    this.invoices.forEach(invoice => {
-      if (invoice.category) {
-        categories.add(invoice.category);
-      }
-    });
-    this.availableCategories = Array.from(categories).sort();
   }
 
   private getInfaktApiKey(): string | null {
@@ -108,7 +121,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
 
     this.isSynchronizing = true;
     this.synchronizeAttempts = 0;
-    this.initialInvoiceCount = this.invoices.length;
+    this.lastKnownTotalElements = this.totalElements;
 
     this.costInvoiceService.synchronizeCosts(infaktApiKey).subscribe({
       next: () => {
@@ -133,19 +146,25 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.costInvoiceService.getCostInvoices().subscribe({
-        next: (invoices) => {
-          if (invoices.length !== this.initialInvoiceCount) {
-            // Content changed, update and stop polling
-            this.invoices = invoices.map(invoice => ({
-              ...invoice,
-              netPrice: Number(invoice.netPrice),
-              grossPrice: Number(invoice.grossPrice)
-            }));
-            this.extractCategories();
-            this.applyFilters();
+      // Check first page to see if total count changed
+      const startOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1);
+      const endOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+
+      this.costInvoiceService.getCostInvoices(
+        0, // first page
+        this.pageSize,
+        this.filterText || undefined,
+        undefined,
+        this.filterCategory || undefined,
+        startOfMonth,
+        endOfMonth
+      ).subscribe({
+        next: (page: CostInvoicePage) => {
+          if (page.totalElements !== this.lastKnownTotalElements) {
+            // Content changed, reload current view and stop polling
+            this.loadInvoices();
             this.stopSynchronizePolling();
-            console.log('Synchronization completed, new invoices loaded');
+            console.log('Synchronization completed, new invoices detected');
           }
         },
         error: (error) => {
@@ -164,59 +183,24 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.synchronizeAttempts = 0;
   }
 
-  // Filter and pagination
+  // Filter and pagination - now handled by backend
   applyFilters(): void {
-    let filtered = [...this.invoices];
-
-    // Text filter
-    if (this.filterText.trim()) {
-      const searchText = this.filterText.toLowerCase();
-      filtered = filtered.filter(invoice =>
-        invoice.number.toLowerCase().includes(searchText) ||
-        invoice.sellerName.toLowerCase().includes(searchText) ||
-        invoice.description?.toLowerCase().includes(searchText) ||
-        invoice.sellerTaxCode?.toLowerCase().includes(searchText)
-      );
-    }
-
-    // Category filter
-    if (this.filterCategory) {
-      filtered = filtered.filter(invoice => invoice.category === this.filterCategory);
-    }
-
-    // Month filter
-    const selectedYear = this.selectedMonth.getFullYear();
-    const selectedMonthNum = this.selectedMonth.getMonth();
-
-    filtered = filtered.filter(invoice => {
-      const invoiceDate = new Date(invoice.createdAt);
-      return invoiceDate.getFullYear() === selectedYear &&
-        invoiceDate.getMonth() === selectedMonthNum;
-    });
-
-    // Sort by date (newest first)
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    this.totalElements = filtered.length;
-    this.totalPages = Math.ceil(this.totalElements / this.pageSize);
-
-    // Apply pagination
-    const startIndex = this.currentPage * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    this.filteredInvoices = filtered.slice(startIndex, endIndex);
+    // Reset to first page when filters change
+    this.currentPage = 0;
+    this.loadInvoices();
   }
 
   // Month navigation
   previousMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() - 1, 1);
     this.currentPage = 0;
-    this.applyFilters();
+    this.loadInvoices();
   }
 
   nextMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 1);
     this.currentPage = 0;
-    this.applyFilters();
+    this.loadInvoices();
   }
 
   // Pagination
@@ -224,13 +208,13 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLSelectElement;
     this.pageSize = Number(target.value);
     this.currentPage = 0;
-    this.applyFilters();
+    this.loadInvoices();
   }
 
   goToPage(page: number): void {
     if (page >= 0 && page < this.totalPages) {
       this.currentPage = page;
-      this.applyFilters();
+      this.loadInvoices();
     }
   }
 
@@ -238,14 +222,16 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   onFilterTextChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.filterText = target.value;
-    this.currentPage = 0;
-    this.applyFilters();
+    // Debounce search - only apply after user stops typing for 500ms
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.applyFilters();
+    }, 500);
   }
 
   onCategoryFilterChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    this.filterCategory = target.value;
-    this.currentPage = 0;
+    this.filterCategory = target.value as CostInvoiceCategory | '';
     this.applyFilters();
   }
 
@@ -254,7 +240,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.filterCategory = '';
     this.selectedMonth = new Date();
     this.currentPage = 0;
-    this.applyFilters();
+    this.loadInvoices();
   }
 
   // Actions
@@ -288,12 +274,16 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     });
   }
 
+  getCategoryDisplayName(category: CostInvoiceCategory | string | undefined): string {
+    return this.costInvoiceService.getCategoryDisplayName(category as CostInvoiceCategory);
+  }
+
   getTotalNetAmount(): number {
-    return this.filteredInvoices.reduce((sum, invoice) => sum + invoice.netPrice, 0);
+    return this.invoices.reduce((sum, invoice) => sum + invoice.netPrice, 0);
   }
 
   getTotalGrossAmount(): number {
-    return this.filteredInvoices.reduce((sum, invoice) => sum + invoice.grossPrice, 0);
+    return this.invoices.reduce((sum, invoice) => sum + invoice.grossPrice, 0);
   }
 
   getPageNumbers(): number[] {

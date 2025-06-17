@@ -50,8 +50,8 @@
         <label class="filter-label">Kategoria:</label>
         <select class="filter-select" [value]="filterCategory" (change)="onCategoryFilterChange($event)">
           <option value="">Wszystkie kategorie</option>
-          <option *ngFor="let category of availableCategories" [value]="category">
-            {{ category }}
+          <option *ngFor="let category of availableCategories" [value]="category.key">
+            {{ category.displayName }}
           </option>
         </select>
       </div>
@@ -118,7 +118,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let invoice of filteredInvoices" class="invoice-row">
+      <tr *ngFor="let invoice of invoices" class="invoice-row">
         <!-- Invoice Number -->
         <td>
           <div class="invoice-info">
@@ -141,12 +141,12 @@
 
         <!-- Category -->
         <td>
-            <span class="category-badge" *ngIf="invoice.category">
-              {{ invoice.category }}
-            </span>
-          <span class="no-category" *ngIf="!invoice.category">
-              Bez kategorii
-            </span>
+          <span class="category-badge" *ngIf="invoice.category && invoice.category !== 'NONE'">
+            {{ getCategoryDisplayName(invoice.category) }}
+          </span>
+          <span class="no-category" *ngIf="!invoice.category || invoice.category === 'NONE'">
+            {{ getCategoryDisplayName(invoice.category) }}
+          </span>
         </td>
 
         <!-- Date -->
@@ -191,7 +191,7 @@
     </table>
 
     <!-- Empty State -->
-    <div *ngIf="!isLoading && filteredInvoices.length === 0" class="empty-state">
+    <div *ngIf="!isLoading && invoices.length === 0" class="empty-state">
       <mat-icon class="empty-icon">receipt_long</mat-icon>
       <h3>Brak faktur kosztów</h3>
       <p *ngIf="totalElements === 0">
@@ -215,7 +215,7 @@
   </div>
 
   <!-- Pagination -->
-  <div class="pagination-container" *ngIf="!isLoading && filteredInvoices.length > 0">
+  <div class="pagination-container" *ngIf="!isLoading && invoices.length > 0">
     <div class="pagination-info">
       <span>
         Wyświetlanie {{ (currentPage * pageSize) + 1 }} -

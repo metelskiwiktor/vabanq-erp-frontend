@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -12,8 +12,31 @@ export interface CostInvoice {
   sellerName: string;
   sellerTaxCode?: string;
   description?: string;
-  category?: string;
+  category?: CostInvoiceCategory;
   createdAt: string;
+}
+
+export enum CostInvoiceCategory {
+  HOUSING_FEES = 'HOUSING_FEES',
+  ELECTRONIC_SERVICES = 'ELECTRONIC_SERVICES',
+  ACCOUNTING_SERVICES = 'ACCOUNTING_SERVICES',
+  ENTREPRENEUR_EXPENSES = 'ENTREPRENEUR_EXPENSES',
+  SALARY = 'SALARY',
+  EMPLOYEE_SOCIAL_SECURITY = 'EMPLOYEE_SOCIAL_SECURITY',
+  GOODS_OR_MATERIALS_PURCHASE = 'GOODS_OR_MATERIALS_PURCHASE',
+  NONE = 'NONE',
+  OTHER = 'OTHER'
+}
+
+export interface CostInvoicePage {
+  content: CostInvoice[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
 }
 
 @Injectable({
@@ -26,10 +49,49 @@ export class CostInvoiceService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Get all cost invoices
+   * Get cost invoices with pagination and filtering
+   * @param page - Page number (0-based)
+   * @param size - Page size
+   * @param search - Search term
+   * @param currency - Currency filter
+   * @param category - Category filter
+   * @param createdFrom - Date from filter
+   * @param createdTo - Date to filter
    */
-  getCostInvoices(): Observable<CostInvoice[]> {
-    return this.http.get<CostInvoice[]>(`${this.apiUrl}/api/invoices/costs`);
+  getCostInvoices(
+      page: number = 0,
+      size: number = 15,
+      search?: string,
+      currency?: string,
+      category?: CostInvoiceCategory,
+      createdFrom?: Date,
+      createdTo?: Date
+  ): Observable<CostInvoicePage> {
+    let params = new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString());
+
+    if (search && search.trim()) {
+      params = params.set('search', search.trim());
+    }
+
+    if (currency && currency.trim()) {
+      params = params.set('currency', currency.trim());
+    }
+
+    if (category) {
+      params = params.set('category', category);
+    }
+
+    if (createdFrom) {
+      params = params.set('createdFrom', createdFrom.toISOString());
+    }
+
+    if (createdTo) {
+      params = params.set('createdTo', createdTo.toISOString());
+    }
+
+    return this.http.get<CostInvoicePage>(`${this.apiUrl}/api/invoices/costs`, { params });
   }
 
   /**
@@ -45,63 +107,40 @@ export class CostInvoiceService {
   }
 
   /**
-   * Get cost invoices filtered by date range
-   * @param startDate - Start date for filtering
-   * @param endDate - End date for filtering
+   * Get display name for category
    */
-  getCostInvoicesByDateRange(startDate: string, endDate: string): Observable<CostInvoice[]> {
-    const params = {
-      startDate: startDate,
-      endDate: endDate
+  getCategoryDisplayName(category: CostInvoiceCategory | string | undefined): string {
+    if (!category) return 'Brak kategorii';
+
+    const categoryDisplayNames: { [key: string]: string } = {
+      [CostInvoiceCategory.HOUSING_FEES]: 'Opłaty mieszkaniowe',
+      [CostInvoiceCategory.ELECTRONIC_SERVICES]: 'Usługi elektroniczne',
+      [CostInvoiceCategory.ACCOUNTING_SERVICES]: 'Usługi księgowe',
+      [CostInvoiceCategory.ENTREPRENEUR_EXPENSES]: 'Wydatki przedsiębiorcy',
+      [CostInvoiceCategory.SALARY]: 'Wynagrodzenie',
+      [CostInvoiceCategory.EMPLOYEE_SOCIAL_SECURITY]: 'ZUS za pracownika',
+      [CostInvoiceCategory.GOODS_OR_MATERIALS_PURCHASE]: 'Zakup towarów i/lub materiałów',
+      [CostInvoiceCategory.NONE]: 'Brak przypisanej kategorii',
+      [CostInvoiceCategory.OTHER]: 'Inne'
     };
 
-    return this.http.get<CostInvoice[]>(`${this.apiUrl}/api/invoices/costs`, { params });
+    return categoryDisplayNames[category as string] || 'Nieznana kategoria';
   }
 
   /**
-   * Get cost invoices with pagination and filtering
-   * @param page - Page number (0-based)
-   * @param size - Page size
-   * @param sortBy - Sort field
-   * @param sortDir - Sort direction (asc/desc)
-   * @param filters - Additional filters
+   * Get all available categories
    */
-  getCostInvoicesPaginated(
-    page: number = 0,
-    size: number = 15,
-    sortBy: string = 'createdAt',
-    sortDir: string = 'desc',
-    filters?: {
-      search?: string;
-      category?: string;
-      monthYear?: string;
-    }
-  ): Observable<any> {
-    let params: any = {
-      page: page.toString(),
-      size: size.toString(),
-      sort: `${sortBy},${sortDir}`
-    };
-
-    if (filters) {
-      if (filters.search) {
-        params.search = filters.search;
-      }
-      if (filters.category) {
-        params.category = filters.category;
-      }
-      if (filters.monthYear) {
-        params.monthYear = filters.monthYear;
-      }
-    }
-
-    return this.http.get(`${this.apiUrl}/api/invoices/costs/paginated`, { params });
-  }
-
-  /**
-   * Get available categories from cost invoices
-   */
-  getCostInvoiceCategories(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/api/invoices/costs/categories`);
+  getAvailableCategories(): { key: CostInvoiceCategory; displayName: string }[] {
+    return [
+      { key: CostInvoiceCategory.HOUSING_FEES, displayName: 'Opłaty mieszkaniowe' },
+      { key: CostInvoiceCategory.ELECTRONIC_SERVICES, displayName: 'Usługi elektroniczne' },
+      { key: CostInvoiceCategory.ACCOUNTING_SERVICES, displayName: 'Usługi księgowe' },
+      { key: CostInvoiceCategory.ENTREPRENEUR_EXPENSES, displayName: 'Wydatki przedsiębiorcy' },
+      { key: CostInvoiceCategory.SALARY, displayName: 'Wynagrodzenie' },
+      { key: CostInvoiceCategory.EMPLOYEE_SOCIAL_SECURITY, displayName: 'ZUS za pracownika' },
+      { key: CostInvoiceCategory.GOODS_OR_MATERIALS_PURCHASE, displayName: 'Zakup towarów i/lub materiałów' },
+      { key: CostInvoiceCategory.NONE, displayName: 'Brak przypisanej kategorii' },
+      { key: CostInvoiceCategory.OTHER, displayName: 'Inne' }
+    ];
   }
 }
