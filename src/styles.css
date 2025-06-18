@@ -1,0 +1,165 @@
+/* src/styles.css - Add these global dialog styles */
+
+/* Custom Dialog Panel */
+.custom-dialog-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+  0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  overflow: hidden !important;
+}
+
+.custom-dialog-panel .mat-mdc-dialog-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-height: none !important;
+}
+
+/* Form Field Styling in Dialogs */
+.expense-dialog .mat-mdc-form-field {
+  width: 100%;
+}
+
+.expense-dialog .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  background-color: #f8fafc;
+  border-radius: 8px;
+}
+
+.expense-dialog .mat-mdc-form-field .mat-mdc-text-field-wrapper:hover {
+  background-color: #f1f5f9;
+}
+
+.expense-dialog .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  background-color: white;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.expense-dialog .mat-mdc-form-field .mat-mdc-floating-label {
+  color: #4a5568;
+}
+
+.expense-dialog .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  color: #667eea;
+}
+
+/* Select Styling */
+.expense-dialog .mat-mdc-select-value {
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.expense-dialog .mat-mdc-select-arrow {
+  color: #718096;
+}
+
+/* Checkbox Styling */
+.expense-dialog .mat-mdc-checkbox .mat-mdc-checkbox-frame {
+  border-color: #cbd5e0;
+  border-radius: 4px;
+}
+
+.expense-dialog .mat-mdc-checkbox.mat-mdc-checkbox-checked .mat-mdc-checkbox-background {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+/* Button Styling */
+.expense-dialog .mat-mdc-raised-button {
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.expense-dialog .mat-mdc-raised-button:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+  0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.expense-dialog .mat-mdc-outlined-button {
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  border-width: 1.5px;
+}
+
+/* Success and Error Snackbars */
+.success-snackbar {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.success-snackbar .mat-mdc-snack-bar-action {
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.error-snackbar .mat-mdc-snack-bar-action {
+  color: white !important;
+}
+
+/* Dialog Overlay */
+.cdk-overlay-backdrop.cdk-overlay-backdrop-showing {
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* Material Table Enhancements */
+.modern-table .mat-mdc-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.modern-table .mat-mdc-header-row {
+  background: #f8fafc;
+}
+
+.modern-table .mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: none;
+}
+
+/* Card Enhancements */
+.cost-card .mat-mdc-card {
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+}
+
+.cost-card:hover .mat-mdc-card {
+  transform: translateY(-2px);
+}
+
+/* Form Field Icons */
+.expense-dialog .mat-mdc-form-field .mat-icon {
+  color: #9ca3af;
+  font-size: 1.25rem;
+}
+
+.expense-dialog .mat-mdc-form-field.mat-focused .mat-icon {
+  color: #667eea;
+}
+
+/* Responsive Dialog */
+@media (max-width: 768px) {
+  .custom-dialog-panel .mat-mdc-dialog-container {
+    margin: 16px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    border-radius: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-dialog-panel .mat-mdc-dialog-container {
+    margin: 8px !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 16px) !important;
+    border-radius: 8px !important;
+  }
+}

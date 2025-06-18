@@ -2,25 +2,27 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Subject, forkJoin } from 'rxjs';
-import { takeUntil, finalize, catchError } from 'rxjs/operators';
+import { takeUntil, finalize } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 // Importy serwisów
-
-// Importy dialogów
-import { AddExpenseDialogComponent, AddExpenseDialogData, ExpenseFormData } from './shared/add-expense-dialog.component';
-import { DeleteConfirmationDialogComponent } from './shared/expense-dialogs.component';
 import {
   CreateFixedExpenseRequest,
   ExpenseSummaryResponse,
   FixedExpenseResponse,
-  FixedExpenseService, UpdateFixedExpenseRequest
+  FixedExpenseService,
+  UpdateFixedExpenseRequest
 } from "../../../utility/service/fixed-expense.service";
 import {
-  CreateVariableExpenseRequest, UpdateVariableExpenseRequest,
+  CreateVariableExpenseRequest,
+  UpdateVariableExpenseRequest,
   VariableExpenseResponse,
   VariableExpenseService
 } from "../../../utility/service/variable-expense.service";
+
+// Importy dialogów
+import { AddExpenseDialogComponent, AddExpenseDialogData, ExpenseFormData } from './shared/add-expense-dialog.component';
+import { DeleteConfirmationDialogComponent } from './shared/expense-dialogs.component';
 
 @Component({
   selector: 'app-accounting-expenses',
@@ -33,6 +35,7 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   // State variables
   isLoading = false;
   showGross = false;
+  searchQuery = '';
 
   // Date management
   selectedMonth: number = new Date().getMonth() + 1;
@@ -45,38 +48,21 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   filteredVariableExpenses: VariableExpenseResponse[] = [];
   expenseSummary: ExpenseSummaryResponse | null = null;
 
-  // Mock data for revenue (should come from service)
-  totalRevenue = 50000;
-
-  // Available months and years for selector
-  months = [
-    { value: 1, name: 'Styczeń' },
-    { value: 2, name: 'Luty' },
-    { value: 3, name: 'Marzec' },
-    { value: 4, name: 'Kwiecień' },
-    { value: 5, name: 'Maj' },
-    { value: 6, name: 'Czerwiec' },
-    { value: 7, name: 'Lipiec' },
-    { value: 8, name: 'Sierpień' },
-    { value: 9, name: 'Wrzesień' },
-    { value: 10, name: 'Październik' },
-    { value: 11, name: 'Listopad' },
-    { value: 12, name: 'Grudzień' }
+  // Month names
+  private monthNames = [
+    'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+    'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
   ];
-
-  years: number[] = [];
 
   constructor(
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private fixedExpenseService: FixedExpenseService,
     private variableExpenseService: VariableExpenseService
-  ) {
-    this.generateYears();
-    this.updateCurrentMonth();
-  }
+  ) {}
 
   ngOnInit(): void {
+    this.updateCurrentMonth();
     this.loadData();
   }
 
@@ -85,16 +71,35 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private generateYears(): void {
-    const currentYear = new Date().getFullYear();
-    for (let year = currentYear - 2; year <= currentYear + 1; year++) {
-      this.years.push(year);
-    }
+  // Utility methods
+  private updateCurrentMonth(): void {
+    this.currentMonth = this.monthNames[this.selectedMonth - 1];
   }
 
-  private updateCurrentMonth(): void {
-    const monthName = this.months.find(m => m.value === this.selectedMonth)?.name || '';
-    this.currentMonth = `${monthName} ${this.selectedYear}`;
+  private showSuccessMessage(message: string): void {
+    this.snackBar.open(message, 'Zamknij', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  private showErrorMessage(message: string): void {
+    this.snackBar.open(message, 'Zamknij', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: 'PLN'
+    }).format(amount || 0);
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pl-PL');
   }
 
   // Navigation methods
@@ -128,14 +133,24 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     this.loadData();
   }
 
-  onMonthYearChange(): void {
-    this.updateCurrentMonth();
-    this.loadData();
-  }
-
   // Toggle amount display type
   toggleAmountType(): void {
     this.showGross = !this.showGross;
+  }
+
+  // Search functionality
+  onSearch(): void {
+    if (!this.searchQuery.trim()) {
+      this.filteredVariableExpenses = [...this.variableExpenses];
+      return;
+    }
+
+    const query = this.searchQuery.toLowerCase().trim();
+    this.filteredVariableExpenses = this.variableExpenses.filter(expense =>
+      expense.name.toLowerCase().includes(query) ||
+      expense.category.toLowerCase().includes(query) ||
+      (expense.description && expense.description.toLowerCase().includes(query))
+    );
   }
 
   // Data loading
@@ -163,6 +178,23 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Calculate totals
+  getFixedExpensesTotal(): number {
+    return this.fixedExpenses.reduce((total, expense) => {
+      return total + (this.showGross ? expense.grossAmount : expense.netAmount);
+    }, 0);
+  }
+
+  getVariableExpensesTotal(): number {
+    return this.filteredVariableExpenses.reduce((total, expense) => {
+      return total + (this.showGross ? expense.grossAmount : expense.netAmount);
+    }, 0);
+  }
+
+  getTotalExpenses(): number {
+    return this.getFixedExpensesTotal() + this.getVariableExpensesTotal();
+  }
+
   // Dialog methods
   openAddExpenseDialog(type?: 'fixed' | 'variable'): void {
     const dialogData: AddExpenseDialogData = {
@@ -172,33 +204,11 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     };
 
     const dialogRef = this.dialog.open(AddExpenseDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
+      width: '700px',
+      maxWidth: '95vw',
       data: dialogData,
-      disableClose: true
-    });
-
-    dialogRef.afterClosed().subscribe((result: ExpenseFormData) => {
-      if (result) {
-        this.createExpense(result);
-      }
-    });
-  }
-
-  // Metoda do wywołania z zewnątrz (np. z faktury)
-  openAddExpenseDialogFromInvoice(preselectedType?: 'fixed' | 'variable'): void {
-    const dialogData: AddExpenseDialogData = {
-      isEdit: false,
-      allowTypeSelection: true,
-      selectedExpenseType: preselectedType,
-      isFromInvoice: true
-    };
-
-    const dialogRef = this.dialog.open(AddExpenseDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
-      data: dialogData,
-      disableClose: true
+      disableClose: true,
+      panelClass: 'custom-dialog-panel'
     });
 
     dialogRef.afterClosed().subscribe((result: ExpenseFormData) => {
@@ -289,10 +299,11 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     };
 
     const dialogRef = this.dialog.open(AddExpenseDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
+      width: '700px',
+      maxWidth: '95vw',
       data: dialogData,
-      disableClose: true
+      disableClose: true,
+      panelClass: 'custom-dialog-panel'
     });
 
     dialogRef.afterClosed().subscribe((result: ExpenseFormData) => {
@@ -314,10 +325,11 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     };
 
     const dialogRef = this.dialog.open(AddExpenseDialogComponent, {
-      width: '600px',
-      maxWidth: '90vw',
+      width: '700px',
+      maxWidth: '95vw',
       data: dialogData,
-      disableClose: true
+      disableClose: true,
+      panelClass: 'custom-dialog-panel'
     });
 
     dialogRef.afterClosed().subscribe((result: ExpenseFormData) => {
@@ -390,7 +402,7 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     if (!expense) return;
 
     const dialogRef = this.dialog.open(DeleteConfirmationDialogComponent, {
-      width: '450px',
+      width: '400px',
       data: {
         type: 'fixed',
         expenseName: expense.name
@@ -404,9 +416,12 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteVariableExpense(expense: VariableExpenseResponse): void {
+  deleteVariableExpense(id: string): void {
+    const expense = this.variableExpenses.find(e => e.id === id);
+    if (!expense) return;
+
     const dialogRef = this.dialog.open(DeleteConfirmationDialogComponent, {
-      width: '450px',
+      width: '400px',
       data: {
         type: 'variable',
         expenseName: expense.name
@@ -415,7 +430,7 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result?.confirmed) {
-        this.performDeleteVariableExpense(expense.id);
+        this.performDeleteVariableExpense(id);
       }
     });
   }
@@ -461,84 +476,27 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Calculation methods
-  getFixedExpensesTotal(): number {
-    if (!this.expenseSummary) {
-      return this.fixedExpenses.reduce((total, expense) => {
-        const amount = this.showGross ? expense.grossAmount : expense.netAmount;
-        return total + amount;
-      }, 0);
-    }
-    return this.showGross ? this.expenseSummary.totalGrossAmount : this.expenseSummary.totalNetAmount;
-  }
+  // Method for calling from invoice panel (if needed)
+  openAddExpenseDialogFromInvoice(preselectedType?: 'fixed' | 'variable'): void {
+    const dialogData: AddExpenseDialogData = {
+      isEdit: false,
+      allowTypeSelection: true,
+      selectedExpenseType: preselectedType,
+      isFromInvoice: true
+    };
 
-  getVariableExpensesTotal(): number {
-    return this.filteredVariableExpenses.reduce((total, expense) => {
-      const amount = this.showGross ? expense.grossAmount : expense.netAmount;
-      return total + amount;
-    }, 0);
-  }
-
-  getTotalExpenses(): number {
-    return this.getFixedExpensesTotal() + this.getVariableExpensesTotal();
-  }
-
-  getCategorySummary(): Array<{name: string, amount: number, color: string}> {
-    const categoryMap = new Map<string, number>();
-
-    // Add fixed expenses
-    this.fixedExpenses.forEach(expense => {
-      const amount = this.showGross ? expense.grossAmount : expense.netAmount;
-      categoryMap.set(expense.category, (categoryMap.get(expense.category) || 0) + amount);
+    const dialogRef = this.dialog.open(AddExpenseDialogComponent, {
+      width: '700px',
+      maxWidth: '95vw',
+      data: dialogData,
+      disableClose: true,
+      panelClass: 'custom-dialog-panel'
     });
 
-    // Add variable expenses
-    this.filteredVariableExpenses.forEach(expense => {
-      const amount = this.showGross ? expense.grossAmount : expense.netAmount;
-      categoryMap.set(expense.category, (categoryMap.get(expense.category) || 0) + amount);
-    });
-
-    const colors = ['#4caf50', '#ff9800', '#2196f3', '#9c27b0', '#f44336', '#ffeb3b', '#607d8b'];
-
-    return Array.from(categoryMap.entries())
-      .map(([name, amount], index) => ({
-        name,
-        amount,
-        color: colors[index % colors.length]
-      }))
-      .sort((a, b) => b.amount - a.amount);
-  }
-
-  // Formatting methods
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency: 'PLN'
-    }).format(amount || 0);
-  }
-
-  formatCurrencyFromBackend(expense: FixedExpenseResponse): string {
-    const amount = this.showGross ? expense.grossAmount : expense.netAmount;
-    return this.formatCurrency(amount);
-  }
-
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL');
-  }
-
-  // Notification methods
-  private showSuccessMessage(message: string): void {
-    this.snackBar.open(message, 'Zamknij', {
-      duration: 3000,
-      panelClass: ['success-snackbar']
-    });
-  }
-
-  private showErrorMessage(message: string): void {
-    this.snackBar.open(message, 'Zamknij', {
-      duration: 5000,
-      panelClass: ['error-snackbar']
+    dialogRef.afterClosed().subscribe((result: ExpenseFormData) => {
+      if (result) {
+        this.createExpense(result);
+      }
     });
   }
 }
