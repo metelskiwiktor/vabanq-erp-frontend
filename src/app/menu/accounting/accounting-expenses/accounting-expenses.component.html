@@ -1,112 +1,382 @@
 <!-- src/app/menu/accounting/accounting-expenses/accounting-expenses.component.html -->
-<div class="accounting-container">
-  <!-- Górny pasek nawigacyjny -->
-  <header class="header">
+<div class="expenses-container">
+  <!-- Modern Header -->
+  <header class="modern-header">
     <div class="header-content">
       <div class="header-left">
-        <h1 class="header-title">Panel Zarządzania Kosztami</h1>
+        <div class="header-icon">
+          <mat-icon>receipt_long</mat-icon>
+        </div>
+        <div class="header-text">
+          <h1 class="header-title">Zarządzanie Kosztami</h1>
+          <p class="header-subtitle">Przegląd i zarządzanie kosztami stałymi i zmiennymi</p>
+        </div>
       </div>
+
       <div class="header-right">
-        <!-- Month/Year Selector -->
-        <div class="date-selector">
+        <!-- Period Selector -->
+        <div class="period-selector">
           <button mat-icon-button
-                  class="date-nav-button"
+                  class="period-nav-btn"
                   (click)="goToPreviousMonth()"
                   [disabled]="isLoading"
                   matTooltip="Poprzedni miesiąc">
             <mat-icon>chevron_left</mat-icon>
           </button>
 
-          <div class="date-controls">
-            <mat-form-field appearance="outline" class="month-select">
-              <mat-label>Miesiąc</mat-label>
-              <mat-select [(ngModel)]="selectedMonth"
-                          (selectionChange)="onMonthYearChange()"
-                          [disabled]="isLoading">
-                <mat-option *ngFor="let month of months" [value]="month.value">
-                  {{ month.name }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="year-select">
-              <mat-label>Rok</mat-label>
-              <mat-select [(ngModel)]="selectedYear"
-                          (selectionChange)="onMonthYearChange()"
-                          [disabled]="isLoading">
-                <mat-option *ngFor="let year of years" [value]="year">
-                  {{ year }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+          <div class="period-display">
+            <div class="period-month">{{ currentMonth }}</div>
+            <div class="period-year">{{ selectedYear }}</div>
           </div>
 
           <button mat-icon-button
-                  class="date-nav-button"
+                  class="period-nav-btn"
                   (click)="goToNextMonth()"
                   [disabled]="isLoading"
                   matTooltip="Następny miesiąc">
             <mat-icon>chevron_right</mat-icon>
           </button>
 
-          <button mat-button
-                  class="current-month-button"
+          <button mat-stroked-button
+                  class="today-btn"
                   (click)="goToCurrentMonth()"
-                  [disabled]="isLoading"
-                  matTooltip="Przejdź do bieżącego miesiąca">
+                  [disabled]="isLoading">
             <mat-icon>today</mat-icon>
             Dziś
           </button>
         </div>
 
-        <div class="current-period">
-          <span class="period-label">Wybrany okres:</span>
-          <span class="period-value">{{ currentMonth }}</span>
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button mat-stroked-button
+                  class="action-btn"
+                  (click)="toggleAmountType()">
+            <mat-icon>{{ showGross ? 'visibility_off' : 'visibility' }}</mat-icon>
+            {{ showGross ? 'Netto' : 'Brutto' }}
+          </button>
+
+          <button mat-raised-button
+                  color="primary"
+                  class="add-expense-btn"
+                  (click)="openAddExpenseDialog()">
+            <mat-icon>add</mat-icon>
+            Dodaj wydatek
+          </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Loading indicator -->
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-icon class="loading-spinner">refresh</mat-icon>
-    <span>Ładowanie...</span>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-content">
+      <mat-progress-spinner diameter="50" mode="indeterminate"></mat-progress-spinner>
+      <p>Ładowanie danych...</p>
+    </div>
   </div>
 
-  <!-- Główna zawartość -->
-  <main class="main-content" [class.loading]="isLoading">
-    <!-- Główne zakładki -->
-    <div class="tab-navigation">
-      <button
-        class="tab-button"
-        [class.active]="activeTab === 'company'"
-        (click)="setActiveTab('company')">
-        Koszty firmowe
-      </button>
-      <button
-        class="tab-button"
-        [class.active]="activeTab === 'products'"
-        (click)="setActiveTab('products')">
-        Koszty produktowe
-      </button>
+  <!-- Main Content -->
+  <div class="main-content" *ngIf="!isLoading">
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <mat-card class="summary-card fixed-card">
+        <mat-card-header>
+          <div mat-card-avatar class="card-avatar fixed-avatar">
+            <mat-icon>account_balance</mat-icon>
+          </div>
+          <mat-card-title>Koszty stałe</mat-card-title>
+          <mat-card-subtitle>Regularne, cykliczne wydatki</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="amount-display">
+            {{ formatCurrency(getFixedExpensesTotal()) }}
+          </div>
+          <div class="expense-count">
+            {{ fixedExpenses.length }} wydatków
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card variable-card">
+        <mat-card-header>
+          <div mat-card-avatar class="card-avatar variable-avatar">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <mat-card-title>Koszty zmienne</mat-card-title>
+          <mat-card-subtitle>Jednorazowe, nieprzewidywalne wydatki</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="amount-display">
+            {{ formatCurrency(getVariableExpensesTotal()) }}
+          </div>
+          <div class="expense-count">
+            {{ filteredVariableExpenses.length }} wydatków
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card total-card">
+        <mat-card-header>
+          <div mat-card-avatar class="card-avatar total-avatar">
+            <mat-icon>calculate</mat-icon>
+          </div>
+          <mat-card-title>Suma kosztów</mat-card-title>
+          <mat-card-subtitle>Całkowite wydatki w okresie</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="amount-display">
+            {{ formatCurrency(getTotalExpenses()) }}
+          </div>
+          <div class="expense-percentage">
+            {{ ((getTotalExpenses() / totalRevenue) * 100).toFixed(1) }}% przychodów
+          </div>
+        </mat-card-content>
+      </mat-card>
     </div>
 
-    <!-- Zakładka kosztów firmowych -->
-    <div *ngIf="activeTab === 'company'" class="content-card">
-      <app-company-expenses
-        [selectedMonth]="selectedMonth"
-        [selectedYear]="selectedYear"
-        [currentMonth]="currentMonth">
-      </app-company-expenses>
+    <!-- Expense Sections -->
+    <div class="expense-sections">
+      <!-- Fixed Expenses Section -->
+      <section class="expense-section">
+        <div class="section-header">
+          <div class="section-title">
+            <mat-icon class="section-icon">account_balance</mat-icon>
+            <h2>Koszty stałe</h2>
+            <span class="section-badge fixed-badge">{{ fixedExpenses.length }} pozycji</span>
+          </div>
+          <button mat-stroked-button
+                  (click)="openAddExpenseDialog('fixed')"
+                  class="add-section-btn">
+            <mat-icon>add</mat-icon>
+            Dodaj koszt stały
+          </button>
+        </div>
+
+        <!-- Fixed Expenses Table -->
+        <div class="table-container">
+          <mat-table [dataSource]="fixedExpenses" class="modern-table">
+            <!-- Category Column -->
+            <ng-container matColumnDef="category">
+              <mat-header-cell *matHeaderCellDef>Kategoria</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="category-cell">
+                  <span class="category-badge" [attr.data-category]="expense.category">
+                    {{ expense.category }}
+                  </span>
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <mat-header-cell *matHeaderCellDef>Nazwa wydatku</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="expense-name-cell">
+                  <div class="expense-name">{{ expense.name }}</div>
+                  <div class="expense-description" *ngIf="expense.description">
+                    {{ expense.description }}
+                  </div>
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+              <mat-header-cell *matHeaderCellDef>
+                Kwota {{ showGross ? 'brutto' : 'netto' }}
+              </mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="amount-cell">
+                  {{ formatCurrencyFromBackend(expense) }}
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Recurring Column -->
+            <ng-container matColumnDef="recurring">
+              <mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="status-cell">
+                  <mat-chip-set>
+                    <mat-chip [class]="expense.isRecurring ? 'recurring-chip' : 'one-time-chip'">
+                      <mat-icon matChipAvatar>
+                        {{ expense.isRecurring ? 'repeat' : 'event_note' }}
+                      </mat-icon>
+                      {{ expense.isRecurring ? 'Cykliczny' : 'Jednorazowy' }}
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="actions-cell">
+                  <button mat-icon-button
+                          color="primary"
+                          (click)="editFixedExpense(expense.id)"
+                          matTooltip="Edytuj">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button
+                          color="warn"
+                          (click)="deleteFixedExpense(expense.id)"
+                          matTooltip="Usuń">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="['category', 'name', 'amount', 'recurring', 'actions']"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: ['category', 'name', 'amount', 'recurring', 'actions']"></mat-row>
+          </mat-table>
+
+          <!-- Empty state for fixed expenses -->
+          <div *ngIf="fixedExpenses.length === 0" class="empty-state">
+            <mat-icon>account_balance</mat-icon>
+            <h3>Brak kosztów stałych</h3>
+            <p>Nie masz jeszcze żadnych kosztów stałych dla {{ currentMonth }}</p>
+            <button mat-raised-button
+                    color="primary"
+                    (click)="openAddExpenseDialog('fixed')">
+              <mat-icon>add</mat-icon>
+              Dodaj pierwszy koszt stały
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Variable Expenses Section -->
+      <section class="expense-section">
+        <div class="section-header">
+          <div class="section-title">
+            <mat-icon class="section-icon">trending_up</mat-icon>
+            <h2>Koszty zmienne</h2>
+            <span class="section-badge variable-badge">{{ filteredVariableExpenses.length }} pozycji</span>
+          </div>
+          <button mat-stroked-button
+                  (click)="openAddExpenseDialog('variable')"
+                  class="add-section-btn">
+            <mat-icon>add</mat-icon>
+            Dodaj koszt zmienny
+          </button>
+        </div>
+
+        <!-- Variable Expenses Table -->
+        <div class="table-container">
+          <mat-table [dataSource]="filteredVariableExpenses" class="modern-table">
+            <!-- Category Column -->
+            <ng-container matColumnDef="category">
+              <mat-header-cell *matHeaderCellDef>Kategoria</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="category-cell">
+                  <span class="category-badge" [attr.data-category]="expense.category">
+                    {{ expense.category }}
+                  </span>
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <mat-header-cell *matHeaderCellDef>Nazwa wydatku</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="expense-name-cell">
+                  <div class="expense-name">{{ expense.name }}</div>
+                  <div class="expense-description" *ngIf="expense.description">
+                    {{ expense.description }}
+                  </div>
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Amount Column -->
+            <ng-container matColumnDef="amount">
+              <mat-header-cell *matHeaderCellDef>
+                Kwota {{ showGross ? 'brutto' : 'netto' }}
+              </mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="amount-cell">
+                  {{ formatCurrency(showGross ? expense.grossAmount : expense.netAmount) }}
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Date Column -->
+            <ng-container matColumnDef="date">
+              <mat-header-cell *matHeaderCellDef>Data</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="date-cell">
+                  <mat-icon>event</mat-icon>
+                  {{ formatDate(expense.expenseDate) }}
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Supplier Column -->
+            <ng-container matColumnDef="supplier">
+              <mat-header-cell *matHeaderCellDef>Dostawca</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="supplier-cell">
+                  <mat-icon>business</mat-icon>
+                  {{ expense.supplier }}
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <mat-header-cell *matHeaderCellDef>Akcje</mat-header-cell>
+              <mat-cell *matCellDef="let expense">
+                <div class="actions-cell">
+                  <button mat-icon-button
+                          color="primary"
+                          (click)="editVariableExpense(expense)"
+                          matTooltip="Edytuj">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button
+                          color="warn"
+                          (click)="deleteVariableExpense(expense)"
+                          matTooltip="Usuń">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </mat-cell>
+            </ng-container>
+
+            <mat-header-row *matHeaderRowDef="['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: ['category', 'name', 'amount', 'date', 'supplier', 'actions']"></mat-row>
+          </mat-table>
+
+          <!-- Empty state for variable expenses -->
+          <div *ngIf="filteredVariableExpenses.length === 0" class="empty-state">
+            <mat-icon>trending_up</mat-icon>
+            <h3>Brak kosztów zmiennych</h3>
+            <p>Nie masz jeszcze żadnych kosztów zmiennych dla {{ currentMonth }}</p>
+            <button mat-raised-button
+                    color="primary"
+                    (click)="openAddExpenseDialog('variable')">
+              <mat-icon>add</mat-icon>
+              Dodaj pierwszy koszt zmienny
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <!-- Zakładka kosztów produktowych -->
-    <div *ngIf="activeTab === 'products'" class="content-card">
-      <app-product-expenses
-        [selectedMonth]="selectedMonth"
-        [selectedYear]="selectedYear"
-        [currentMonth]="currentMonth">
-      </app-product-expenses>
-    </div>
-  </main>
+    <!-- Charts Section -->
+    <app-expense-charts
+      *ngIf="fixedExpenses.length > 0 || filteredVariableExpenses.length > 0"
+      [fixedExpenses]="fixedExpenses"
+      [variableExpenses]="filteredVariableExpenses"
+      [expenseSummary]="expenseSummary"
+      [showGross]="showGross"
+      [currentPeriod]="currentMonth"
+      [totalRevenue]="totalRevenue">
+    </app-expense-charts>
+  </div>
 </div>
