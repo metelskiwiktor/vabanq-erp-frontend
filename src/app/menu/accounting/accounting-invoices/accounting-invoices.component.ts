@@ -45,7 +45,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
 
   // Available options
   availableCategories: { key: CostInvoiceCategory; displayName: string }[] = [];
-  availableCurrencies: string[] = ['PLN', 'EUR', 'USD', 'GBP', 'CZK', 'HUF'];
+  availableCurrencies: string[] = ['PLN', 'EUR', 'CZK', 'HUF'];
 
   // Search timeout for debouncing
   private searchTimeout: any;

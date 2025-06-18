@@ -112,10 +112,10 @@
         <span class="summary-label">Netto {{ total.currency }}:</span>
         <span class="summary-value">{{ formatCurrency(total.netTotal, total.currency) }}</span>
       </div>
-      <div *ngFor="let total of getCurrencyTotals()" class="summary-item">
-        <span class="summary-label">Brutto {{ total.currency }}:</span>
-        <span class="summary-value">{{ formatCurrency(total.grossTotal, total.currency) }}</span>
-      </div>
+<!--      <div *ngFor="let total of getCurrencyTotals()" class="summary-item">-->
+<!--        <span class="summary-label">Brutto {{ total.currency }}:</span>-->
+<!--        <span class="summary-value">{{ formatCurrency(total.grossTotal, total.currency) }}</span>-->
+<!--      </div>-->
     </div>
   </div>
 
