@@ -11,13 +11,14 @@ export interface InvoiceResponse {
   orderId: string;
   invoiceNumber: string;
   status: string;
-  invoiceUrl: string;
+  invoiceUrl: string | null;
   createdAt: string;
   updatedAt: string;
   buyerEmail: string;
   buyerFirstName: string;
   buyerLastName: string;
   attachedToAllegro: boolean;
+  infaktPlatformUrl: string | null;
 }
 
 export interface InfaktCheckResponse {

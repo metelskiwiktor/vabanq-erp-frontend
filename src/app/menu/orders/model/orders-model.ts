@@ -64,12 +64,13 @@ export interface InvoiceInfo {
   invoiceId: string;
   invoiceNumber: string;
   invoiceStatus: string;
-  invoiceUrl: string;
+  invoiceUrl: string | null;
   createdAt: string;
   isAttachedToAllegro?: boolean;
   allegroInvoiceId?: string;
   isAttachingToAllegro?: boolean;
   allegroAttachmentError?: string;
+  infaktPlatformUrl?: string | null;
 }
 
 export interface InvoiceOrder {

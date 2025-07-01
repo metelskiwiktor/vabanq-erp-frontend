@@ -241,11 +241,6 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  toggleAllDetails(): void {
-    this.allExpanded = !this.allExpanded;
-    this.filteredOrders = this.filteredOrders.map(order => ({...order, isExpanded: this.allExpanded}));
-  }
-
   showSuccess(template: TemplateRef<any>): void {
     this.toastService.show({
       template,
@@ -256,17 +251,6 @@ export class OrdersComponent implements OnInit {
   }
 
   generateInvoice(order: Order, template: TemplateRef<any>): void {
-    // Check if it's a foreign market (not allegro-pl)
-    if (!order.market.toLowerCase().includes('pl')) {
-      this.toastService.show({
-        template: template,
-        classname: 'bg-warning text-dark',
-        delay: 3000,
-        text: 'Generowanie faktur jest dostępne tylko dla rynku polskiego (Allegro PL).',
-      });
-      return;
-    }
-
     const dialogRef = this.dialog.open(InvoiceGenerationDialogComponent, {
       width: '650px',
       data: { order }
@@ -442,10 +426,6 @@ export class OrdersComponent implements OnInit {
     return this.orders.filter(order => order.status === status).length;
   }
 
-  getTotalOrdersValue(): number {
-    return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  }
-
   getOrdersWithInvoicesCount(): number {
     return this.orders.filter(order => order.invoices && order.invoices.length > 0).length;
   }
@@ -559,7 +539,7 @@ export class OrdersComponent implements OnInit {
 
   getInvoiceButtonText(order: Order): string {
     if (!order.market.toLowerCase().includes('pl')) {
-      return 'Niedostępne dla rynków zagranicznych';
+      return 'Wystaw fakturę OSS ' + this.getMarketDisplayName(order.market);
     }
     if (this.isInvoiceRequired(order)) {
       return 'Wystaw fakturę wymaganą';
@@ -568,18 +548,14 @@ export class OrdersComponent implements OnInit {
   }
 
   isInvoiceGenerationDisabled(order: Order): boolean {
-    return !order.market.toLowerCase().includes('pl');
+    const allowedMarkets = ['pl', 'cz', 'sk', 'hu'];
+    const market = order.market?.toLowerCase().trim();
+
+    return !market || !allowedMarkets.some(code => market.endsWith(`-${code}`));
   }
 
   isInvoiceRequired(order: Order): boolean {
     return order.invoice?.invoiceRequired === true;
-  }
-
-  sendToAllegroButtonText(element: Order) {
-    if (this.isInvoiceRequired(element)) {
-      return 'Wyślij do allegro (wymagana)';
-    }
-    return 'Wyślij do allegro';
   }
 
   // Metoda do wyświetlania nazwy kupującego

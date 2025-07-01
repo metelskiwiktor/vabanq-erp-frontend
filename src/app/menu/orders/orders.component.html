@@ -246,7 +246,7 @@
                         [class.invoice-required]="isInvoiceRequired(order)"
                         [class.disabled]="isInvoiceGenerationDisabled(order)"
                         [disabled]="isInvoiceGenerationDisabled(order)"
-                        [title]="isInvoiceGenerationDisabled(order) ? 'Funkcja dostępna tylko dla Allegro PL' : ''"
+                        [title]="isInvoiceGenerationDisabled(order) ? 'Funkcja dostępna tylko dla Allegro PL/CZ/SK/HU' : ''"
                         (click)="generateInvoice(order, successTpl)">
                   <i class="bx bx-receipt"></i>
                   {{ getInvoiceButtonText(order) }}
