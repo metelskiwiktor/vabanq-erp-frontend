@@ -144,7 +144,8 @@ export class OrdersComponent implements OnInit {
               isAttachedToAllegro: inv.attachedToAllegro,
               allegroInvoiceId: undefined,
               isAttachingToAllegro: false,
-              allegroAttachmentError: undefined
+              allegroAttachmentError: undefined,
+              infaktPlatformUrl: inv.infaktPlatformUrl
             }));
           }
         });

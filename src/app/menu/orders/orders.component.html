@@ -268,12 +268,41 @@
               <!-- Invoice Exists -->
               <div *ngIf="order.invoices && order.invoices.length > 0" class="invoice-status">
                 <div *ngFor="let invoice of order.invoices" class="invoice-item">
-                  <a [href]="invoice.invoiceUrl"
-                     target="_blank"
-                     class="invoice-link"
-                     (click)="$event.stopPropagation()">
-                    {{ invoice.invoiceNumber }}
-                  </a>
+
+                  <!-- Invoice Links Container -->
+                  <div class="invoice-links-container">
+                    <!-- Primary Invoice URL (PDF) -->
+                    <a *ngIf="invoice.invoiceUrl"
+                       [href]="invoice.invoiceUrl"
+                       target="_blank"
+                       class="invoice-link primary"
+                       title="Otwórz fakturę PDF"
+                       (click)="$event.stopPropagation()">
+                      <i class="bx bx-file-pdf"></i>
+                      {{ invoice.invoiceNumber }}
+                    </a>
+
+                    <!-- Infakt Platform URL -->
+                    <a *ngIf="invoice.infaktPlatformUrl"
+                       [href]="invoice.infaktPlatformUrl"
+                       target="_blank"
+                       class="invoice-link secondary"
+                       title="Otwórz w Infakt"
+                       (click)="$event.stopPropagation()">
+                      <i class="bx bx-link-external"></i>
+                      {{ invoice.invoiceNumber }}
+                    </a>
+
+                    <!-- No URLs Available -->
+                    <div *ngIf="!invoice.invoiceUrl && !invoice.infaktPlatformUrl" class="invoice-no-url">
+                      <span class="invoice-number-text">{{ invoice.invoiceNumber }}</span>
+                      <div class="no-url-indicator">
+                        <i class="bx bx-error-circle"></i>
+                        <span>Brak URL</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div class="invoice-info">
                     <div *ngIf="isInvoiceRequired(order)" class="invoice-required-indicator">
                       <i class="bx bx-error-circle"></i>

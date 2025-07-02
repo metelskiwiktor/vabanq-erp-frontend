@@ -1275,3 +1275,133 @@
     max-width: 116px;
   }
 }
+
+/* Dodaj te style do orders.component.css na końcu pliku */
+
+/* Invoice Links Container */
+.invoice-links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+/* Invoice Links */
+.invoice-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  width: fit-content;
+  border: 1px solid;
+  font-family: 'Monaco', 'Menlo', monospace;
+  margin-bottom: 4px;
+}
+
+.invoice-link:hover {
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.invoice-link.primary {
+  color: #8064A2;
+  background-color: #f8f4ff;
+  border-color: #e9d5ff;
+}
+
+.invoice-link.primary:hover {
+  color: #6d5596;
+  background-color: #f3e8ff;
+  border-color: #d8b4fe;
+}
+
+.invoice-link.secondary {
+  color: #059669;
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.invoice-link.secondary:hover {
+  color: #047857;
+  background-color: #dcfce7;
+  border-color: #86efac;
+}
+
+.invoice-link i {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* No URL Available */
+.invoice-no-url {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.invoice-number-text {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  color: #374151;
+  font-size: 12px;
+}
+
+.no-url-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  background-color: #fee2e2;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.no-url-indicator i {
+  font-size: 12px;
+}
+
+/* Invoice Number Only */
+.invoice-number-only {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+  padding: 4px 8px;
+  background-color: #f9fafb;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+/* Mobile responsiveness for invoice links */
+@media (max-width: 768px) {
+  .invoice-links-container {
+    gap: 2px;
+  }
+
+  .invoice-link {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+
+  .invoice-link.secondary {
+    font-size: 10px;
+  }
+
+  .invoice-number-text,
+  .invoice-number-only {
+    font-size: 11px;
+  }
+
+  .no-url-indicator {
+    font-size: 9px;
+  }
+}
