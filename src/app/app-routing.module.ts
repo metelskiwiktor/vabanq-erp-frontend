@@ -15,7 +15,6 @@ import {DashboardComponent} from "./menu/dashboard/dashboard.component";
 import {OrdersComponent} from "./menu/orders/orders.component";
 import {AccountingDashboardComponent} from "./menu/accounting/accounting-dashboard/accounting-dashboard.component";
 import {AccountingInvoicesComponent} from "./menu/accounting/accounting-invoices/accounting-invoices.component";
-import {AccountingExpensesComponent} from "./menu/accounting/accounting-expenses/accounting-expenses.component";
 import {BackupComponent} from "./menu/profile/backup/backup.component";
 
 const routes: Routes = [
@@ -29,7 +28,6 @@ const routes: Routes = [
   { path: 'wms', component: ProductMaterialsWmsTableComponent, canActivate: [AuthGuard] },
   { path: 'accounting/dashboard', component: AccountingDashboardComponent, canActivate: [AuthGuard] },
   { path: 'accounting/invoices', component: AccountingInvoicesComponent, canActivate: [AuthGuard] },
-  { path: 'accounting/expenses', component: AccountingExpensesComponent, canActivate: [AuthGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
   { path: 'integrations', component: IntegrationsComponent, canActivate: [AuthGuard] },
   { path: 'backups', component: BackupComponent, canActivate: [AuthGuard] },

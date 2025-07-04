@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {environment} from "../../../environments/environment";
+import {AssignInvoiceToExpenseResponse} from "../model/expense-models";
 
 export interface FixedExpenseResponse {
   id: string;
@@ -102,5 +103,21 @@ export class FixedExpenseService {
    */
   getExpenseSummary(month: number, year: number): Observable<ExpenseSummaryResponse> {
     return this.http.get<ExpenseSummaryResponse>(`${this.baseUrl}/summary/${month}/${year}`);
+  }
+
+  assignInvoice(expenseId: string, invoiceId: string): Observable<AssignInvoiceToExpenseResponse> {
+    return this.http.post<AssignInvoiceToExpenseResponse>(
+      `${this.baseUrl}/${expenseId}/assign-invoice`,
+      { invoiceId }
+    );
+  }
+
+  /**
+   * Usuń przypisanie faktury od kosztu stałego
+   */
+  unassignInvoice(expenseId: string, invoiceId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/${expenseId}/invoices/${invoiceId}`
+    );
   }
 }
