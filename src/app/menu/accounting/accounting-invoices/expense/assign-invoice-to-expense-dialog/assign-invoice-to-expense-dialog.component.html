@@ -1,0 +1,211 @@
+<!-- assign-invoice-to-expense-dialog.component.html -->
+<div class="dialog-container">
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="dialog-title">
+      <div class="dialog-icon">
+        <mat-icon>add_business</mat-icon>
+      </div>
+      <div>
+        <h2>Przypisz do wydatku</h2>
+        <div class="dialog-subtitle">Wybierz istniejący wydatek lub utwórz nowy</div>
+      </div>
+    </div>
+    <button class="close-button" mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="dialog-content" mat-dialog-content>
+    <!-- Invoice Information -->
+    <div class="form-section">
+      <div class="section-title">
+        <mat-icon class="section-icon">receipt</mat-icon>
+        <span>Faktura kosztowa</span>
+      </div>
+      <div class="invoice-card">
+        <div class="invoice-header">
+          <div>
+            <div class="invoice-number">{{ invoice.number }}</div>
+            <div class="invoice-supplier" *ngIf="invoice.sellerName && invoice.sellerName !== 'null'">
+              {{ invoice.sellerName }}
+            </div>
+            <div class="invoice-supplier no-seller" *ngIf="!invoice.sellerName || invoice.sellerName === 'null'">
+              Nie sprecyzowano sprzedawcy
+            </div>
+            <div class="invoice-description" *ngIf="invoice.description && invoice.description !== 'null'">
+              {{ invoice.description }}
+            </div>
+          </div>
+          <div class="invoice-amounts">
+            <div class="net-amount">{{ formatCurrency(invoice.netPrice, invoice.currency) }}</div>
+            <div class="gross-amount">Brutto: {{ formatCurrency(invoice.grossPrice, invoice.currency) }}</div>
+          </div>
+        </div>
+        <div class="invoice-meta">
+          <div class="meta-item">
+            <mat-icon class="meta-icon">calendar_today</mat-icon>
+            <span>{{ formatDate(invoice.createdAt) }}</span>
+          </div>
+          <div class="meta-item" *ngIf="invoice.sellerTaxCode && invoice.sellerTaxCode !== 'null'">
+            <mat-icon class="meta-icon">business_center</mat-icon>
+            <span>NIP: {{ invoice.sellerTaxCode }}</span>
+          </div>
+          <div class="category-badge" *ngIf="invoice.category && invoice.category !== 'NONE'">
+            {{ getCategoryDisplayName(invoice.category) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense Selection -->
+    <div class="form-section">
+      <div class="section-title">
+        <mat-icon class="section-icon">assignment</mat-icon>
+        <span>Wybierz wydatek</span>
+      </div>
+
+      <!-- Create New Expense Option -->
+      <div class="create-expense-section" (click)="openCreateExpenseDialog()">
+        <mat-icon class="create-expense-icon">add_circle_outline</mat-icon>
+        <div class="create-expense-text">Utwórz nowy wydatek dla tej faktury</div>
+        <button class="btn-create" type="button">
+          <mat-icon>add</mat-icon>
+          <span>Nowy wydatek</span>
+        </button>
+      </div>
+
+      <!-- Search and Filters -->
+      <div class="form-group">
+        <div class="search-container">
+          <mat-form-field class="search-field" appearance="outline">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-label>Szukaj wydatków...</mat-label>
+            <input matInput [(ngModel)]="searchText" (input)="onSearchChange()">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-row">
+          <div class="filter-group">
+            <span class="filter-label">Typ:</span>
+            <mat-form-field appearance="outline" class="filter-select-field">
+              <mat-select [(value)]="filterType" (selectionChange)="onFilterChange()">
+                <mat-option *ngFor="let option of typeOptions" [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Kategoria:</span>
+            <mat-form-field appearance="outline" class="filter-select-field">
+              <mat-select [(value)]="filterCategory" (selectionChange)="onFilterChange()">
+                <mat-option *ngFor="let option of categoryOptions" [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Okres:</span>
+            <mat-form-field appearance="outline" class="filter-select-field">
+              <mat-select [(value)]="filterPeriod" (selectionChange)="onFilterChange()">
+                <mat-option *ngFor="let option of periodOptions" [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <button mat-stroked-button class="clear-filters-btn" (click)="clearFilters()">
+            <mat-icon>filter_alt_off</mat-icon>
+            <span>Wyczyść</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="expense-count">Znaleziono {{ filteredExpenses.length }} wydatków</div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <mat-spinner class="spinner-large"></mat-spinner>
+        <p>Ładowanie wydatków...</p>
+      </div>
+
+      <!-- Expense List -->
+      <div class="expense-list" *ngIf="!isLoading">
+        <div
+          *ngFor="let expense of filteredExpenses"
+          class="expense-item"
+          [class.selected]="selectedExpenseId === expense.id"
+          (click)="selectExpense(expense.id)">
+
+          <div class="expense-radio">
+            <mat-radio-button
+              [checked]="selectedExpenseId === expense.id"
+              [value]="expense.id">
+            </mat-radio-button>
+          </div>
+
+          <div class="expense-info">
+            <div class="expense-name">{{ expense.name }}</div>
+            <div class="expense-details">
+              <span class="expense-type-badge"
+                    [class.variable]="expense.type === 'VARIABLE'">
+                {{ getExpenseTypeLabel(expense.type) }}
+              </span>
+              <span>•</span>
+              <span>{{ getCategoryDisplayName(expense.category) }}</span>
+              <span>•</span>
+              <span>{{ getExpenseDisplayDate(expense) }}</span>
+            </div>
+          </div>
+
+          <div class="expense-amount">
+            <div>{{ formatCurrency(expense.totalCost, expense.currency) }}</div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredExpenses.length === 0" class="empty-state">
+          <mat-icon class="empty-icon">assignment</mat-icon>
+          <h3>Brak wydatków</h3>
+          <p *ngIf="expenses.length === 0">
+            Nie znaleziono żadnych wydatków.
+            <br>Utwórz nowy wydatek klikając przycisk powyżej.
+          </p>
+          <p *ngIf="expenses.length > 0">
+            Nie znaleziono wydatków spełniających wybrane kryteria filtrowania.
+          </p>
+          <div class="empty-actions">
+            <button *ngIf="expenses.length > 0" mat-stroked-button (click)="clearFilters()">
+              <mat-icon>filter_alt_off</mat-icon>
+              <span>Wyczyść filtry</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="dialog-actions" mat-dialog-actions align="end">
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>close</mat-icon>
+      <span>Anuluj</span>
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      [disabled]="!selectedExpenseId"
+      (click)="assignToExpense()">
+      <mat-icon>add_business</mat-icon>
+      <span>Przypisz do wydatku</span>
+    </button>
+  </div>
+</div>

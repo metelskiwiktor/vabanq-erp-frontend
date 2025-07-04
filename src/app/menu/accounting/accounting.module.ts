@@ -1,7 +1,7 @@
 // src/app/menu/accounting/accounting.module.ts
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 // Material imports
 import {MatIconModule} from '@angular/material/icon';
@@ -24,6 +24,13 @@ import {AccountingInvoicesComponent} from './accounting-invoices/accounting-invo
 // Shared dialogs
 import {MatChip, MatChipSet} from "@angular/material/chips";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
+import {
+  AssignInvoiceToExpenseDialogComponent
+} from "./accounting-invoices/expense/assign-invoice-to-expense-dialog/assign-invoice-to-expense-dialog.component";
+import {
+  CreateInvoiceExpenseDialogComponent
+} from "./accounting-invoices/expense/create-invoice-expense-dialog/create-invoice-expense-dialog.component";
+import {MatRadioButton} from "@angular/material/radio";
 
 @NgModule({
   declarations: [
@@ -31,6 +38,8 @@ import {MatProgressSpinner} from "@angular/material/progress-spinner";
     AccountingComponent,
     AccountingDashboardComponent,
     AccountingInvoicesComponent,
+    AssignInvoiceToExpenseDialogComponent,
+    CreateInvoiceExpenseDialogComponent
   ],
   imports: [
     CommonModule,
@@ -48,7 +57,9 @@ import {MatProgressSpinner} from "@angular/material/progress-spinner";
     MatSnackBarModule,
     MatChipSet,
     MatChip,
-    MatProgressSpinner
+    MatProgressSpinner,
+    ReactiveFormsModule,
+    MatRadioButton
   ],
   exports: [
     AccountingComponent
