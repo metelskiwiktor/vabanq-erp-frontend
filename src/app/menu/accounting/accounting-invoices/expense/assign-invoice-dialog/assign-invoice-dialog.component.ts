@@ -1,28 +1,21 @@
+// src/app/menu/accounting/accounting-invoices/expense/assign-invoice-dialog/assign-invoice-dialog.component.ts
 import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, Observable, of } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs/operators';
+import { takeUntil, debounceTime, distinctUntilChanged, switchMap, startWith, catchError } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {CostInvoice} from "../../../../../utility/service/cost-invoice.service";
-import {
-  CreateFixedExpenseRequest,
-  FixedExpenseResponse,
-  FixedExpenseService
-} from "../../../../../utility/service/fixed-expense.service";
-import {
-  CreateVariableExpenseRequest,
-  VariableExpenseResponse, VariableExpenseService
-} from "../../../../../utility/service/variable-expense.service";
-import {AssignInvoiceToExpenseRequest} from "../../../../../utility/model/expense-models";
-import {ExpenseInvoiceService} from "../../../../../utility/service/expense-invoice.service";
+import { CostInvoice } from "../../../../../utility/service/cost-invoice.service";
+import { ExpenseService, ExpenseResponse, CreateExpenseRequest, AttachInvoiceRequest } from "../../../../../utility/service/expense.service";
+import { ExpenseCategoryMapperService } from "../../../../../utility/service/expense-category-mapper.service";
 
 interface ExpenseOption {
+  netAmount: number;
   id: string;
   name: string;
   type: 'FIXED' | 'VARIABLE';
   category: string;
-  netAmount: number;
+  totalCost: number;
   currency: string;
   period: string;
   description?: string;
@@ -78,20 +71,16 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     public dialogRef: MatDialogRef<AssignInvoiceDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: AssignInvoiceDialogData,
     private fb: FormBuilder,
-    private fixedExpenseService: FixedExpenseService,
-    private variableExpenseService: VariableExpenseService,
-    private expenseInvoiceService: ExpenseInvoiceService,
+    private expenseService: ExpenseService,
+    private expenseCategoryMapper: ExpenseCategoryMapperService,
     private snackBar: MatSnackBar
   ) {
     this.createExpenseForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       type: ['', Validators.required],
       category: ['', Validators.required],
-      month: [new Date().getMonth() + 1, Validators.required],
-      year: [new Date().getFullYear(), Validators.required],
-      expenseDate: [new Date().toISOString().split('T')[0]], // For variable expenses
       description: [''],
-      isRecurring: [false]
+      tags: ['']
     });
   }
 
@@ -106,80 +95,55 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
   }
 
   private setupFormSubscriptions(): void {
-    // Watch type changes to toggle date fields
-    this.createExpenseForm.get('type')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(type => {
-        const expenseDateControl = this.createExpenseForm.get('expenseDate');
-        const monthControl = this.createExpenseForm.get('month');
-        const yearControl = this.createExpenseForm.get('year');
-
-        if (type === 'VARIABLE') {
-          expenseDateControl?.setValidators([Validators.required]);
-          monthControl?.clearValidators();
-          yearControl?.clearValidators();
-        } else {
-          expenseDateControl?.clearValidators();
-          monthControl?.setValidators([Validators.required]);
-          yearControl?.setValidators([Validators.required]);
-        }
-
-        expenseDateControl?.updateValueAndValidity();
-        monthControl?.updateValueAndValidity();
-        yearControl?.updateValueAndValidity();
-      });
+    // Setup any form subscriptions if needed
   }
 
   private loadAvailableExpenses(): void {
     this.isLoading = true;
 
-    // Load both fixed and variable expenses
+    // Load expenses for current month
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
+    const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
-    Promise.all([
-      this.fixedExpenseService.getExpensesForMonth(currentMonth, currentYear).toPromise(),
-      this.variableExpenseService.getAllExpenses().toPromise()
-    ]).then(([fixedExpenses, variableExpenses]) => {
-      this.availableExpenses = [
-        ...(fixedExpenses || []).map(expense => this.mapFixedExpenseToOption(expense)),
-        ...(variableExpenses || []).map(expense => this.mapVariableExpenseToOption(expense))
-      ];
+    this.expenseService.listExpenses(yearMonth)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          console.error('Error loading expenses:', error);
+          this.snackBar.open('Błąd podczas ładowania wydatków', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          return of([]);
+        })
+      )
+      .subscribe(expenses => {
+        this.availableExpenses = expenses.map(expense => this.mapExpenseToOption(expense));
+        this.applyFilters();
+        this.isLoading = false;
+      });
+  }
 
-      this.applyFilters();
-      this.isLoading = false;
-    }).catch(error => {
-      console.error('Error loading expenses:', error);
-      this.isLoading = false;
-      this.snackBar.open('Błąd podczas ładowania wydatków', 'Zamknij', { duration: 3000 });
+  private mapExpenseToOption(expense: ExpenseResponse): ExpenseOption {
+    return {
+      id: expense.id,
+      netAmount: expense.netAmount,
+      name: expense.name,
+      type: expense.type,
+      category: expense.category,
+      totalCost: expense.totalCost,
+      currency: 'PLN',
+      period: this.formatDateToPeriod(expense.createdAt),
+      description: expense.description
+    };
+  }
+
+  private formatDateToPeriod(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pl-PL', {
+      year: 'numeric',
+      month: 'long'
     });
-  }
-
-  private mapFixedExpenseToOption(expense: FixedExpenseResponse): ExpenseOption {
-    return {
-      id: expense.id,
-      name: expense.name,
-      type: 'FIXED',
-      category: expense.category,
-      netAmount: expense.netAmount,
-      currency: 'PLN',
-      period: expense.displayMonth,
-      description: expense.description
-    };
-  }
-
-  private mapVariableExpenseToOption(expense: VariableExpenseResponse): ExpenseOption {
-    return {
-      id: expense.id,
-      name: expense.name,
-      type: 'VARIABLE',
-      category: expense.category,
-      netAmount: expense.netAmount,
-      currency: 'PLN',
-      period: new Date(expense.expenseDate).toLocaleDateString('pl-PL'),
-      description: expense.description
-    };
   }
 
   // Filter methods
@@ -228,18 +192,53 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
   // View switching
   switchToCreateView(): void {
     this.currentView = 'create';
-    // Pre-fill form with invoice data
+    // Pre-fill form with invoice data using mapper service
     const invoice = this.data.invoice;
+
+    // Use mapper service to generate smart defaults
+    const suggestedName = this.expenseCategoryMapper.generateExpenseNameFromInvoice(
+      invoice.number,
+      invoice.sellerName,
+      invoice.description
+    );
+
+    const suggestedCategory = this.expenseCategoryMapper.mapInvoiceCategoryToExpenseCategory(
+      invoice.category
+    );
+
+    const suggestedType = this.expenseCategoryMapper.suggestExpenseType(
+      invoice.category,
+      invoice.sellerName,
+      invoice.netPrice
+    );
+
+    const suggestedTags = this.expenseCategoryMapper.generateTagsFromInvoice(
+      invoice.category,
+      invoice.sellerName,
+      invoice.description
+    );
+
     this.createExpenseForm.patchValue({
-      name: `Wydatek dla faktury ${invoice.number}`,
-      description: invoice.description || `Wydatek utworzony automatycznie dla faktury ${invoice.number} od ${invoice.sellerName}`
+      name: suggestedName,
+      type: suggestedType,
+      category: suggestedCategory,
+      description: invoice.description && invoice.description !== 'null' ? invoice.description : '',
+      tags: suggestedTags.join(', ')
     });
   }
 
   switchToAssignView(): void {
     this.currentView = 'assign';
     this.createExpenseForm.reset();
-    this.setupFormSubscriptions();
+  }
+
+  private generateExpenseName(): string {
+    const invoice = this.data.invoice;
+    return this.expenseCategoryMapper.generateExpenseNameFromInvoice(
+      invoice.number,
+      invoice.sellerName,
+      invoice.description
+    );
   }
 
   // Assignment action
@@ -249,16 +248,11 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     this.isAssigning = true;
 
     try {
-      const selectedExpense = this.availableExpenses.find(e => e.id === this.selectedExpenseId);
-      if (!selectedExpense) throw new Error('Wybrany wydatek nie istnieje');
-
-      const request: AssignInvoiceToExpenseRequest = {
-        expenseId: this.selectedExpenseId,
-        invoiceId: this.data.invoice.id,
-        expenseType: selectedExpense.type.toLowerCase() as 'fixed' | 'variable'
+      const request: AttachInvoiceRequest = {
+        costInvoiceId: this.data.invoice.id
       };
 
-      await this.expenseInvoiceService.assignInvoiceToExpense(request).toPromise();
+      await this.expenseService.attachInvoiceToExpense(this.selectedExpenseId, request).toPromise();
 
       this.snackBar.open('Faktura została przypisana do wydatku', 'Zamknij', {
         duration: 3000,
@@ -287,43 +281,34 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
 
     try {
       const formValue = this.createExpenseForm.value;
-      const expenseType = formValue.type;
 
-      let createdExpense: any;
+      // Parse tags
+      const tags = formValue.tags ?
+        formValue.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) :
+        [];
 
-      if (expenseType === 'FIXED') {
-        const request: CreateFixedExpenseRequest = {
-          name: formValue.name,
-          category: formValue.category,
-          netAmount: this.data.invoice.netPrice.toString(),
-          month: formValue.month,
-          year: formValue.year,
-          isRecurring: formValue.isRecurring,
-          description: formValue.description
-        };
-
-        createdExpense = await this.fixedExpenseService.createFixedExpense(request).toPromise();
-      } else {
-        const request: CreateVariableExpenseRequest = {
-          name: formValue.name,
-          category: formValue.category,
-          netAmount: this.data.invoice.netPrice.toString(),
-          expenseDate: formValue.expenseDate,
-          supplier: this.data.invoice.sellerName || 'Nieznany dostawca',
-          description: formValue.description
-        };
-
-        createdExpense = await this.variableExpenseService.createVariableExpense(request).toPromise();
-      }
-
-      // Now assign the invoice to the created expense
-      const assignRequest: AssignInvoiceToExpenseRequest = {
-        expenseId: createdExpense.id,
-        invoiceId: this.data.invoice.id,
-        expenseType: expenseType.toLowerCase() as 'fixed' | 'variable'
+      // Create expense request
+      const createRequest: CreateExpenseRequest = {
+        name: formValue.name,
+        description: formValue.description || undefined,
+        type: formValue.type,
+        category: formValue.category,
+        tags: tags
       };
 
-      await this.expenseInvoiceService.assignInvoiceToExpense(assignRequest).toPromise();
+      // Create the expense
+      const createdExpense = await this.expenseService.createExpense(createRequest).toPromise();
+
+      if (!createdExpense) {
+        throw new Error('Failed to create expense');
+      }
+
+      // Attach the invoice to the created expense
+      const attachRequest: AttachInvoiceRequest = {
+        costInvoiceId: this.data.invoice.id
+      };
+
+      await this.expenseService.attachInvoiceToExpense(createdExpense.id, attachRequest).toPromise();
 
       this.snackBar.open('Wydatek został utworzony i faktura została przypisana', 'Zamknij', {
         duration: 3000,

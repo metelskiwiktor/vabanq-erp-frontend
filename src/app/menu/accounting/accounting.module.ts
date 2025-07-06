@@ -35,6 +35,9 @@ import {
   AssignInvoiceDialogModule
 } from "./accounting-invoices/expense/assign-invoice-dialog/assign-invoice-dialog.module";
 
+// Services
+import { ExpenseService } from '../../utility/service/expense.service';
+
 @NgModule({
   declarations: [
     // Main accounting components
@@ -64,6 +67,9 @@ import {
     MatProgressSpinner,
     ReactiveFormsModule,
     MatRadioButton
+  ],
+  providers: [
+    ExpenseService
   ],
   exports: [
     AccountingComponent

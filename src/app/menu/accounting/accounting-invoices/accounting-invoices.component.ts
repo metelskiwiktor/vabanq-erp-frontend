@@ -1,3 +1,4 @@
+// src/app/menu/accounting/accounting-invoices/accounting-invoices.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { environment } from '../../../../environments/environment';
@@ -314,7 +315,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.loadInvoices();
   }
 
-  // Actions
+  // Actions - Updated to use real API
   openExpenseDialog(invoice: CostInvoice): void {
     const dialogData: AssignInvoiceDialogData = {
       invoice: invoice
@@ -346,154 +347,87 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
           }
         );
 
-        // Optionally reload data if needed
-        // this.loadInvoices();
-      }
-    });
-  }
-
-  private assignInvoiceToExpense(invoice: CostInvoice, expenseId: string): void {
-    // Tutaj wywołaj swój service do przypisania faktury do wydatku
-    // Przykład:
-    /*
-    this.expenseInvoiceService.assignInvoiceToExpense({
-      invoiceId: invoice.id,
-      expenseId: expenseId,
-      expenseType: 'fixed' // lub 'variable' w zależności od typu wydatku
-    }).subscribe({
-      next: (response) => {
-        this.showSuccessMessage('Faktura została pomyślnie przypisana do wydatku');
-        // Opcjonalnie odśwież listę faktur
+        // Reload invoices to reflect any changes
         this.loadInvoices();
-      },
-      error: (error) => {
-        this.showErrorMessage('Błąd podczas przypisywania faktury do wydatku');
-        console.error('Error assigning invoice to expense:', error);
       }
     });
-    */
-
-    // Tymczasowa implementacja z mock
-    setTimeout(() => {
-      this.showSuccessMessage('Faktura została pomyślnie przypisana do wydatku');
-    }, 1000);
   }
 
-  private createExpenseAndAssign(invoice: CostInvoice, expenseData: any): void {
-    // Tutaj wywołaj swój service do utworzenia wydatku i przypisania faktury
-    // Przykład:
-    /*
-    this.expenseService.createExpense(expenseData).subscribe({
-      next: (createdExpense) => {
-        // Po utworzeniu wydatku, przypisz do niego fakturę
-        this.assignInvoiceToExpense(invoice, createdExpense.id);
-      },
-      error: (error) => {
-        this.showErrorMessage('Błąd podczas tworzenia wydatku');
-        console.error('Error creating expense:', error);
+  openInfaktView(invoice: CostInvoice): void {
+    const infaktUrl = `${environment.infaktUrl || 'https://app.infakt.pl'}/app/koszty/${invoice.id}`;
+    window.open(infaktUrl, '_blank');
+  }
+
+  // Utility methods
+  formatCurrency(amount: number, currency: string = 'PLN'): string {
+    return new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('pl-PL');
+  }
+
+  getMonthDisplayName(): string {
+    return this.selectedMonth.toLocaleDateString('pl-PL', {
+      year: 'numeric',
+      month: 'long'
+    });
+  }
+
+  getDateRangeDisplayName(): string {
+    if (this.useCustomDateRange && this.dateFrom && this.dateTo) {
+      return `${this.formatDate(this.dateFrom.toISOString())} - ${this.formatDate(this.dateTo.toISOString())}`;
+    }
+    return this.getMonthDisplayName();
+  }
+
+  getCategoryDisplayName(category: CostInvoiceCategory | string | undefined): string {
+    return this.costInvoiceService.getCategoryDisplayName(category as CostInvoiceCategory);
+  }
+
+  // Calculate totals by currency
+  getCurrencyTotals(): CurrencyTotal[] {
+    const totalsMap = new Map<string, CurrencyTotal>();
+
+    this.invoices.forEach(invoice => {
+      const currency = invoice.currency || 'PLN';
+
+      if (!totalsMap.has(currency)) {
+        totalsMap.set(currency, {
+          currency: currency,
+          netTotal: 0,
+          grossTotal: 0
+        });
       }
+
+      const total = totalsMap.get(currency)!;
+      total.netTotal += invoice.netPrice;
+      total.grossTotal += invoice.grossPrice;
     });
-    */
 
-    // Tymczasowa implementacja z mock
-    setTimeout(() => {
-      this.showSuccessMessage('Wydatek został utworzony i faktura została przypisana');
-    }, 1500);
+    return Array.from(totalsMap.values()).sort((a, b) => a.currency.localeCompare(b.currency));
   }
 
-  private showSuccessMessage(message: string): void {
-    this.snackBar.open(message, 'Zamknij', {
-      duration: 5000,
-      panelClass: ['success-snackbar'],
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    });
-  }
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxPagesToShow = 5;
 
-  private showErrorMessage(message: string): void {
-    this.snackBar.open(message, 'Zamknij', {
-      duration: 7000,
-      panelClass: ['error-snackbar'],
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    });
-  }
+    let startPage = Math.max(0, this.currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(this.totalPages - 1, startPage + maxPagesToShow - 1);
 
-openInfaktView(invoice: CostInvoice): void {
-  const infaktUrl = `${environment.infaktUrl || 'https://app.infakt.pl'}/app/koszty/${invoice.id}`;
-  window.open(infaktUrl, '_blank');
-}
-
-// Utility methods
-formatCurrency(amount: number, currency: string = 'PLN'): string {
-  return new Intl.NumberFormat('pl-PL', {
-    style: 'currency',
-    currency: currency
-  }).format(amount);
-}
-
-formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('pl-PL');
-}
-
-getMonthDisplayName(): string {
-  return this.selectedMonth.toLocaleDateString('pl-PL', {
-    year: 'numeric',
-    month: 'long'
-  });
-}
-
-getDateRangeDisplayName(): string {
-  if (this.useCustomDateRange && this.dateFrom && this.dateTo) {
-    return `${this.formatDate(this.dateFrom.toISOString())} - ${this.formatDate(this.dateTo.toISOString())}`;
-  }
-  return this.getMonthDisplayName();
-}
-
-getCategoryDisplayName(category: CostInvoiceCategory | string | undefined): string {
-  return this.costInvoiceService.getCategoryDisplayName(category as CostInvoiceCategory);
-}
-
-// Calculate totals by currency
-getCurrencyTotals(): CurrencyTotal[] {
-  const totalsMap = new Map<string, CurrencyTotal>();
-
-  this.invoices.forEach(invoice => {
-    const currency = invoice.currency || 'PLN';
-
-    if (!totalsMap.has(currency)) {
-      totalsMap.set(currency, {
-        currency: currency,
-        netTotal: 0,
-        grossTotal: 0
-      });
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(0, endPage - maxPagesToShow + 1);
     }
 
-    const total = totalsMap.get(currency)!;
-    total.netTotal += invoice.netPrice;
-    total.grossTotal += invoice.grossPrice;
-  });
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
 
-  return Array.from(totalsMap.values()).sort((a, b) => a.currency.localeCompare(b.currency));
-}
-
-getPageNumbers(): number[] {
-  const pages: number[] = [];
-  const maxPagesToShow = 5;
-
-  let startPage = Math.max(0, this.currentPage - Math.floor(maxPagesToShow / 2));
-  let endPage = Math.min(this.totalPages - 1, startPage + maxPagesToShow - 1);
-
-  if (endPage - startPage < maxPagesToShow - 1) {
-    startPage = Math.max(0, endPage - maxPagesToShow + 1);
+    return pages;
   }
 
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i);
-  }
-
-  return pages;
-}
-
-protected readonly Math = Math;
+  protected readonly Math = Math;
 }
