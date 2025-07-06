@@ -1,0 +1,200 @@
+<div class="expenses-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="page-title">
+        <h1>Wydatki</h1>
+        <p class="page-subtitle">Zarządzanie wydatkami firmowymi i przypisywanie faktur</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="exportExpenses()">
+          <mat-icon>download</mat-icon>
+          Eksportuj
+        </button>
+        <button class="btn btn-primary" (click)="createNewExpense()">
+          <mat-icon>add</mat-icon>
+          Nowy wydatek
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Month Navigation -->
+  <div class="month-navigation">
+    <div class="month-selector">
+      <button class="month-nav-btn" (click)="previousMonth()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <div class="current-month">{{ getMonthDisplayName() }}</div>
+      <button class="month-nav-btn" (click)="nextMonth()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-section">
+    <div class="summary-card">
+      <div class="card-header">
+        <div class="card-icon total">
+          <mat-icon>account_balance_wallet</mat-icon>
+        </div>
+        <div>
+          <div class="card-title">Łączne wydatki</div>
+        </div>
+      </div>
+      <div class="card-amount">{{ formatCurrency(summary.totalAmount) }}</div>
+      <div class="card-count">{{ summary.totalCount }} wydatków</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-header">
+        <div class="card-icon fixed">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div>
+          <div class="card-title">Wydatki stałe</div>
+        </div>
+      </div>
+      <div class="card-amount">{{ formatCurrency(summary.fixedAmount) }}</div>
+      <div class="card-count">{{ summary.fixedCount }} wydatków</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-header">
+        <div class="card-icon variable">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div>
+          <div class="card-title">Wydatki zmienne</div>
+        </div>
+      </div>
+      <div class="card-amount">{{ formatCurrency(summary.variableAmount) }}</div>
+      <div class="card-count">{{ summary.variableCount }} wydatki</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-header">
+        <div class="card-icon invoices">
+          <mat-icon>receipt_long</mat-icon>
+        </div>
+        <div>
+          <div class="card-title">Przypisane faktury</div>
+        </div>
+      </div>
+      <div class="card-amount">{{ summary.assignedInvoices }} faktur</div>
+      <div class="card-count">z {{ summary.totalInvoices }} dostępnych</div>
+    </div>
+  </div>
+
+  <!-- Expenses List -->
+  <div class="expenses-section">
+    <div class="section-header">
+      <h2 class="section-title">Lista wydatków</h2>
+      <div class="filters">
+        <mat-form-field appearance="outline" class="search-field">
+          <input matInput
+                 placeholder="Szukaj wydatków..."
+                 [(ngModel)]="searchText"
+                 (input)="onSearchChange()">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Typ</mat-label>
+          <mat-select [(value)]="typeFilter" (selectionChange)="onTypeFilterChange()">
+            <mat-option *ngFor="let option of typeOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Kategoria</mat-label>
+          <mat-select [(value)]="categoryFilter" (selectionChange)="onCategoryFilterChange()">
+            <mat-option *ngFor="let option of categoryOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Ładowanie wydatków...</p>
+    </div>
+
+    <!-- Expenses List -->
+    <div *ngIf="!isLoading" class="expenses-list">
+      <div *ngFor="let expense of filteredExpenses" class="expense-item">
+        <div class="expense-header">
+          <div class="expense-info">
+            <div class="expense-name">{{ expense.name }}</div>
+            <div class="expense-description">{{ expense.description }}</div>
+            <div class="expense-meta">
+              <div class="meta-item">
+                <span class="expense-type-badge" [class.fixed]="expense.type === 'FIXED'" [class.variable]="expense.type === 'VARIABLE'">
+                  {{ getTypeDisplayName(expense.type) }}
+                </span>
+              </div>
+              <div class="meta-item">
+                <mat-icon class="small-icon">category</mat-icon>
+                {{ getCategoryDisplayName(expense.category) }}
+              </div>
+              <div class="meta-item">
+                <mat-icon class="small-icon">schedule</mat-icon>
+                {{ formatDate(expense.date) }}
+              </div>
+              <div class="expense-tags">
+                <span *ngFor="let tag of expense.tags" class="tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="expense-amount">
+            <div class="amount-value">{{ formatCurrency(expense.amount) }}</div>
+            <div class="items-count">{{ expense.itemsCount }} pozycj{{ expense.itemsCount === 1 ? 'a' : (expense.itemsCount < 5 ? 'e' : '') }}</div>
+          </div>
+        </div>
+        <div class="expense-actions">
+          <button class="action-btn" (click)="viewExpenseDetails(expense)">
+            <mat-icon class="small-icon">visibility</mat-icon>
+            Szczegóły
+          </button>
+          <button class="action-btn" (click)="viewExpenseInvoices(expense)">
+            <mat-icon class="small-icon">receipt</mat-icon>
+            Faktury ({{ expense.invoicesCount }})
+          </button>
+          <button class="action-btn primary" (click)="addExpenseItem(expense)">
+            <mat-icon class="small-icon">add</mat-icon>
+            Dodaj pozycję
+          </button>
+          <button class="action-btn" (click)="editExpense(expense)">
+            <mat-icon class="small-icon">edit</mat-icon>
+            Edytuj
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredExpenses.length === 0" class="empty-state">
+        <mat-icon class="empty-icon">assignment</mat-icon>
+        <h3>Brak wydatków</h3>
+        <p *ngIf="expenses.length === 0">
+          Nie znaleziono żadnych wydatków dla wybranego miesiąca.
+          <br>Utwórz pierwszy wydatek klikając przycisk "Nowy wydatek".
+        </p>
+        <p *ngIf="expenses.length > 0">
+          Nie znaleziono wydatków spełniających wybrane kryteria filtrowania.
+        </p>
+        <div class="empty-actions">
+          <button *ngIf="expenses.length === 0" class="btn btn-primary" (click)="createNewExpense()">
+            <mat-icon>add</mat-icon>
+            Nowy wydatek
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

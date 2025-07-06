@@ -31,7 +31,7 @@
         class="tab-button"
         [class.active]="activeTab === 'expenses'"
         (click)="setActiveTab('expenses')">
-        Koszty
+        Wydatki
       </button>
       <button
         class="tab-button"
@@ -55,12 +55,10 @@
       <!-- Invoices Tab -->
       <app-accounting-invoices *ngIf="activeTab === 'invoices'"></app-accounting-invoices>
 
-      <!-- Placeholder tabs for future implementation -->
-      <div *ngIf="activeTab === 'expenses'" class="placeholder-content">
-        <h2>Zarządzanie kosztami</h2>
-        <p>Tutaj będzie panel zarządzania kosztami stałymi i zmiennymi.</p>
-      </div>
+      <!-- Expenses Tab -->
+      <app-accounting-expenses *ngIf="activeTab === 'expenses'"></app-accounting-expenses>
 
+      <!-- Placeholder tabs for future implementation -->
       <div *ngIf="activeTab === 'taxes'" class="placeholder-content">
         <h2>Podatki i VAT</h2>
         <p>Tutaj będzie panel zarządzania podatkami i VAT.</p>

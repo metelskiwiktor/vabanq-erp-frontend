@@ -20,6 +20,7 @@ import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {AccountingComponent} from './accounting.component';
 import {AccountingDashboardComponent} from './accounting-dashboard/accounting-dashboard.component';
 import {AccountingInvoicesComponent} from './accounting-invoices/accounting-invoices.component';
+import {AccountingExpensesComponent} from './accounting-expenses/accounting-expenses.component';
 
 // Shared dialogs
 import {MatChip, MatChipSet} from "@angular/material/chips";
@@ -44,6 +45,7 @@ import { ExpenseService } from '../../utility/service/expense.service';
     AccountingComponent,
     AccountingDashboardComponent,
     AccountingInvoicesComponent,
+    AccountingExpensesComponent,
     AssignInvoiceToExpenseDialogComponent,
     CreateInvoiceExpenseDialogComponent,
   ],
