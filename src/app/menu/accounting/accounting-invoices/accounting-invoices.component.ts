@@ -2,10 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { environment } from '../../../../environments/environment';
 import {CostInvoice, CostInvoiceService, CostInvoiceCategory, CostInvoicePage} from "../../../utility/service/cost-invoice.service";
-import {
-  AssignInvoiceToExpenseDialogComponent, ExpenseDialogResult
-} from "./expense/assign-invoice-to-expense-dialog/assign-invoice-to-expense-dialog.component";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {
+  AssignInvoiceDialogComponent,
+  AssignInvoiceDialogData
+} from "./expense/assign-invoice-dialog/assign-invoice-dialog.component";
 
 interface CurrencyTotal {
   currency: string;
@@ -315,21 +316,38 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
 
   // Actions
   openExpenseDialog(invoice: CostInvoice): void {
-    const dialogRef = this.dialog.open(AssignInvoiceToExpenseDialogComponent, {
-      width: '700px',
-      maxWidth: '90vw',
-      data: { invoice },
-      panelClass: 'custom-dialog-panel',
-      disableClose: false
+    const dialogData: AssignInvoiceDialogData = {
+      invoice: invoice
+    };
+
+    const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: dialogData,
+      panelClass: ['custom-dialog-panel', 'expense-dialog'],
+      disableClose: false,
+      autoFocus: false
     });
 
-    dialogRef.afterClosed().subscribe((result: ExpenseDialogResult) => {
-      if (result) {
-        if (result.action === 'assign' && result.expenseId) {
-          this.assignInvoiceToExpense(invoice, result.expenseId);
-        } else if (result.action === 'create' && result.expenseData) {
-          this.createExpenseAndAssign(invoice, result.expenseData);
-        }
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.success) {
+        console.log('Invoice assignment result:', result);
+
+        // Show success message
+        this.snackBar.open(
+          result.action === 'created'
+            ? 'Wydatek został utworzony i faktura została przypisana'
+            : 'Faktura została przypisana do wydatku',
+          'Zamknij',
+          {
+            duration: 5000,
+            panelClass: ['success-snackbar']
+          }
+        );
+
+        // Optionally reload data if needed
+        // this.loadInvoices();
       }
     });
   }

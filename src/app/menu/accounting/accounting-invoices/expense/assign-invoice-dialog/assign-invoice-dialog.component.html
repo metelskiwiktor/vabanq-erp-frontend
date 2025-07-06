@@ -1,0 +1,359 @@
+<div class="assign-dialog-container">
+  <!-- Main Assignment View -->
+  <div *ngIf="currentView === 'assign'" class="dialog-view">
+    <!-- Header -->
+    <div class="dialog-header">
+      <div class="dialog-title">
+        <div class="dialog-icon">
+          <mat-icon>add_business</mat-icon>
+        </div>
+        <div>
+          <h2>Przypisz do wydatku</h2>
+          <div class="dialog-subtitle">Wybierz istniejący wydatek lub utwórz nowy</div>
+        </div>
+      </div>
+      <button mat-icon-button class="close-button" (click)="closeDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="dialog-content">
+      <!-- Invoice Information -->
+      <div class="form-section">
+        <div class="section-title">
+          <mat-icon class="section-icon">receipt</mat-icon>
+          Faktura kosztowa
+        </div>
+        <div class="invoice-card">
+          <div class="invoice-header">
+            <div>
+              <div class="invoice-number">{{ data.invoice.number }}</div>
+              <div class="invoice-supplier" *ngIf="data.invoice.sellerName && data.invoice.sellerName !== 'null'">
+                {{ data.invoice.sellerName }}
+              </div>
+              <div class="invoice-supplier no-seller" *ngIf="!data.invoice.sellerName || data.invoice.sellerName === 'null'">
+                Nieznany dostawca
+              </div>
+              <div class="invoice-description" *ngIf="data.invoice.description && data.invoice.description !== 'null'">
+                {{ data.invoice.description }}
+              </div>
+            </div>
+            <div class="invoice-amounts">
+              <div class="net-amount">{{ formatCurrency(data.invoice.netPrice, data.invoice.currency) }}</div>
+              <div class="gross-amount">Brutto: {{ formatCurrency(data.invoice.grossPrice, data.invoice.currency) }}</div>
+            </div>
+          </div>
+          <div class="invoice-meta">
+            <div class="meta-item">
+              <mat-icon class="meta-icon">calendar_today</mat-icon>
+              {{ formatDate(data.invoice.createdAt) }}
+            </div>
+            <div class="meta-item" *ngIf="data.invoice.sellerTaxCode && data.invoice.sellerTaxCode !== 'null'">
+              <mat-icon class="meta-icon">business_center</mat-icon>
+              NIP: {{ data.invoice.sellerTaxCode }}
+            </div>
+            <div class="category-badge" *ngIf="data.invoice.category && data.invoice.category !== 'NONE'">
+              {{ getCategoryDisplayName(data.invoice.category) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expense Selection -->
+      <div class="form-section">
+        <div class="section-title">
+          <mat-icon class="section-icon">assignment</mat-icon>
+          Wybierz wydatek
+        </div>
+
+        <!-- Create New Expense Option -->
+        <div class="create-expense-section" (click)="switchToCreateView()">
+          <mat-icon class="create-expense-icon">add_circle_outline</mat-icon>
+          <div class="create-expense-text">Utwórz nowy wydatek dla tej faktury</div>
+          <button mat-raised-button color="primary" class="btn-create" type="button">
+            <mat-icon>add</mat-icon>
+            Nowy wydatek
+          </button>
+        </div>
+
+        <!-- Search and Filters -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Szukaj wydatków</mat-label>
+          <input matInput
+                 #searchInput
+                 placeholder="Wpisz nazwę wydatku..."
+                 [value]="searchTerm"
+                 (input)="onSearchChange(searchInput.value)">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <div class="filter-section">
+          <div class="filter-row">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Typ</mat-label>
+              <mat-select [value]="typeFilter" (selectionChange)="onTypeFilterChange($event.value)">
+                <mat-option value="">Wszystkie</mat-option>
+                <mat-option value="FIXED">Stałe</mat-option>
+                <mat-option value="VARIABLE">Zmienne</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Kategoria</mat-label>
+              <mat-select [value]="categoryFilter" (selectionChange)="onCategoryFilterChange($event.value)">
+                <mat-option value="">Wszystkie</mat-option>
+                <mat-option *ngFor="let category of availableCategories" [value]="category.key">
+                  {{ category.displayName }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="expense-count">Znaleziono {{ filteredExpenses.length }} wydatków</div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Ładowanie wydatków...</p>
+        </div>
+
+        <!-- Expense List -->
+        <div *ngIf="!isLoading" class="expense-list">
+          <div *ngFor="let expense of filteredExpenses; trackBy: trackByExpenseId"
+               class="expense-item"
+               [class.selected]="isExpenseSelected(expense)"
+               (click)="selectExpense(expense)">
+            <mat-radio-button
+              [checked]="isExpenseSelected(expense)"
+              [value]="expense.id"
+              class="expense-radio">
+            </mat-radio-button>
+            <div class="expense-info">
+              <div class="expense-name">{{ expense.name }}</div>
+              <div class="expense-details">
+                <span class="expense-type-badge" [class.variable]="expense.type === 'VARIABLE'">
+                  {{ getTypeDisplayName(expense.type) }}
+                </span>
+                <span>•</span>
+                <span>{{ getCategoryDisplayName(expense.category) }}</span>
+                <span>•</span>
+                <span>{{ expense.period }}</span>
+              </div>
+              <div class="expense-description" *ngIf="expense.description">
+                {{ expense.description }}
+              </div>
+            </div>
+            <div class="expense-amount">
+              <div>{{ formatCurrency(expense.netAmount, expense.currency) }}</div>
+              <div class="expense-currency">{{ expense.currency }}</div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredExpenses.length === 0 && !isLoading" class="empty-state">
+            <mat-icon class="empty-icon">assignment</mat-icon>
+            <h3>Brak wydatków</h3>
+            <p>Nie znaleziono wydatków spełniających kryteria wyszukiwania.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="dialog-actions">
+      <button mat-button (click)="closeDialog()" class="btn-secondary">
+        <mat-icon>close</mat-icon>
+        Anuluj
+      </button>
+      <button mat-raised-button
+              color="primary"
+              [disabled]="!canAssign"
+              (click)="assignToSelectedExpense()"
+              class="btn-primary">
+        <mat-spinner *ngIf="isAssigning" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!isAssigning">add_business</mat-icon>
+        {{ isAssigning ? 'Przypisywanie...' : 'Przypisz do wydatku' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Create Expense View -->
+  <div *ngIf="currentView === 'create'" class="dialog-view">
+    <!-- Header -->
+    <div class="dialog-header">
+      <div class="dialog-title">
+        <div class="dialog-icon purple">
+          <mat-icon>add_box</mat-icon>
+        </div>
+        <div>
+          <h2>Utwórz nowy wydatek</h2>
+          <div class="dialog-subtitle">Dodaj nowy wydatek i przypisz do niego fakturę</div>
+        </div>
+      </div>
+      <button mat-icon-button class="close-button" (click)="switchToAssignView()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="dialog-content">
+      <!-- Invoice Information (repeated for context) -->
+      <div class="form-section">
+        <div class="section-title">
+          <mat-icon class="section-icon purple">receipt</mat-icon>
+          Faktura do przypisania
+        </div>
+        <div class="invoice-card compact">
+          <div class="invoice-header">
+            <div>
+              <div class="invoice-number">{{ data.invoice.number }}</div>
+              <div class="invoice-supplier" *ngIf="data.invoice.sellerName && data.invoice.sellerName !== 'null'">
+                {{ data.invoice.sellerName }}
+              </div>
+            </div>
+            <div class="invoice-amounts">
+              <div class="net-amount">{{ formatCurrency(data.invoice.netPrice, data.invoice.currency) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expense Form -->
+      <div class="form-section">
+        <div class="section-title">
+          <mat-icon class="section-icon purple">assignment</mat-icon>
+          Szczegóły wydatku
+        </div>
+
+        <form [formGroup]="createExpenseForm" class="create-expense-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nazwa wydatku *</mat-label>
+            <input matInput
+                   formControlName="name"
+                   placeholder="Np. Koszty materiałów - Maj 2024">
+            <mat-error *ngIf="hasFieldError('name')">
+              {{ getFieldError('name') }}
+            </mat-error>
+          </mat-form-field>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Typ wydatku *</mat-label>
+              <mat-select formControlName="type">
+                <mat-option value="">Wybierz typ</mat-option>
+                <mat-option value="FIXED">Stały</mat-option>
+                <mat-option value="VARIABLE">Zmienny</mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasFieldError('type')">
+                {{ getFieldError('type') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Kategoria *</mat-label>
+              <mat-select formControlName="category">
+                <mat-option value="">Wybierz kategorię</mat-option>
+                <mat-option *ngFor="let category of availableCategories" [value]="category.key">
+                  {{ category.displayName }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasFieldError('category')">
+                {{ getFieldError('category') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Date fields for fixed expenses -->
+          <div *ngIf="expenseTypeIsFixed" class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Miesiąc *</mat-label>
+              <mat-select formControlName="month">
+                <mat-option *ngFor="let month of [1,2,3,4,5,6,7,8,9,10,11,12]; let i = index" [value]="month">
+                  {{ getMonthName(month) }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasFieldError('month')">
+                {{ getFieldError('month') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Rok *</mat-label>
+              <mat-select formControlName="year">
+                <mat-option value="2023">2023</mat-option>
+                <mat-option value="2024">2024</mat-option>
+                <mat-option value="2025">2025</mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasFieldError('year')">
+                {{ getFieldError('year') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Date field for variable expenses -->
+          <mat-form-field *ngIf="expenseTypeIsVariable" appearance="outline" class="full-width">
+            <mat-label>Data wydatku *</mat-label>
+            <input matInput
+                   type="date"
+                   formControlName="expenseDate">
+            <mat-error *ngIf="hasFieldError('expenseDate')">
+              {{ getFieldError('expenseDate') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Opis wydatku</mat-label>
+            <textarea matInput
+                      formControlName="description"
+                      placeholder="Opcjonalny opis wydatku..."
+                      rows="3">
+            </textarea>
+          </mat-form-field>
+
+          <!-- Recurring option for fixed expenses -->
+          <mat-checkbox *ngIf="expenseTypeIsFixed"
+                        formControlName="isRecurring"
+                        class="recurring-checkbox">
+            Wydatek cykliczny (będzie automatycznie tworzony w kolejnych miesiącach)
+          </mat-checkbox>
+        </form>
+      </div>
+
+      <!-- Automatic Assignment Info -->
+      <div class="form-section">
+        <div class="section-title">
+          <mat-icon class="section-icon purple">link</mat-icon>
+          Automatyczne przypisanie
+        </div>
+        <div class="info-card">
+          <div class="info-header">
+            <mat-icon class="info-icon">info</mat-icon>
+            <span class="info-title">Informacja</span>
+          </div>
+          <div class="info-text">
+            Po utworzeniu wydatku, wybrana faktura zostanie automatycznie do niego przypisana.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="dialog-actions">
+      <button mat-button (click)="switchToAssignView()" class="btn-secondary">
+        <mat-icon>arrow_back</mat-icon>
+        Powrót
+      </button>
+      <button mat-raised-button
+              color="primary"
+              [disabled]="!canCreate"
+              (click)="createExpenseAndAssign()"
+              class="btn-primary">
+        <mat-spinner *ngIf="isCreating" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!isCreating">add_box</mat-icon>
+        {{ isCreating ? 'Tworzenie...' : 'Utwórz i przypisz' }}
+      </button>
+    </div>
+  </div>
+</div>

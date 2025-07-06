@@ -31,6 +31,9 @@ import {
   CreateInvoiceExpenseDialogComponent
 } from "./accounting-invoices/expense/create-invoice-expense-dialog/create-invoice-expense-dialog.component";
 import {MatRadioButton} from "@angular/material/radio";
+import {
+  AssignInvoiceDialogModule
+} from "./accounting-invoices/expense/assign-invoice-dialog/assign-invoice-dialog.module";
 
 @NgModule({
   declarations: [
@@ -39,9 +42,10 @@ import {MatRadioButton} from "@angular/material/radio";
     AccountingDashboardComponent,
     AccountingInvoicesComponent,
     AssignInvoiceToExpenseDialogComponent,
-    CreateInvoiceExpenseDialogComponent
+    CreateInvoiceExpenseDialogComponent,
   ],
   imports: [
+    AssignInvoiceDialogModule,
     CommonModule,
     FormsModule,
     MatIconModule,
