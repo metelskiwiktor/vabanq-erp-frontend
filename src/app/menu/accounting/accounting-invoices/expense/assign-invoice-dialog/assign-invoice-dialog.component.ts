@@ -5,17 +5,17 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, Observable, of } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, switchMap, startWith, catchError } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { CostInvoice } from "../../../../../utility/service/cost-invoice.service";
-import { ExpenseService, ExpenseResponse, CreateExpenseRequest, AttachInvoiceRequest } from "../../../../../utility/service/expense.service";
+import { CostInvoice, CostInvoiceCategory } from "../../../../../utility/service/cost-invoice.service";
+import { ExpenseService, ExpenseResponse, CreateExpenseRequest, AttachInvoiceRequest, ExpenseCategory } from "../../../../../utility/service/expense.service";
 import { ExpenseCategoryMapperService } from "../../../../../utility/service/expense-category-mapper.service";
 
 interface ExpenseOption {
-  netAmount: number;
   id: string;
   name: string;
   type: 'FIXED' | 'VARIABLE';
-  category: string;
+  category: ExpenseCategory;
   totalCost: number;
+  netAmount: number;
   currency: string;
   period: string;
   description?: string;
@@ -54,18 +54,7 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
   periodFilter = '';
 
   // Options
-  availableCategories = [
-    { key: 'MATERIALS', displayName: 'Materiały' },
-    { key: 'OFFICE', displayName: 'Biuro' },
-    { key: 'MARKETING', displayName: 'Marketing' },
-    { key: 'UTILITIES', displayName: 'Media' },
-    { key: 'SERVICES', displayName: 'Usługi' },
-    { key: 'RENT', displayName: 'Czynsz' },
-    { key: 'INSURANCE', displayName: 'Ubezpieczenia' },
-    { key: 'SOFTWARE', displayName: 'Oprogramowanie' },
-    { key: 'TRANSPORT', displayName: 'Transport' },
-    { key: 'OTHER', displayName: 'Inne' }
-  ];
+  availableCategories: { key: ExpenseCategory; displayName: string }[] = [];
 
   constructor(
     public dialogRef: MatDialogRef<AssignInvoiceDialogComponent>,
@@ -85,6 +74,7 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.availableCategories = this.expenseService.getAvailableCategories();
     this.loadAvailableExpenses();
     this.setupFormSubscriptions();
   }
@@ -103,7 +93,7 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
 
     // Load expenses for current month
     const currentDate = new Date();
-    const yearMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    const yearMonth = this.formatMonthForBackend(currentDate);
 
     this.expenseService.listExpenses(yearMonth)
       .pipe(
@@ -124,14 +114,20 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
       });
   }
 
+  private formatMonthForBackend(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
   private mapExpenseToOption(expense: ExpenseResponse): ExpenseOption {
     return {
       id: expense.id,
-      netAmount: expense.netAmount,
       name: expense.name,
       type: expense.type,
       category: expense.category,
-      totalCost: expense.totalCost,
+      totalCost: Number(expense.totalCost),
+      netAmount: Number(expense.totalCost),
       currency: 'PLN',
       period: this.formatDateToPeriod(expense.createdAt),
       description: expense.description
@@ -232,15 +228,6 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     this.createExpenseForm.reset();
   }
 
-  private generateExpenseName(): string {
-    const invoice = this.data.invoice;
-    return this.expenseCategoryMapper.generateExpenseNameFromInvoice(
-      invoice.number,
-      invoice.sellerName,
-      invoice.description
-    );
-  }
-
   // Assignment action
   async assignToSelectedExpense(): Promise<void> {
     if (!this.selectedExpenseId) return;
@@ -292,6 +279,7 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
         name: formValue.name,
         description: formValue.description || undefined,
         type: formValue.type,
+        cyclic: false, // Default to false for now
         category: formValue.category,
         tags: tags
       };
@@ -345,13 +333,18 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     return new Date(dateString).toLocaleDateString('pl-PL');
   }
 
-  getCategoryDisplayName(category: string): string {
-    const found = this.availableCategories.find(c => c.key === category);
-    return found?.displayName || category;
+  getCategoryDisplayName(category: ExpenseCategory | string): string {
+    // Handle both ExpenseCategory and CostInvoiceCategory
+    if (typeof category === 'string') {
+      // If it's a string, try to map it from CostInvoiceCategory to ExpenseCategory first
+      const mappedCategory = this.expenseCategoryMapper.mapInvoiceCategoryToExpenseCategory(category as any);
+      return this.expenseService.getCategoryDisplayName(mappedCategory);
+    }
+    return this.expenseService.getCategoryDisplayName(category);
   }
 
   getTypeDisplayName(type: 'FIXED' | 'VARIABLE'): string {
-    return type === 'FIXED' ? 'Stały' : 'Zmienny';
+    return this.expenseService.getTypeDisplayName(type);
   }
 
   getMonthName(month: number): string {

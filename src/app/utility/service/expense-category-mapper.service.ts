@@ -1,6 +1,7 @@
 // src/app/utility/service/expense-category-mapper.service.ts
 import { Injectable } from '@angular/core';
 import { CostInvoiceCategory } from './cost-invoice.service';
+import { ExpenseCategory } from './expense.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,22 +11,22 @@ export class ExpenseCategoryMapperService {
   /**
    * Mapuje kategorię faktury kosztowej na kategorię wydatku
    */
-  mapInvoiceCategoryToExpenseCategory(invoiceCategory: CostInvoiceCategory | string | undefined): string {
-    if (!invoiceCategory) return 'OTHER';
+  mapInvoiceCategoryToExpenseCategory(invoiceCategory: CostInvoiceCategory | string | undefined): ExpenseCategory {
+    if (!invoiceCategory) return ExpenseCategory.OTHER;
 
-    const categoryMapping: { [key: string]: string } = {
-      'GOODS_OR_MATERIALS_PURCHASE': 'MATERIALS',
-      'ELECTRONIC_SERVICES': 'SOFTWARE',
-      'ACCOUNTING_SERVICES': 'SERVICES',
-      'HOUSING_FEES': 'UTILITIES',
-      'ENTREPRENEUR_EXPENSES': 'OFFICE',
-      'SALARY': 'SERVICES',
-      'EMPLOYEE_SOCIAL_SECURITY': 'SERVICES',
-      'NONE': 'OTHER',
-      'OTHER': 'OTHER'
+    const categoryMapping: { [key: string]: ExpenseCategory } = {
+      'GOODS_OR_MATERIALS_PURCHASE': ExpenseCategory.OTHER,
+      'ELECTRONIC_SERVICES': ExpenseCategory.SERVICES,
+      'ACCOUNTING_SERVICES': ExpenseCategory.ACCOUNTING,
+      'HOUSING_FEES': ExpenseCategory.OTHER,
+      'ENTREPRENEUR_EXPENSES': ExpenseCategory.OFFICE_SUPPLIES,
+      'SALARY': ExpenseCategory.SALARY,
+      'EMPLOYEE_SOCIAL_SECURITY': ExpenseCategory.SALARY,
+      'NONE': ExpenseCategory.OTHER,
+      'OTHER': ExpenseCategory.OTHER
     };
 
-    return categoryMapping[invoiceCategory as string] || 'OTHER';
+    return categoryMapping[invoiceCategory as string] || ExpenseCategory.OTHER;
   }
 
   /**

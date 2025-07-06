@@ -5,22 +5,32 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface ExpenseResponse {
-  netAmount: number;
   id: string;
   name: string;
   description: string;
   type: 'FIXED' | 'VARIABLE';
-  category: string;
+  cyclic: boolean;
+  category: ExpenseCategory;
   tags: string[];
   totalCost: number;
   createdAt: string;
+}
+
+export enum ExpenseCategory {
+  SERVICES = 'SERVICES',
+  ACCOUNTING = 'ACCOUNTING',
+  OFFICE_SUPPLIES = 'OFFICE_SUPPLIES',
+  TRAVEL = 'TRAVEL',
+  SALARY = 'SALARY',
+  OTHER = 'OTHER'
 }
 
 export interface CreateExpenseRequest {
   name: string;
   description?: string;
   type: 'FIXED' | 'VARIABLE';
-  category: string;
+  cyclic: boolean;
+  category: ExpenseCategory;
   tags: string[];
 }
 
@@ -137,18 +147,14 @@ export class ExpenseService {
   /**
    * Mapowanie kategorii na display names
    */
-  getCategoryDisplayName(category: string): string {
-    const categoryMap: { [key: string]: string } = {
-      'MATERIALS': 'Materiały',
-      'OFFICE': 'Biuro',
-      'MARKETING': 'Marketing',
-      'UTILITIES': 'Media',
-      'SERVICES': 'Usługi',
-      'RENT': 'Czynsz',
-      'INSURANCE': 'Ubezpieczenia',
-      'SOFTWARE': 'Oprogramowanie',
-      'TRANSPORT': 'Transport',
-      'OTHER': 'Inne'
+  getCategoryDisplayName(category: ExpenseCategory): string {
+    const categoryMap: { [key in ExpenseCategory]: string } = {
+      [ExpenseCategory.SERVICES]: 'Usługi',
+      [ExpenseCategory.ACCOUNTING]: 'Księgowość',
+      [ExpenseCategory.OFFICE_SUPPLIES]: 'Biuro',
+      [ExpenseCategory.TRAVEL]: 'Podróże',
+      [ExpenseCategory.SALARY]: 'Wynagrodzenie',
+      [ExpenseCategory.OTHER]: 'Inne'
     };
     return categoryMap[category] || category;
   }
@@ -163,18 +169,14 @@ export class ExpenseService {
   /**
    * Dostępne kategorie
    */
-  getAvailableCategories(): { key: string; displayName: string }[] {
+  getAvailableCategories(): { key: ExpenseCategory; displayName: string }[] {
     return [
-      { key: 'MATERIALS', displayName: 'Materiały' },
-      { key: 'OFFICE', displayName: 'Biuro' },
-      { key: 'MARKETING', displayName: 'Marketing' },
-      { key: 'UTILITIES', displayName: 'Media' },
-      { key: 'SERVICES', displayName: 'Usługi' },
-      { key: 'RENT', displayName: 'Czynsz' },
-      { key: 'INSURANCE', displayName: 'Ubezpieczenia' },
-      { key: 'SOFTWARE', displayName: 'Oprogramowanie' },
-      { key: 'TRANSPORT', displayName: 'Transport' },
-      { key: 'OTHER', displayName: 'Inne' }
+      { key: ExpenseCategory.SERVICES, displayName: 'Usługi' },
+      { key: ExpenseCategory.ACCOUNTING, displayName: 'Księgowość' },
+      { key: ExpenseCategory.OFFICE_SUPPLIES, displayName: 'Biuro' },
+      { key: ExpenseCategory.TRAVEL, displayName: 'Podróże' },
+      { key: ExpenseCategory.SALARY, displayName: 'Wynagrodzenie' },
+      { key: ExpenseCategory.OTHER, displayName: 'Inne' }
     ];
   }
 }

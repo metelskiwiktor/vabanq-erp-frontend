@@ -1,20 +1,23 @@
+// src/app/menu/accounting/accounting-expenses/accounting-expenses.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ExpenseService, ExpenseResponse, ExpenseCategory } from '../../../utility/service/expense.service';
 
 interface ExpenseItem {
   id: string;
   name: string;
   description: string;
   type: 'FIXED' | 'VARIABLE';
-  category: string;
+  category: ExpenseCategory;
   amount: number;
   currency: string;
   date: string;
   tags: string[];
   itemsCount: number;
   invoicesCount: number;
+  cyclic: boolean;
 }
 
 interface ExpenseSummary {
@@ -66,22 +69,15 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     { value: 'VARIABLE', label: 'Zmienne' }
   ];
 
-  categoryOptions = [
-    { value: '', label: 'Wszystkie kategorie' },
-    { value: 'SERVICES', label: 'Usługi' },
-    { value: 'OFFICE_SUPPLIES', label: 'Biuro' },
-    { value: 'ACCOUNTING', label: 'Księgowość' },
-    { value: 'MATERIALS', label: 'Materiały' },
-    { value: 'MARKETING', label: 'Marketing' },
-    { value: 'UTILITIES', label: 'Media' },
-    { value: 'OTHER', label: 'Inne' }
-  ];
+  categoryOptions: { value: string; label: string }[] = [];
 
   constructor(
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private expenseService: ExpenseService
   ) {}
 
   ngOnInit(): void {
+    this.initializeCategoryOptions();
     this.loadExpenses();
   }
 
@@ -90,125 +86,67 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  private initializeCategoryOptions(): void {
+    this.categoryOptions = [
+      { value: '', label: 'Wszystkie kategorie' },
+      ...this.expenseService.getAvailableCategories().map(cat => ({
+        value: cat.key,
+        label: cat.displayName
+      }))
+    ];
+  }
+
   loadExpenses(): void {
     this.isLoading = true;
 
-    // Mock data for now - replace with actual service call
-    setTimeout(() => {
-      this.expenses = this.getMockExpenses();
-      this.applyFilters();
-      this.calculateSummary();
-      this.isLoading = false;
-    }, 500);
+    // Format month as YYYY-MM for backend
+    const monthString = this.formatMonthForBackend(this.selectedMonth);
+
+    this.expenseService.listExpenses(monthString)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (expenses: ExpenseResponse[]) => {
+          this.expenses = expenses.map(expense => this.mapExpenseResponseToItem(expense));
+          this.applyFilters();
+          this.calculateSummary();
+          this.isLoading = false;
+          console.log(`Loaded ${this.expenses.length} expenses for ${monthString}`);
+        },
+        error: (error) => {
+          console.error('Error loading expenses:', error);
+          this.snackBar.open('Błąd podczas ładowania wydatków', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.isLoading = false;
+          this.expenses = [];
+          this.filteredExpenses = [];
+          this.calculateSummary();
+        }
+      });
   }
 
-  private getMockExpenses(): ExpenseItem[] {
-    return [
-      {
-        id: 'exp-001',
-        name: 'Koszty biurowe - Maj 2024',
-        description: 'Zakup materiałów biurowych, papieru i akcesoriów do drukarek',
-        type: 'FIXED',
-        category: 'OFFICE_SUPPLIES',
-        amount: 4250.00,
-        currency: 'PLN',
-        date: '2024-05-15',
-        tags: ['biuro', 'materiały'],
-        itemsCount: 3,
-        invoicesCount: 2
-      },
-      {
-        id: 'exp-002',
-        name: 'Serwis drukarek 3D',
-        description: 'Przegląd techniczny i naprawa urządzeń drukujących',
-        type: 'VARIABLE',
-        category: 'SERVICES',
-        amount: 1850.00,
-        currency: 'PLN',
-        date: '2024-05-10',
-        tags: ['serwis', 'drukarki', 'naprawa'],
-        itemsCount: 1,
-        invoicesCount: 1
-      },
-      {
-        id: 'exp-003',
-        name: 'Energia elektryczna - Maj',
-        description: 'Opłaty za energię elektryczną w hali produkcyjnej',
-        type: 'FIXED',
-        category: 'UTILITIES',
-        amount: 3200.00,
-        currency: 'PLN',
-        date: '2024-05-05',
-        tags: ['energia', 'media'],
-        itemsCount: 1,
-        invoicesCount: 1
-      },
-      {
-        id: 'exp-004',
-        name: 'Kampania marketingowa Q2',
-        description: 'Reklama online, materiały promocyjne i kampanie społecznościowe',
-        type: 'VARIABLE',
-        category: 'MARKETING',
-        amount: 8500.00,
-        currency: 'PLN',
-        date: '2024-05-01',
-        tags: ['marketing', 'reklama', 'q2'],
-        itemsCount: 5,
-        invoicesCount: 3
-      },
-      {
-        id: 'exp-005',
-        name: 'Usługi księgowe - Maj 2024',
-        description: 'Prowadzenie księgowości i obsługa podatkowa',
-        type: 'FIXED',
-        category: 'ACCOUNTING',
-        amount: 2500.00,
-        currency: 'PLN',
-        date: '2024-04-25',
-        tags: ['księgowość', 'podatki'],
-        itemsCount: 1,
-        invoicesCount: 1
-      },
-      {
-        id: 'exp-006',
-        name: 'Materiały do drukarek 3D',
-        description: 'Filamenty PLA, ABS i materiały pomocnicze',
-        type: 'VARIABLE',
-        category: 'MATERIALS',
-        amount: 3750.00,
-        currency: 'PLN',
-        date: '2024-05-12',
-        tags: ['materiały', 'filamenty', 'drukarki'],
-        itemsCount: 4,
-        invoicesCount: 2
-      },
-      {
-        id: 'exp-007',
-        name: 'Abonament internetowy',
-        description: 'Opłaty za internet w biurze i hali produkcyjnej',
-        type: 'FIXED',
-        category: 'UTILITIES',
-        amount: 450.00,
-        currency: 'PLN',
-        date: '2024-05-01',
-        tags: ['internet', 'abonament'],
-        itemsCount: 1,
-        invoicesCount: 1
-      },
-      {
-        id: 'exp-008',
-        name: 'Transport materiałów',
-        description: 'Koszty dostawy materiałów od dostawców',
-        type: 'VARIABLE',
-        category: 'SERVICES',
-        amount: 850.00,
-        currency: 'PLN',
-        date: '2024-05-18',
-        tags: ['transport', 'dostawa'],
-        itemsCount: 2,
-        invoicesCount: 1
-      }
-    ];
+  private formatMonthForBackend(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
+  private mapExpenseResponseToItem(expense: ExpenseResponse): ExpenseItem {
+    return {
+      id: expense.id,
+      name: expense.name,
+      description: expense.description || '',
+      type: expense.type,
+      category: expense.category,
+      amount: Number(expense.totalCost),
+      currency: 'PLN', // Default currency
+      date: expense.createdAt,
+      tags: expense.tags || [],
+      itemsCount: 0, // Will be determined by backend later
+      invoicesCount: 0, // Will be determined by backend later
+      cyclic: expense.cyclic
+    };
   }
 
   // Month navigation
@@ -262,39 +200,51 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       variableAmount: filtered.filter(exp => exp.type === 'VARIABLE').reduce((sum, exp) => sum + exp.amount, 0),
       variableCount: filtered.filter(exp => exp.type === 'VARIABLE').length,
       assignedInvoices: filtered.reduce((sum, exp) => sum + exp.invoicesCount, 0),
-      totalInvoices: 23 // Mock total invoices available
+      totalInvoices: 0 // TODO: Get from backend
     };
   }
 
-  // Actions
+  // Actions - placeholders for now
   createNewExpense(): void {
     console.log('Creating new expense...');
-    // TODO: Open create expense dialog
+    this.snackBar.open('Funkcja tworzenia wydatku będzie wkrótce dostępna', 'Zamknij', {
+      duration: 3000
+    });
   }
 
   exportExpenses(): void {
     console.log('Exporting expenses...');
-    // TODO: Implement export functionality
+    this.snackBar.open('Funkcja eksportu będzie wkrótce dostępna', 'Zamknij', {
+      duration: 3000
+    });
   }
 
   viewExpenseDetails(expense: ExpenseItem): void {
     console.log('Viewing expense details:', expense.id);
-    // TODO: Open expense details dialog
+    this.snackBar.open('Funkcja szczegółów wydatku będzie wkrótce dostępna', 'Zamknij', {
+      duration: 3000
+    });
   }
 
   viewExpenseInvoices(expense: ExpenseItem): void {
     console.log('Viewing expense invoices:', expense.id);
-    // TODO: Open invoices dialog
+    this.snackBar.open('Funkcja przeglądania faktur będzie wkrótce dostępna', 'Zamknij', {
+      duration: 3000
+    });
   }
 
   addExpenseItem(expense: ExpenseItem): void {
     console.log('Adding item to expense:', expense.id);
-    // TODO: Open add item dialog
+    this.snackBar.open('Funkcja dodawania pozycji będzie wkrótce dostępna', 'Zamknij', {
+      duration: 3000
+    });
   }
 
   editExpense(expense: ExpenseItem): void {
     console.log('Editing expense:', expense.id);
-    // TODO: Open edit expense dialog
+    this.snackBar.open('Funkcja edycji wydatku będzie wkrótce dostępna', 'Zamknij', {
+      duration: 3000
+    });
   }
 
   // Utility methods
@@ -316,20 +266,11 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     });
   }
 
-  getCategoryDisplayName(category: string): string {
-    const categoryMap: { [key: string]: string } = {
-      'SERVICES': 'Usługi',
-      'OFFICE_SUPPLIES': 'Biuro',
-      'ACCOUNTING': 'Księgowość',
-      'MATERIALS': 'Materiały',
-      'MARKETING': 'Marketing',
-      'UTILITIES': 'Media',
-      'OTHER': 'Inne'
-    };
-    return categoryMap[category] || category;
+  getCategoryDisplayName(category: ExpenseCategory): string {
+    return this.expenseService.getCategoryDisplayName(category);
   }
 
   getTypeDisplayName(type: 'FIXED' | 'VARIABLE'): string {
-    return type === 'FIXED' ? 'STAŁY' : 'ZMIENNY';
+    return this.expenseService.getTypeDisplayName(type);
   }
 }
