@@ -9,6 +9,7 @@ import {
 
 // Interfaces for expenses (adjust based on your actual expense model)
 export interface ExpenseItem {
+  expanded?: any;
   id: string;
   name: string;
   description?: string;
@@ -20,6 +21,14 @@ export interface ExpenseItem {
   year?: number;
   expenseDate?: string;
   tags?: string[];
+  items: ExpenseEntry[];
+}
+
+export interface ExpenseEntry {
+  id: string
+  amount: number;
+  costInvoiceId: string;
+  name: string
 }
 
 export interface ExpenseDialogData {
@@ -103,7 +112,7 @@ export class AssignInvoiceToExpenseDialogComponent implements OnInit, OnDestroy 
 
     // Mock data - replace with actual service call
     setTimeout(() => {
-      this.expenses = this.getMockExpenses();
+      // this.expenses = this.getMockExpenses();
       this.applyFilters();
       this.isLoading = false;
     }, 500);
@@ -124,68 +133,68 @@ export class AssignInvoiceToExpenseDialogComponent implements OnInit, OnDestroy 
     //   });
   }
 
-  private getMockExpenses(): ExpenseItem[] {
-    return [
-      {
-        id: 'exp-001',
-        name: 'Koszty materiałów - Maj 2024',
-        description: 'Zakup materiałów do drukarek 3D',
-        type: 'FIXED',
-        category: 'MATERIALS',
-        totalCost: 2450.00,
-        currency: 'PLN',
-        month: 5,
-        year: 2024,
-        tags: ['materiały', 'drukarki']
-      },
-      {
-        id: 'exp-002',
-        name: 'Zakup sprzętu biurowego',
-        description: 'Meble i akcesoria biurowe',
-        type: 'VARIABLE',
-        category: 'OFFICE',
-        totalCost: 890.00,
-        currency: 'PLN',
-        expenseDate: '2024-05-15',
-        tags: ['biuro', 'meble']
-      },
-      {
-        id: 'exp-003',
-        name: 'Kampania marketingowa Q2',
-        description: 'Reklama online i materiały promocyjne',
-        type: 'FIXED',
-        category: 'MARKETING',
-        totalCost: 3200.00,
-        currency: 'PLN',
-        month: 4,
-        year: 2024,
-        tags: ['marketing', 'reklama']
-      },
-      {
-        id: 'exp-004',
-        name: 'Serwis drukarek 3D',
-        description: 'Przegląd i naprawa urządzeń',
-        type: 'VARIABLE',
-        category: 'SERVICES',
-        totalCost: 567.50,
-        currency: 'PLN',
-        expenseDate: '2024-05-10',
-        tags: ['serwis', 'drukarki']
-      },
-      {
-        id: 'exp-005',
-        name: 'Energia elektryczna - Maj',
-        description: 'Rachunki za prąd',
-        type: 'FIXED',
-        category: 'UTILITIES',
-        totalCost: 1150.00,
-        currency: 'PLN',
-        month: 5,
-        year: 2024,
-        tags: ['media', 'prąd']
-      }
-    ];
-  }
+  // private getMockExpenses(): ExpenseItem[] {
+  //   return [
+  //     {
+  //       id: 'exp-001',
+  //       name: 'Koszty materiałów - Maj 2024',
+  //       description: 'Zakup materiałów do drukarek 3D',
+  //       type: 'FIXED',
+  //       category: 'MATERIALS',
+  //       totalCost: 2450.00,
+  //       currency: 'PLN',
+  //       month: 5,
+  //       year: 2024,
+  //       tags: ['materiały', 'drukarki']
+  //     },
+  //     {
+  //       id: 'exp-002',
+  //       name: 'Zakup sprzętu biurowego',
+  //       description: 'Meble i akcesoria biurowe',
+  //       type: 'VARIABLE',
+  //       category: 'OFFICE',
+  //       totalCost: 890.00,
+  //       currency: 'PLN',
+  //       expenseDate: '2024-05-15',
+  //       tags: ['biuro', 'meble']
+  //     },
+  //     {
+  //       id: 'exp-003',
+  //       name: 'Kampania marketingowa Q2',
+  //       description: 'Reklama online i materiały promocyjne',
+  //       type: 'FIXED',
+  //       category: 'MARKETING',
+  //       totalCost: 3200.00,
+  //       currency: 'PLN',
+  //       month: 4,
+  //       year: 2024,
+  //       tags: ['marketing', 'reklama']
+  //     },
+  //     {
+  //       id: 'exp-004',
+  //       name: 'Serwis drukarek 3D',
+  //       description: 'Przegląd i naprawa urządzeń',
+  //       type: 'VARIABLE',
+  //       category: 'SERVICES',
+  //       totalCost: 567.50,
+  //       currency: 'PLN',
+  //       expenseDate: '2024-05-10',
+  //       tags: ['serwis', 'drukarki']
+  //     },
+  //     {
+  //       id: 'exp-005',
+  //       name: 'Energia elektryczna - Maj',
+  //       description: 'Rachunki za prąd',
+  //       type: 'FIXED',
+  //       category: 'UTILITIES',
+  //       totalCost: 1150.00,
+  //       currency: 'PLN',
+  //       month: 5,
+  //       year: 2024,
+  //       tags: ['media', 'prąd']
+  //     }
+  //   ];
+  // }
 
   selectExpense(expenseId: string): void {
     this.selectedExpenseId = expenseId;

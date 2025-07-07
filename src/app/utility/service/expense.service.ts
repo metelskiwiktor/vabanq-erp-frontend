@@ -3,8 +3,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import {
+  ExpenseEntry
+} from "../../menu/accounting/accounting-invoices/expense/assign-invoice-to-expense-dialog/assign-invoice-to-expense-dialog.component";
 
 export interface ExpenseResponse {
+  expanded: boolean;
   id: string;
   name: string;
   description: string;
@@ -14,6 +18,7 @@ export interface ExpenseResponse {
   tags: string[];
   totalCost: number;
   createdAt: string;
+  items: ExpenseEntry[];
 }
 
 export enum ExpenseCategory {

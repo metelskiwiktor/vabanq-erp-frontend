@@ -6,6 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ExpenseService, ExpenseResponse, ExpenseCategory } from '../../../utility/service/expense.service';
 
 interface ExpenseItem {
+  expanded: boolean;
   id: string;
   name: string;
   description: string;
@@ -18,6 +19,14 @@ interface ExpenseItem {
   itemsCount: number;
   invoicesCount: number;
   cyclic: boolean;
+  items: ExpenseEntry[];
+}
+
+interface ExpenseEntry {
+  id: string
+  amount: number;
+  costInvoiceId: string;
+  name: string
 }
 
 interface ExpenseSummary {
@@ -106,6 +115,7 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (expenses: ExpenseResponse[]) => {
+          console.log(expenses)
           this.expenses = expenses.map(expense => this.mapExpenseResponseToItem(expense));
           this.applyFilters();
           this.calculateSummary();
@@ -135,6 +145,7 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   private mapExpenseResponseToItem(expense: ExpenseResponse): ExpenseItem {
     return {
       id: expense.id,
+      expanded: false,
       name: expense.name,
       description: expense.description || '',
       type: expense.type,
@@ -145,7 +156,8 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       tags: expense.tags || [],
       itemsCount: 0, // Will be determined by backend later
       invoicesCount: 0, // Will be determined by backend later
-      cyclic: expense.cyclic
+      cyclic: expense.cyclic,
+      items: expense.items
     };
   }
 
