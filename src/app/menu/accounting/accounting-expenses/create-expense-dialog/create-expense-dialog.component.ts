@@ -140,10 +140,9 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
       expense.items.forEach(item => {
         this.addExpenseItemFromData(item);
       });
-    } else {
-      // Add one empty item if no items exist
-      this.addExpenseItem();
     }
+
+    // If no items exist, don't add any - allow empty expenses
   }
 
   private addExpenseItemFromData(item: ExpenseEntry): void {
@@ -275,22 +274,44 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
     const isInvoiceItem = itemForm.get('isInvoiceItem')?.value;
 
     if (isInvoiceItem) {
-      this.snackBar.open('Nie można usunąć pozycji pochodzącej z faktury. Usuń przypisanie faktury w sekcji Faktury.', 'Zamknij', {
-        duration: 5000,
-        panelClass: ['error-snackbar']
-      });
+      // For invoice items, we'll detach them from the expense
+      this.detachInvoiceItem(index);
       return;
     }
 
-    if (this.getManualItemsCount() <= 1) {
-      this.snackBar.open('Wydatek musi mieć przynajmniej jedną pozycję manualną', 'Zamknij', {
+    // For manual items, we can always remove them - no minimum required
+    this.itemsFormArray.removeAt(index);
+  }
+
+  async detachInvoiceItem(index: number): Promise<void> {
+    const itemForm = this.itemsFormArray.at(index) as FormGroup;
+    const costInvoiceId = itemForm.get('costInvoiceId')?.value;
+    const itemId = itemForm.get('id')?.value;
+
+    if (!costInvoiceId || !this.expenseId || !this.isEditMode) {
+      // For non-persisted items, just remove from form
+      this.itemsFormArray.removeAt(index);
+      return;
+    }
+
+    try {
+      // Call backend to detach invoice
+      await this.expenseService.detachInvoiceFromExpense(this.expenseId, costInvoiceId).toPromise();
+
+      // Remove from form array
+      this.itemsFormArray.removeAt(index);
+
+      this.snackBar.open('Faktura została odłączona od wydatku', 'Zamknij', {
+        duration: 3000,
+        panelClass: ['success-snackbar']
+      });
+    } catch (error) {
+      console.error('Error detaching invoice:', error);
+      this.snackBar.open('Błąd podczas odłączania faktury', 'Zamknij', {
         duration: 3000,
         panelClass: ['error-snackbar']
       });
-      return;
     }
-
-    this.itemsFormArray.removeAt(index);
   }
 
   protected getManualItemsCount(): number {
@@ -539,13 +560,10 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
     return itemGroup.get('isInvoiceItem')?.value || false;
   }
 
-  // Check if item can be removed
+  // Check if item can be removed - Updated to allow removing all items
   canRemoveItem(index: number): boolean {
-    const isInvoiceItem = this.isItemFromInvoice(index);
-    const manualItemsCount = this.getManualItemsCount();
-
-    if (isInvoiceItem) return false; // Never remove invoice items
-    return manualItemsCount > 1; // Always keep at least one manual item
+    // All items can be removed now - no minimum requirements
+    return true;
   }
 
   // Toggle auto-calculation for specific item
@@ -560,7 +578,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
   }
 
   get canSave(): boolean {
-    return this.expenseForm.valid && !this.isCreating && this.itemsFormArray.length > 0;
+    return this.expenseForm.valid && !this.isCreating;
   }
 
   get isFixedExpense(): boolean {

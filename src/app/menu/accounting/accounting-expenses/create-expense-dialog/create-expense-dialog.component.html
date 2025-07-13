@@ -120,12 +120,13 @@
           </div>
           <div class="info-text">
             <span *ngIf="!isEditMode">
-              Tutaj możesz dodać tylko pozycje manualne. Aby przypisać faktury do wydatków,
+              Tutaj możesz dodać pozycje manualne. Aby przypisać faktury do wydatków,
               przejdź do sekcji "Faktury" w panelu księgowości.
             </span>
             <span *ngIf="isEditMode">
-              Pozycje pochodzące z faktur (oznaczone <strong>Faktura</strong>) nie mogą być edytowane tutaj.
-              Aby usunąć przypisanie faktury, przejdź do sekcji "Faktury".
+              Pozycje pochodzące z faktur (oznaczone <strong>Faktura</strong>) można usunąć klikając przycisk usuwania.
+              Spowoduje to odłączenie faktury od wydatku. Można także dodawać nowe pozycje manualne.
+              Wydatek może mieć 0 pozycji (wartość 0zł).
             </span>
           </div>
         </div>
@@ -155,9 +156,8 @@
                         mat-icon-button
                         class="remove-item-btn"
                         (click)="removeExpenseItem(i)"
-                        [disabled]="!canRemoveItem(i)"
-                        [matTooltip]="isItemFromInvoice(i) ? 'Nie można usunąć pozycji z faktury' : 'Usuń pozycję'">
-                  <mat-icon>delete</mat-icon>
+                        [matTooltip]="isItemFromInvoice(i) ? 'Odłącz fakturę od wydatku' : 'Usuń pozycję manualną'">
+                  <mat-icon>{{ isItemFromInvoice(i) ? 'link_off' : 'delete' }}</mat-icon>
                 </button>
               </div>
             </div>
@@ -244,18 +244,18 @@
           </div>
         </div>
 
-        <div class="add-item-section" *ngIf="!isEditMode || getManualItemsCount() > 0">
+        <div class="add-item-section">
           <button type="button"
                   mat-stroked-button
                   (click)="addExpenseItem()"
                   class="add-item-btn">
             <mat-icon>add</mat-icon>
-            <span>Dodaj kolejną pozycję manualną</span>
+            <span>Dodaj pozycję manualną</span>
           </button>
         </div>
 
         <!-- Summary -->
-        <div class="expense-summary">
+        <div class="expense-summary" *ngIf="itemsFormArray.length > 0">
           <div class="summary-row">
             <span class="summary-label">Suma netto:</span>
             <span class="summary-value">{{ formatCurrency(getTotalNetAmount()) }}</span>
@@ -267,6 +267,24 @@
           <div class="summary-row total">
             <span class="summary-label">Suma brutto:</span>
             <span class="summary-value">{{ formatCurrency(getTotalGrossAmount()) }}</span>
+          </div>
+        </div>
+
+        <!-- Empty state when no items -->
+        <div *ngIf="itemsFormArray.length === 0" class="empty-items-state">
+          <div class="empty-items-content">
+            <mat-icon class="empty-icon">receipt_long</mat-icon>
+            <h3>Brak pozycji</h3>
+            <p>Ten wydatek nie ma żadnych pozycji (wartość 0zł)</p>
+            <p class="empty-hint">Dodaj pozycję manualną lub przypisz faktury w sekcji "Faktury"</p>
+            <button type="button"
+                    mat-raised-button
+                    color="primary"
+                    (click)="addExpenseItem()"
+                    class="add-first-item-btn">
+              <mat-icon>add</mat-icon>
+              <span>Dodaj pierwszą pozycję</span>
+            </button>
           </div>
         </div>
       </div>

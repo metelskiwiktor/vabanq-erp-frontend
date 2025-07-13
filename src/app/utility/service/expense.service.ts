@@ -124,8 +124,8 @@ export class ExpenseService {
   /**
    * Usuń przypisanie faktury od wydatku
    */
-  detachInvoiceFromExpense(expenseId: string, invoiceId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${expenseId}/invoice-expenses/${invoiceId}`);
+  detachInvoiceFromExpense(expenseId: string, itemId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${expenseId}/items/${itemId}`);
   }
 
   /**
