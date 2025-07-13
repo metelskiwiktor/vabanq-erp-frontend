@@ -13,6 +13,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TextFieldModule } from '@angular/cdk/text-field';
 
 // Component
@@ -34,6 +36,8 @@ import { CreateExpenseDialogComponent } from './create-expense-dialog.component'
     MatCheckboxModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
     TextFieldModule
   ],
   exports: [

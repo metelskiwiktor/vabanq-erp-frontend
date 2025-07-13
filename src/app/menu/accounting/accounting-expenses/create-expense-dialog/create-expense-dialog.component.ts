@@ -16,6 +16,8 @@ interface ExpenseItemForm {
   name: string;
   netAmount: number;
   grossAmount: number;
+  taxPercentage: number; // Added for UI calculations only
+  autoCalculate: boolean; // Added for auto-calculation toggle
 }
 
 @Component({
@@ -100,18 +102,59 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
     const itemForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       netAmount: [0, [Validators.required, Validators.min(0.01)]],
-      grossAmount: [0, [Validators.required, Validators.min(0.01)]]
+      grossAmount: [0, [Validators.required, Validators.min(0.01)]],
+      taxPercentage: [23, [Validators.required, Validators.min(0), Validators.max(100)]],
+      autoCalculate: [true] // New field for auto-calculation toggle
     });
 
-    // Auto-calculate gross amount when net amount changes
+    this.setupTaxCalculations(itemForm);
+    this.itemsFormArray.push(itemForm);
+  }
+
+  private setupTaxCalculations(itemForm: FormGroup): void {
+    let isCalculating = false; // Flag to prevent infinite loops
+
+    // Calculate gross amount when net amount or tax percentage changes
     itemForm.get('netAmount')?.valueChanges.subscribe(netAmount => {
-      if (netAmount && netAmount > 0) {
-        const grossAmount = Number((netAmount * 1.23).toFixed(2)); // Default 23% VAT
+      if (isCalculating || !itemForm.get('autoCalculate')?.value) return;
+
+      const taxPercentage = itemForm.get('taxPercentage')?.value || 23;
+      if (netAmount && netAmount > 0 && taxPercentage >= 0) {
+        isCalculating = true;
+        const multiplier = 1 + (taxPercentage / 100);
+        const grossAmount = Number((netAmount * multiplier).toFixed(2));
         itemForm.get('grossAmount')?.setValue(grossAmount, { emitEvent: false });
+        isCalculating = false;
       }
     });
 
-    this.itemsFormArray.push(itemForm);
+    // Calculate net amount when gross amount changes
+    itemForm.get('grossAmount')?.valueChanges.subscribe(grossAmount => {
+      if (isCalculating || !itemForm.get('autoCalculate')?.value) return;
+
+      const taxPercentage = itemForm.get('taxPercentage')?.value || 23;
+      if (grossAmount && grossAmount > 0 && taxPercentage >= 0) {
+        isCalculating = true;
+        const multiplier = 1 + (taxPercentage / 100);
+        const netAmount = Number((grossAmount / multiplier).toFixed(2));
+        itemForm.get('netAmount')?.setValue(netAmount, { emitEvent: false });
+        isCalculating = false;
+      }
+    });
+
+    // Recalculate when tax percentage changes (uses net as base)
+    itemForm.get('taxPercentage')?.valueChanges.subscribe(taxPercentage => {
+      if (isCalculating || !itemForm.get('autoCalculate')?.value) return;
+
+      const netAmount = itemForm.get('netAmount')?.value;
+      if (netAmount && netAmount > 0 && taxPercentage >= 0) {
+        isCalculating = true;
+        const multiplier = 1 + (taxPercentage / 100);
+        const grossAmount = Number((netAmount * multiplier).toFixed(2));
+        itemForm.get('grossAmount')?.setValue(grossAmount, { emitEvent: false });
+        isCalculating = false;
+      }
+    });
   }
 
   removeExpenseItem(index: number): void {
@@ -166,6 +209,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
             name: item.name,
             netAmount: Number(item.netAmount),
             grossAmount: Number(item.grossAmount)
+            // Note: taxPercentage is not sent to backend - it's only for UI calculations
           };
 
           await this.expenseService.addManualItem(createdExpense.id, itemRequest).toPromise();
@@ -231,6 +275,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
         if (field.errors['required']) return 'To pole jest wymagane';
         if (field.errors['minlength']) return `Minimum ${field.errors['minlength'].requiredLength} znaków`;
         if (field.errors['min']) return `Minimalna wartość: ${field.errors['min'].min}`;
+        if (field.errors['max']) return `Maksymalna wartość: ${field.errors['max'].max}`;
       }
       return '';
     }
@@ -263,6 +308,23 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
       const grossAmount = control.get('grossAmount')?.value || 0;
       return total + Number(grossAmount);
     }, 0);
+  }
+
+  getTotalTaxAmount(): number {
+    return this.getTotalGrossAmount() - this.getTotalNetAmount();
+  }
+
+  // Check if item has auto-calculation enabled
+  isAutoCalculateEnabled(index: number): boolean {
+    const itemGroup = this.itemsFormArray.at(index) as FormGroup;
+    return itemGroup.get('autoCalculate')?.value || false;
+  }
+
+  // Toggle auto-calculation for specific item
+  toggleAutoCalculate(index: number): void {
+    const itemGroup = this.itemsFormArray.at(index) as FormGroup;
+    const currentValue = itemGroup.get('autoCalculate')?.value;
+    itemGroup.get('autoCalculate')?.setValue(!currentValue);
   }
 
   get canCreate(): boolean {

@@ -125,13 +125,23 @@
 
             <div class="item-header">
               <h4>Pozycja {{ i + 1 }}</h4>
-              <button type="button"
-                      mat-icon-button
-                      class="remove-item-btn"
-                      (click)="removeExpenseItem(i)"
-                      [disabled]="expenseItems.length <= 1">
-                <mat-icon>delete</mat-icon>
-              </button>
+              <div class="item-header-actions">
+                <div class="auto-calculate-toggle">
+                  <mat-slide-toggle
+                    [checked]="isAutoCalculateEnabled(i)"
+                    (change)="toggleAutoCalculate(i)"
+                    [matTooltip]="isAutoCalculateEnabled(i) ? 'Wyłącz automatyczne przeliczanie' : 'Włącz automatyczne przeliczanie'">
+                  </mat-slide-toggle>
+                  <span class="toggle-label">Auto</span>
+                </div>
+                <button type="button"
+                        mat-icon-button
+                        class="remove-item-btn"
+                        (click)="removeExpenseItem(i)"
+                        [disabled]="expenseItems.length <= 1">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             </div>
 
             <div class="item-form-row">
@@ -180,6 +190,26 @@
                   </mat-error>
                 </mat-form-field>
               </div>
+
+              <div class="form-group tax-group">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>VAT</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="taxPercentage"
+                         placeholder="23"
+                         min="0"
+                         max="100"
+                         step="1"
+                         [readonly]="!isAutoCalculateEnabled(i)">
+                  <span matTextSuffix>%</span>
+                  <mat-error *ngIf="hasFieldError('taxPercentage', i)">
+                    {{ getFieldError('taxPercentage', i) }}
+                  </mat-error>
+                  <mat-hint *ngIf="isAutoCalculateEnabled(i)">Automatyczne przeliczanie</mat-hint>
+                  <mat-hint *ngIf="!isAutoCalculateEnabled(i)">Przeliczanie wyłączone</mat-hint>
+                </mat-form-field>
+              </div>
             </div>
           </div>
         </div>
@@ -199,6 +229,10 @@
           <div class="summary-row">
             <span class="summary-label">Suma netto:</span>
             <span class="summary-value">{{ formatCurrency(getTotalNetAmount()) }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Suma VAT:</span>
+            <span class="summary-value tax-amount">{{ formatCurrency(getTotalTaxAmount()) }}</span>
           </div>
           <div class="summary-row total">
             <span class="summary-label">Suma brutto:</span>
