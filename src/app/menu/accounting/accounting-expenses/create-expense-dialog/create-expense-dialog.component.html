@@ -1,0 +1,228 @@
+<!-- src/app/menu/accounting/accounting-expenses/create-expense-dialog/create-expense-dialog.component.html -->
+<div class="dialog-container large">
+  <!-- Header -->
+  <div class="dialog-header">
+    <div class="dialog-title">
+      <div class="dialog-icon green">
+        <mat-icon>add_business</mat-icon>
+      </div>
+      <div>
+        <h2>Utwórz nowy wydatek</h2>
+        <div class="dialog-subtitle">Dodaj wydatek z pozycjami manualnymi</div>
+      </div>
+    </div>
+    <button mat-icon-button class="close-button" (click)="cancel()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="dialog-content">
+    <form [formGroup]="expenseForm" (ngSubmit)="createExpense()">
+      <!-- Basic Expense Information -->
+      <div class="form-section">
+        <div class="section-title">
+          <mat-icon class="section-icon green">assignment</mat-icon>
+          <span>Podstawowe informacje</span>
+        </div>
+
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nazwa wydatku *</mat-label>
+            <input matInput
+                   formControlName="name"
+                   placeholder="Np. Koszty materiałów - Maj 2024">
+            <mat-error *ngIf="hasFieldError('name')">
+              {{ getFieldError('name') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Typ wydatku *</mat-label>
+              <mat-select formControlName="type">
+                <mat-option *ngFor="let option of typeOptions" [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasFieldError('type')">
+                {{ getFieldError('type') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-group">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Kategoria *</mat-label>
+              <mat-select formControlName="category">
+                <mat-option *ngFor="let option of categoryOptions" [value]="option.key">
+                  {{ option.displayName }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasFieldError('category')">
+                {{ getFieldError('category') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Opis wydatku</mat-label>
+            <textarea matInput
+                      formControlName="description"
+                      placeholder="Opcjonalny opis wydatku..."
+                      rows="3"
+                      cdkTextareaAutosize
+                      cdkAutosizeMinRows="3"
+                      cdkAutosizeMaxRows="5">
+            </textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tagi</mat-label>
+            <input matInput
+                   formControlName="tags"
+                   placeholder="Tagi oddzielone przecinkami (np. materiały, drukarki, Q2)">
+            <mat-hint>Oddziel tagi przecinkami</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="checkbox-group" *ngIf="isFixedExpense">
+          <mat-checkbox formControlName="cyclic">
+            Wydatek cykliczny (będzie automatycznie tworzony w kolejnych miesiącach)
+          </mat-checkbox>
+        </div>
+      </div>
+
+      <!-- Expense Items -->
+      <div class="form-section">
+        <div class="section-title">
+          <mat-icon class="section-icon green">receipt_long</mat-icon>
+          <span>Pozycje wydatku</span>
+        </div>
+
+        <!-- Info about invoice assignments -->
+        <div class="info-card">
+          <div class="info-header">
+            <mat-icon class="info-icon">info</mat-icon>
+            <span class="info-title">Informacja</span>
+          </div>
+          <div class="info-text">
+            Tutaj możesz dodać tylko pozycje manualne. Aby przypisać faktury do wydatków,
+            przejdź do sekcji "Faktury" w panelu księgowości.
+          </div>
+        </div>
+
+        <div class="expense-items-container" formArrayName="items">
+          <div *ngFor="let itemGroup of expenseItems; let i = index"
+               class="expense-item-form"
+               [formGroupName]="i">
+
+            <div class="item-header">
+              <h4>Pozycja {{ i + 1 }}</h4>
+              <button type="button"
+                      mat-icon-button
+                      class="remove-item-btn"
+                      (click)="removeExpenseItem(i)"
+                      [disabled]="expenseItems.length <= 1">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <div class="item-form-row">
+              <div class="form-group flex-grow">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Nazwa pozycji *</mat-label>
+                  <input matInput
+                         formControlName="name"
+                         placeholder="Np. Filament PLA 1kg">
+                  <mat-error *ngIf="hasFieldError('name', i)">
+                    {{ getFieldError('name', i) }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="item-form-row">
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Kwota netto *</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="netAmount"
+                         placeholder="0.00"
+                         min="0.01"
+                         step="0.01">
+                  <span matTextSuffix>PLN</span>
+                  <mat-error *ngIf="hasFieldError('netAmount', i)">
+                    {{ getFieldError('netAmount', i) }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-group">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Kwota brutto *</mat-label>
+                  <input matInput
+                         type="number"
+                         formControlName="grossAmount"
+                         placeholder="0.00"
+                         min="0.01"
+                         step="0.01">
+                  <span matTextSuffix>PLN</span>
+                  <mat-error *ngIf="hasFieldError('grossAmount', i)">
+                    {{ getFieldError('grossAmount', i) }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="add-item-section">
+          <button type="button"
+                  mat-stroked-button
+                  (click)="addExpenseItem()"
+                  class="add-item-btn">
+            <mat-icon>add</mat-icon>
+            <span>Dodaj kolejną pozycję</span>
+          </button>
+        </div>
+
+        <!-- Summary -->
+        <div class="expense-summary">
+          <div class="summary-row">
+            <span class="summary-label">Suma netto:</span>
+            <span class="summary-value">{{ formatCurrency(getTotalNetAmount()) }}</span>
+          </div>
+          <div class="summary-row total">
+            <span class="summary-label">Suma brutto:</span>
+            <span class="summary-value">{{ formatCurrency(getTotalGrossAmount()) }}</span>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Actions -->
+  <div class="dialog-actions">
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>close</mat-icon>
+      <span>Anuluj</span>
+    </button>
+    <button mat-raised-button
+            color="primary"
+            [disabled]="!canCreate"
+            (click)="createExpense()"
+            class="btn-green">
+      <mat-spinner *ngIf="isCreating" diameter="20"></mat-spinner>
+      <mat-icon *ngIf="!isCreating">add_business</mat-icon>
+      <span>{{ isCreating ? 'Tworzenie...' : 'Utwórz wydatek' }}</span>
+    </button>
+  </div>
+</div>

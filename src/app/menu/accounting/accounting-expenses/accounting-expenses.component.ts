@@ -1,9 +1,16 @@
-// src/app/menu/accounting/accounting-expenses/accounting-expenses.component.ts
+// src/app/menu/accounting/accounting-expenses/accounting-expenses.component.ts - Updated with dialog integration
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ExpenseService, ExpenseResponse, ExpenseCategory, ExpenseEntry } from '../../../utility/service/expense.service';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  ExpenseService,
+  ExpenseResponse,
+  ExpenseCategory,
+  ExpenseEntry
+} from '../../../utility/service/expense.service';
+import { CreateExpenseDialogComponent } from './create-expense-dialog/create-expense-dialog.component';
 
 interface ExpenseItem {
   expanded: boolean;
@@ -82,7 +89,8 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
 
   constructor(
     private snackBar: MatSnackBar,
-    private expenseService: ExpenseService
+    private expenseService: ExpenseService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -249,12 +257,30 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     };
   }
 
-  // Actions - placeholders for now
+  // Actions - Updated with actual dialog implementation
   createNewExpense(): void {
-    console.log('Creating new expense...');
-    this.snackBar.open('Funkcja tworzenia wydatku będzie wkrótce dostępna', 'Zamknij', {
-      duration: 3000
+    const dialogRef = this.dialog.open(CreateExpenseDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      disableClose: false,
+      autoFocus: false,
+      panelClass: ['custom-dialog-panel', 'expense-dialog']
     });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result?.success) {
+          this.snackBar.open('Wydatek został utworzony pomyślnie', 'Zamknij', {
+            duration: 5000,
+            panelClass: ['success-snackbar']
+          });
+
+          // Reload expenses to show the new one
+          this.loadExpenses();
+        }
+      });
   }
 
   viewExpenseDetails(expense: ExpenseItem): void {

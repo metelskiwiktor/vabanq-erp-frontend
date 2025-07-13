@@ -1,4 +1,4 @@
-// src/app/menu/accounting/accounting.module.ts
+// src/app/menu/accounting/accounting.module.ts - Updated with CreateExpenseDialogModule
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -36,6 +36,9 @@ import {
   AssignInvoiceDialogModule
 } from "./accounting-invoices/expense/assign-invoice-dialog/assign-invoice-dialog.module";
 
+// New dialog for creating expenses
+import { CreateExpenseDialogModule } from './accounting-expenses/create-expense-dialog/create-expense-dialog.module';
+
 // Services
 import { ExpenseService } from '../../utility/service/expense.service';
 
@@ -51,6 +54,7 @@ import { ExpenseService } from '../../utility/service/expense.service';
   ],
   imports: [
     AssignInvoiceDialogModule,
+    CreateExpenseDialogModule, // Add the new module
     CommonModule,
     FormsModule,
     MatIconModule,
