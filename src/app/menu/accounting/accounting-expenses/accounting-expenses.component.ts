@@ -154,12 +154,45 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       currency: 'PLN', // Default currency
       date: expense.createdAt,
       tags: expense.tags || [],
-      itemsCount: 0, // Will be determined by backend later
-      invoicesCount: 0, // Will be determined by backend later
+      itemsCount: expense.items?.length || 0,
+      invoicesCount: expense.items?.filter(item => item.costInvoiceId).length || 0,
       cyclic: expense.cyclic,
-      items: expense.items
+      items: expense.items || []
     };
   }
+
+  // Toggle expense expansion
+  toggleExpenseExpansion(expense: ExpenseItem): void {
+    expense.expanded = !expense.expanded;
+
+    // If expanding and no items loaded yet, load details
+    if (expense.expanded && expense.items.length === 0) {
+      this.loadExpenseDetails(expense);
+    }
+  }
+
+  private loadExpenseDetails(expense: ExpenseItem): void {
+    this.expenseService.getExpense(expense.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (detailedExpense: ExpenseResponse) => {
+          expense.items = detailedExpense.items || [];
+          expense.itemsCount = expense.items.length;
+          expense.invoicesCount = expense.items.filter(item => item.costInvoiceId).length;
+        },
+        error: (error) => {
+          console.error('Error loading expense details:', error);
+          this.snackBar.open('Błąd podczas ładowania szczegółów wydatku', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+  }
+
+  // Edit expense item - removed (will be handled in separate dialog)
+  // Delete expense item - removed (will be handled in separate dialog)
+  // Add manual item to expense - removed (will be handled in separate dialog)
 
   // Month navigation
   previousMonth(): void {
@@ -224,37 +257,22 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     });
   }
 
-  exportExpenses(): void {
-    console.log('Exporting expenses...');
-    this.snackBar.open('Funkcja eksportu będzie wkrótce dostępna', 'Zamknij', {
-      duration: 3000
-    });
-  }
-
   viewExpenseDetails(expense: ExpenseItem): void {
-    console.log('Viewing expense details:', expense.id);
-    this.snackBar.open('Funkcja szczegółów wydatku będzie wkrótce dostępna', 'Zamknij', {
-      duration: 3000
-    });
-  }
-
-  viewExpenseInvoices(expense: ExpenseItem): void {
-    console.log('Viewing expense invoices:', expense.id);
-    this.snackBar.open('Funkcja przeglądania faktur będzie wkrótce dostępna', 'Zamknij', {
-      duration: 3000
-    });
+    this.toggleExpenseExpansion(expense);
   }
 
   addExpenseItem(expense: ExpenseItem): void {
-    console.log('Adding item to expense:', expense.id);
-    this.snackBar.open('Funkcja dodawania pozycji będzie wkrótce dostępna', 'Zamknij', {
+    // Will be handled in separate dialog
+    console.log('Adding expense item will open dialog:', expense.id);
+    this.snackBar.open('Funkcja dodawania pozycji zostanie zaimplementowana w osobnym dialogu', 'Zamknij', {
       duration: 3000
     });
   }
 
   editExpense(expense: ExpenseItem): void {
-    console.log('Editing expense:', expense.id);
-    this.snackBar.open('Funkcja edycji wydatku będzie wkrótce dostępna', 'Zamknij', {
+    // Will be handled in separate dialog
+    console.log('Editing expense will open dialog:', expense.id);
+    this.snackBar.open('Funkcja edycji wydatku zostanie zaimplementowana w osobnym dialogu', 'Zamknij', {
       duration: 3000
     });
   }
@@ -284,5 +302,15 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
 
   getTypeDisplayName(type: 'FIXED' | 'VARIABLE'): string {
     return this.expenseService.getTypeDisplayName(type);
+  }
+
+  // Check if expense item is from invoice
+  isInvoiceItem(item: ExpenseEntry): boolean {
+    return !!item.costInvoiceId;
+  }
+
+  // Get item type display name
+  getItemTypeDisplayName(item: ExpenseEntry): string {
+    return this.isInvoiceItem(item) ? 'Faktura' : 'Manualny';
   }
 }

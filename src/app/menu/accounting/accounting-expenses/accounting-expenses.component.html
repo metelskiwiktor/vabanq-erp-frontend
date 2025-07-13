@@ -7,10 +7,6 @@
         <p class="page-subtitle">Zarządzanie wydatkami firmowymi i przypisywanie faktur</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" (click)="exportExpenses()">
-          <mat-icon>download</mat-icon>
-          Eksportuj
-        </button>
         <button class="btn btn-primary" (click)="createNewExpense()">
           <mat-icon>add</mat-icon>
           Nowy wydatek
@@ -128,10 +124,16 @@
 
     <!-- Expenses List -->
     <div *ngIf="!isLoading" class="expenses-list">
-      <div *ngFor="let expense of filteredExpenses" class="expense-item">
-        <div class="expense-header">
+      <div *ngFor="let expense of filteredExpenses" class="expense-item" [class.expanded]="expense.expanded">
+        <!-- Main expense header -->
+        <div class="expense-header" (click)="toggleExpenseExpansion(expense)">
           <div class="expense-info">
-            <div class="expense-name">{{ expense.name }}</div>
+            <div class="expense-name">
+              <mat-icon class="expand-icon" [class.rotated]="expense.expanded">
+                {{ expense.expanded ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+              {{ expense.name }}
+            </div>
             <div class="expense-description">{{ expense.description }}</div>
             <div class="expense-meta">
               <div class="meta-item">
@@ -157,23 +159,48 @@
             <div class="items-count">{{ expense.itemsCount }} pozycj{{ expense.itemsCount === 1 ? 'a' : (expense.itemsCount < 5 ? 'e' : '') }}</div>
           </div>
         </div>
-        <div class="expense-actions">
+
+        <!-- Expense actions -->
+        <div class="expense-actions" (click)="$event.stopPropagation()">
           <button class="action-btn" (click)="viewExpenseDetails(expense)">
-            <mat-icon class="small-icon">visibility</mat-icon>
-            Szczegóły
-          </button>
-          <button class="action-btn" (click)="viewExpenseInvoices(expense)">
-            <mat-icon class="small-icon">receipt</mat-icon>
-            Faktury ({{ expense.invoicesCount }})
-          </button>
-          <button class="action-btn primary" (click)="addExpenseItem(expense)">
-            <mat-icon class="small-icon">add</mat-icon>
-            Dodaj pozycję
+            <mat-icon class="small-icon">{{ expense.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+            {{ expense.expanded ? 'Zwiń' : 'Rozwiń' }}
           </button>
           <button class="action-btn" (click)="editExpense(expense)">
             <mat-icon class="small-icon">edit</mat-icon>
             Edytuj
           </button>
+        </div>
+
+        <!-- Expanded expense details -->
+        <div class="expense-details" *ngIf="expense.expanded">
+          <div class="details-header">
+            <h4>Pozycje wydatku</h4>
+          </div>
+
+          <div class="expense-items">
+            <div *ngFor="let item of expense.items" class="expense-item-row">
+              <div class="item-info">
+                <div class="item-name">{{ item.name }}</div>
+                <div class="item-meta">
+                  <span class="item-type-badge" [class.invoice]="isInvoiceItem(item)" [class.manual]="!isInvoiceItem(item)">
+                    {{ getItemTypeDisplayName(item) }}
+                  </span>
+                  <span *ngIf="isInvoiceItem(item)" class="item-invoice-id">
+                    ID: {{ item.costInvoiceId }}
+                  </span>
+                </div>
+              </div>
+              <div class="item-amount">
+                {{ formatCurrency(item.amount) }}
+              </div>
+            </div>
+
+            <!-- Empty state for items -->
+            <div *ngIf="expense.items.length === 0" class="empty-items">
+              <p>Brak pozycji w tym wydatku</p>
+            </div>
+          </div>
         </div>
       </div>
 
