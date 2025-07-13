@@ -3,12 +3,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import {
-  ExpenseEntry
-} from "../../menu/accounting/accounting-invoices/expense/assign-invoice-to-expense-dialog/assign-invoice-to-expense-dialog.component";
 
 export interface ExpenseResponse {
-  expanded: boolean;
   id: string;
   name: string;
   description: string;
@@ -16,9 +12,18 @@ export interface ExpenseResponse {
   cyclic: boolean;
   category: ExpenseCategory;
   tags: string[];
-  totalCost: number;
+  totalGrossCost: number;  // Zaktualizowane pole
+  totalNetCost: number;    // Zaktualizowane pole
   createdAt: string;
   items: ExpenseEntry[];
+}
+
+export interface ExpenseEntry {
+  id: string;
+  name: string;
+  netAmount: number;
+  grossAmount: number;
+  costInvoiceId?: string; // Opcjonalne dla manualnych pozycji
 }
 
 export enum ExpenseCategory {
@@ -45,17 +50,23 @@ export interface AttachInvoiceRequest {
 
 export interface CreateExpenseItemRequest {
   name: string;
-  amount: number;
+  netAmount: number;
+  grossAmount: number;
 }
 
 export interface UpdateExpenseRequest {
   name?: string;
   description?: string;
+  type?: 'FIXED' | 'VARIABLE';
+  cyclic?: boolean;
+  category?: ExpenseCategory;
+  createdAt?: string;
 }
 
 export interface UpdateExpenseItemRequest {
   name: string;
-  amount: number;
+  netAmount: number;
+  grossAmount: number;
 }
 
 export interface ExpenseTagResponse {
@@ -125,7 +136,7 @@ export class ExpenseService {
   }
 
   /**
-   * Lista wydatków dla miesiąca
+   * Lista wydatków dla miesiąca - aktualizacja parametru
    */
   listExpenses(month?: string): Observable<ExpenseResponse[]> {
     let params = new HttpParams();

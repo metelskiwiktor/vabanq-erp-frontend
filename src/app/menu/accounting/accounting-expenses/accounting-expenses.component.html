@@ -39,8 +39,8 @@
           <div class="card-title">Łączne wydatki</div>
         </div>
       </div>
-      <div class="card-amount">{{ formatCurrency(summary.totalAmount) }}</div>
-      <div class="card-count">{{ summary.totalCount }} wydatków</div>
+      <div class="card-amount">{{ formatCurrency(summary.totalGrossAmount) }}</div>
+      <div class="card-count">{{ summary.totalCount }} wydatków • Netto: {{ formatCurrency(summary.totalNetAmount) }}</div>
     </div>
 
     <div class="summary-card">
@@ -52,8 +52,8 @@
           <div class="card-title">Wydatki stałe</div>
         </div>
       </div>
-      <div class="card-amount">{{ formatCurrency(summary.fixedAmount) }}</div>
-      <div class="card-count">{{ summary.fixedCount }} wydatków</div>
+      <div class="card-amount">{{ formatCurrency(summary.fixedGrossAmount) }}</div>
+      <div class="card-count">{{ summary.fixedCount }} wydatków • Netto: {{ formatCurrency(summary.fixedNetAmount) }}</div>
     </div>
 
     <div class="summary-card">
@@ -65,8 +65,8 @@
           <div class="card-title">Wydatki zmienne</div>
         </div>
       </div>
-      <div class="card-amount">{{ formatCurrency(summary.variableAmount) }}</div>
-      <div class="card-count">{{ summary.variableCount }} wydatki</div>
+      <div class="card-amount">{{ formatCurrency(summary.variableGrossAmount) }}</div>
+      <div class="card-count">{{ summary.variableCount }} wydatków • Netto: {{ formatCurrency(summary.variableNetAmount) }}</div>
     </div>
 
     <div class="summary-card">
@@ -155,7 +155,8 @@
             </div>
           </div>
           <div class="expense-amount">
-            <div class="amount-value">{{ formatCurrency(expense.amount) }}</div>
+            <div class="amount-value">{{ formatCurrency(expense.grossAmount) }}</div>
+            <div class="items-count">Netto: {{ formatCurrency(expense.netAmount) }}</div>
             <div class="items-count">{{ expense.itemsCount }} pozycj{{ expense.itemsCount === 1 ? 'a' : (expense.itemsCount < 5 ? 'e' : '') }}</div>
           </div>
         </div>
@@ -192,7 +193,8 @@
                 </div>
               </div>
               <div class="item-amount">
-                {{ formatCurrency(item.amount) }}
+                <div>{{ formatCurrency(item.grossAmount) }}</div>
+                <div class="item-net-amount">Netto: {{ formatCurrency(item.netAmount) }}</div>
               </div>
             </div>
 

@@ -146,8 +146,8 @@
               </div>
             </div>
             <div class="expense-amount">
-              <div>{{ formatCurrency(expense.netAmount, expense.currency) }}</div>
-              <div class="expense-currency">{{ expense.currency }}</div>
+              <div>{{ formatCurrency(expense.totalGrossCost, expense.currency) }}</div>
+              <div class="expense-currency">Netto: {{ formatCurrency(expense.totalNetCost, expense.currency) }}</div>
             </div>
           </div>
 
@@ -265,44 +265,6 @@
             </mat-form-field>
           </div>
 
-          <!-- Date fields for fixed expenses -->
-          <div *ngIf="expenseTypeIsFixed" class="form-row">
-            <mat-form-field appearance="outline">
-              <mat-label>Miesiąc *</mat-label>
-              <mat-select formControlName="month">
-                <mat-option *ngFor="let month of [1,2,3,4,5,6,7,8,9,10,11,12]; let i = index" [value]="month">
-                  {{ getMonthName(month) }}
-                </mat-option>
-              </mat-select>
-              <mat-error *ngIf="hasFieldError('month')">
-                {{ getFieldError('month') }}
-              </mat-error>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Rok *</mat-label>
-              <mat-select formControlName="year">
-                <mat-option value="2023">2023</mat-option>
-                <mat-option value="2024">2024</mat-option>
-                <mat-option value="2025">2025</mat-option>
-              </mat-select>
-              <mat-error *ngIf="hasFieldError('year')">
-                {{ getFieldError('year') }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-
-          <!-- Date field for variable expenses -->
-          <mat-form-field *ngIf="expenseTypeIsVariable" appearance="outline" class="full-width">
-            <mat-label>Data wydatku *</mat-label>
-            <input matInput
-                   type="date"
-                   formControlName="expenseDate">
-            <mat-error *ngIf="hasFieldError('expenseDate')">
-              {{ getFieldError('expenseDate') }}
-            </mat-error>
-          </mat-form-field>
-
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Opis wydatku</mat-label>
             <textarea matInput
@@ -312,12 +274,13 @@
             </textarea>
           </mat-form-field>
 
-          <!-- Recurring option for fixed expenses -->
-          <mat-checkbox *ngIf="expenseTypeIsFixed"
-                        formControlName="isRecurring"
-                        class="recurring-checkbox">
-            Wydatek cykliczny (będzie automatycznie tworzony w kolejnych miesiącach)
-          </mat-checkbox>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tagi</mat-label>
+            <input matInput
+                   formControlName="tags"
+                   placeholder="Tagi oddzielone przecinkami (np. materiały, drukarki, Q2)">
+            <mat-hint>Oddziel tagi przecinkami</mat-hint>
+          </mat-form-field>
         </form>
       </div>
 

@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ExpenseService, ExpenseResponse, ExpenseCategory } from '../../../utility/service/expense.service';
+import { ExpenseService, ExpenseResponse, ExpenseCategory, ExpenseEntry } from '../../../utility/service/expense.service';
 
 interface ExpenseItem {
   expanded: boolean;
@@ -12,7 +12,8 @@ interface ExpenseItem {
   description: string;
   type: 'FIXED' | 'VARIABLE';
   category: ExpenseCategory;
-  amount: number;
+  netAmount: number;        // Zaktualizowane pole
+  grossAmount: number;      // Zaktualizowane pole
   currency: string;
   date: string;
   tags: string[];
@@ -22,19 +23,15 @@ interface ExpenseItem {
   items: ExpenseEntry[];
 }
 
-interface ExpenseEntry {
-  id: string
-  amount: number;
-  costInvoiceId: string;
-  name: string
-}
-
 interface ExpenseSummary {
-  totalAmount: number;
+  totalNetAmount: number;     // Zaktualizowane pole
+  totalGrossAmount: number;   // Zaktualizowane pole
   totalCount: number;
-  fixedAmount: number;
+  fixedNetAmount: number;     // Zaktualizowane pole
+  fixedGrossAmount: number;   // Zaktualizowane pole
   fixedCount: number;
-  variableAmount: number;
+  variableNetAmount: number;  // Zaktualizowane pole
+  variableGrossAmount: number; // Zaktualizowane pole
   variableCount: number;
   assignedInvoices: number;
   totalInvoices: number;
@@ -52,11 +49,14 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   expenses: ExpenseItem[] = [];
   filteredExpenses: ExpenseItem[] = [];
   summary: ExpenseSummary = {
-    totalAmount: 0,
+    totalNetAmount: 0,
+    totalGrossAmount: 0,
     totalCount: 0,
-    fixedAmount: 0,
+    fixedNetAmount: 0,
+    fixedGrossAmount: 0,
     fixedCount: 0,
-    variableAmount: 0,
+    variableNetAmount: 0,
+    variableGrossAmount: 0,
     variableCount: 0,
     assignedInvoices: 0,
     totalInvoices: 0
@@ -115,7 +115,7 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (expenses: ExpenseResponse[]) => {
-          console.log(expenses)
+          console.log('Loaded expenses:', expenses);
           this.expenses = expenses.map(expense => this.mapExpenseResponseToItem(expense));
           this.applyFilters();
           this.calculateSummary();
@@ -150,7 +150,8 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       description: expense.description || '',
       type: expense.type,
       category: expense.category,
-      amount: Number(expense.totalCost),
+      netAmount: Number(expense.totalNetCost),      // Zaktualizowane pole
+      grossAmount: Number(expense.totalGrossCost),  // Zaktualizowane pole
       currency: 'PLN', // Default currency
       date: expense.createdAt,
       tags: expense.tags || [],
@@ -189,10 +190,6 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
         }
       });
   }
-
-  // Edit expense item - removed (will be handled in separate dialog)
-  // Delete expense item - removed (will be handled in separate dialog)
-  // Add manual item to expense - removed (will be handled in separate dialog)
 
   // Month navigation
   previousMonth(): void {
@@ -238,11 +235,14 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     const filtered = this.filteredExpenses;
 
     this.summary = {
-      totalAmount: filtered.reduce((sum, exp) => sum + exp.amount, 0),
+      totalNetAmount: filtered.reduce((sum, exp) => sum + exp.netAmount, 0),
+      totalGrossAmount: filtered.reduce((sum, exp) => sum + exp.grossAmount, 0),
       totalCount: filtered.length,
-      fixedAmount: filtered.filter(exp => exp.type === 'FIXED').reduce((sum, exp) => sum + exp.amount, 0),
+      fixedNetAmount: filtered.filter(exp => exp.type === 'FIXED').reduce((sum, exp) => sum + exp.netAmount, 0),
+      fixedGrossAmount: filtered.filter(exp => exp.type === 'FIXED').reduce((sum, exp) => sum + exp.grossAmount, 0),
       fixedCount: filtered.filter(exp => exp.type === 'FIXED').length,
-      variableAmount: filtered.filter(exp => exp.type === 'VARIABLE').reduce((sum, exp) => sum + exp.amount, 0),
+      variableNetAmount: filtered.filter(exp => exp.type === 'VARIABLE').reduce((sum, exp) => sum + exp.netAmount, 0),
+      variableGrossAmount: filtered.filter(exp => exp.type === 'VARIABLE').reduce((sum, exp) => sum + exp.grossAmount, 0),
       variableCount: filtered.filter(exp => exp.type === 'VARIABLE').length,
       assignedInvoices: filtered.reduce((sum, exp) => sum + exp.invoicesCount, 0),
       totalInvoices: 0 // TODO: Get from backend

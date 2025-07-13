@@ -14,8 +14,8 @@ interface ExpenseOption {
   name: string;
   type: 'FIXED' | 'VARIABLE';
   category: ExpenseCategory;
-  totalCost: number;
-  netAmount: number;
+  totalGrossCost: number;    // Zaktualizowane pole
+  totalNetCost: number;      // Zaktualizowane pole
   currency: string;
   period: string;
   description?: string;
@@ -126,8 +126,8 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
       name: expense.name,
       type: expense.type,
       category: expense.category,
-      totalCost: Number(expense.totalCost),
-      netAmount: Number(expense.totalCost),
+      totalGrossCost: Number(expense.totalGrossCost),  // Zaktualizowane pole
+      totalNetCost: Number(expense.totalNetCost),      // Zaktualizowane pole
       currency: 'PLN',
       period: this.formatDateToPeriod(expense.createdAt),
       description: expense.description
