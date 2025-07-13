@@ -1,4 +1,4 @@
-// src/app/utility/service/expense.service.ts
+// src/app/utility/service/expense.service.ts - Updated with missing methods
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -101,6 +101,20 @@ export class ExpenseService {
   }
 
   /**
+   * Aktualizuj wydatek
+   */
+  updateExpense(expenseId: string, request: UpdateExpenseRequest): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${expenseId}`, request);
+  }
+
+  /**
+   * Usuń wydatek
+   */
+  deleteExpense(expenseId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${expenseId}`);
+  }
+
+  /**
    * Przypisz fakturę do wydatku
    */
   attachInvoiceToExpense(expenseId: string, request: AttachInvoiceRequest): Observable<void> {
@@ -108,17 +122,17 @@ export class ExpenseService {
   }
 
   /**
+   * Usuń przypisanie faktury od wydatku
+   */
+  detachInvoiceFromExpense(expenseId: string, invoiceId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${expenseId}/invoice-expenses/${invoiceId}`);
+  }
+
+  /**
    * Dodaj manualną pozycję do wydatku
    */
   addManualItem(expenseId: string, request: CreateExpenseItemRequest): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${expenseId}/items`, request);
-  }
-
-  /**
-   * Aktualizuj wydatek
-   */
-  updateExpense(expenseId: string, request: UpdateExpenseRequest): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${expenseId}`, request);
   }
 
   /**
@@ -147,6 +161,46 @@ export class ExpenseService {
   }
 
   /**
+   * Lista wszystkich wydatków (bez filtra miesiąca)
+   */
+  listAllExpenses(): Observable<ExpenseResponse[]> {
+    return this.http.get<ExpenseResponse[]>(`${this.apiUrl}/all`);
+  }
+
+  /**
+   * Wyszukaj wydatki po nazwie lub opisie
+   */
+  searchExpenses(query: string, month?: string): Observable<ExpenseResponse[]> {
+    let params = new HttpParams().set('search', query);
+    if (month) {
+      params = params.set('month', month);
+    }
+    return this.http.get<ExpenseResponse[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  /**
+   * Pobierz wydatki według kategorii
+   */
+  getExpensesByCategory(category: ExpenseCategory, month?: string): Observable<ExpenseResponse[]> {
+    let params = new HttpParams().set('category', category);
+    if (month) {
+      params = params.set('month', month);
+    }
+    return this.http.get<ExpenseResponse[]>(`${this.apiUrl}/by-category`, { params });
+  }
+
+  /**
+   * Pobierz wydatki według typu
+   */
+  getExpensesByType(type: 'FIXED' | 'VARIABLE', month?: string): Observable<ExpenseResponse[]> {
+    let params = new HttpParams().set('type', type);
+    if (month) {
+      params = params.set('month', month);
+    }
+    return this.http.get<ExpenseResponse[]>(`${this.apiUrl}/by-type`, { params });
+  }
+
+  /**
    * Utwórz nowy tag
    */
   createTag(request: CreateExpenseTagRequest): Observable<ExpenseTagResponse> {
@@ -158,6 +212,60 @@ export class ExpenseService {
    */
   listTags(): Observable<ExpenseTagResponse[]> {
     return this.http.get<ExpenseTagResponse[]>(`${this.apiUrl}/tags`);
+  }
+
+  /**
+   * Usuń tag
+   */
+  deleteTag(tagId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/tags/${tagId}`);
+  }
+
+  /**
+   * Pobierz podsumowanie wydatków dla miesiąca
+   */
+  getExpenseSummary(month: string): Observable<ExpenseSummaryResponse> {
+    const params = new HttpParams().set('month', month);
+    return this.http.get<ExpenseSummaryResponse>(`${this.apiUrl}/summary`, { params });
+  }
+
+  /**
+   * Duplikuj wydatek (przydatne dla wydatków cyklicznych)
+   */
+  duplicateExpense(expenseId: string, targetMonth: string): Observable<ExpenseResponse> {
+    const params = new HttpParams().set('targetMonth', targetMonth);
+    return this.http.post<ExpenseResponse>(`${this.apiUrl}/${expenseId}/duplicate`, null, { params });
+  }
+
+  /**
+   * Zmień status wydatku (aktywny/nieaktywny)
+   */
+  toggleExpenseStatus(expenseId: string, active: boolean): Observable<void> {
+    const body = { active };
+    return this.http.patch<void>(`${this.apiUrl}/${expenseId}/status`, body);
+  }
+
+  /**
+   * Eksportuj wydatki do CSV
+   */
+  exportExpensesToCSV(month?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (month) {
+      params = params.set('month', month);
+    }
+    return this.http.get(`${this.apiUrl}/export/csv`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Importuj wydatki z CSV
+   */
+  importExpensesFromCSV(file: File): Observable<ImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ImportResult>(`${this.apiUrl}/import/csv`, formData);
   }
 
   /**
@@ -195,4 +303,94 @@ export class ExpenseService {
       { key: ExpenseCategory.OTHER, displayName: 'Inne' }
     ];
   }
+
+  /**
+   * Walidacja wydatku
+   */
+  validateExpense(expense: Partial<CreateExpenseRequest>): ValidationResult {
+    const errors: string[] = [];
+
+    if (!expense.name || expense.name.trim().length < 3) {
+      errors.push('Nazwa wydatku musi mieć przynajmniej 3 znaki');
+    }
+
+    if (!expense.type) {
+      errors.push('Typ wydatku jest wymagany');
+    }
+
+    if (!expense.category) {
+      errors.push('Kategoria wydatku jest wymagana');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Oblicz sumy dla wydatków
+   */
+  calculateExpenseTotals(expenses: ExpenseResponse[]): ExpenseTotals {
+    return expenses.reduce((totals, expense) => ({
+      totalNet: totals.totalNet + expense.totalNetCost,
+      totalGross: totals.totalGross + expense.totalGrossCost,
+      count: totals.count + 1,
+      itemsCount: totals.itemsCount + (expense.items?.length || 0)
+    }), {
+      totalNet: 0,
+      totalGross: 0,
+      count: 0,
+      itemsCount: 0
+    });
+  }
+}
+
+// Additional interfaces for the service
+export interface ExpenseSummaryResponse {
+  month: string;
+  totalNetAmount: number;
+  totalGrossAmount: number;
+  totalCount: number;
+  fixedExpenses: {
+    count: number;
+    netAmount: number;
+    grossAmount: number;
+  };
+  variableExpenses: {
+    count: number;
+    netAmount: number;
+    grossAmount: number;
+  };
+  categorySummary: {
+    [key in ExpenseCategory]: {
+      count: number;
+      netAmount: number;
+      grossAmount: number;
+    }
+  };
+  invoiceAssignments: {
+    totalInvoices: number;
+    assignedInvoices: number;
+  };
+}
+
+export interface ImportResult {
+  success: boolean;
+  importedCount: number;
+  skippedCount: number;
+  errors: string[];
+  duplicates: string[];
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+export interface ExpenseTotals {
+  totalNet: number;
+  totalGross: number;
+  count: number;
+  itemsCount: number;
 }

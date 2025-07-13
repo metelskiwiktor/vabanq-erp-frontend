@@ -1,4 +1,4 @@
-// src/app/menu/accounting/accounting-expenses/accounting-expenses.component.ts - Updated with dialog integration
+// src/app/menu/accounting/accounting-expenses/accounting-expenses.component.ts - Updated with edit dialog integration
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import {
   ExpenseCategory,
   ExpenseEntry
 } from '../../../utility/service/expense.service';
-import { CreateExpenseDialogComponent } from './create-expense-dialog/create-expense-dialog.component';
+import { CreateExpenseDialogComponent, CreateExpenseDialogData } from './create-expense-dialog/create-expense-dialog.component';
 
 interface ExpenseItem {
   expanded: boolean;
@@ -259,13 +259,18 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
 
   // Actions - Updated with actual dialog implementation
   createNewExpense(): void {
+    const dialogData: CreateExpenseDialogData = {
+      mode: 'create'
+    };
+
     const dialogRef = this.dialog.open(CreateExpenseDialogComponent, {
       width: '900px',
       maxWidth: '95vw',
       maxHeight: '90vh',
       disableClose: false,
       autoFocus: false,
-      panelClass: ['custom-dialog-panel', 'expense-dialog']
+      panelClass: ['custom-dialog-panel', 'expense-dialog'],
+      data: dialogData
     });
 
     dialogRef.afterClosed()
@@ -283,24 +288,53 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
       });
   }
 
+  editExpense(expense: ExpenseItem): void {
+    const dialogData: CreateExpenseDialogData = {
+      mode: 'edit',
+      expenseId: expense.id
+    };
+
+    const dialogRef = this.dialog.open(CreateExpenseDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      disableClose: false,
+      autoFocus: false,
+      panelClass: ['custom-dialog-panel', 'expense-dialog'],
+      data: dialogData
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result?.success) {
+          const actionText = result.action === 'updated' ? 'zaktualizowany' : 'zmodyfikowany';
+          this.snackBar.open(`Wydatek został ${actionText} pomyślnie`, 'Zamknij', {
+            duration: 5000,
+            panelClass: ['success-snackbar']
+          });
+
+          // Reload expenses to show changes
+          this.loadExpenses();
+        }
+      });
+  }
+
   viewExpenseDetails(expense: ExpenseItem): void {
     this.toggleExpenseExpansion(expense);
   }
 
   addExpenseItem(expense: ExpenseItem): void {
-    // Will be handled in separate dialog
-    console.log('Adding expense item will open dialog:', expense.id);
-    this.snackBar.open('Funkcja dodawania pozycji zostanie zaimplementowana w osobnym dialogu', 'Zamknij', {
+    // Will be handled in separate dialog - for now just show info
+    this.snackBar.open('Aby dodać pozycje do wydatku, użyj przycisku "Edytuj"', 'Zamknij', {
       duration: 3000
     });
   }
 
-  editExpense(expense: ExpenseItem): void {
-    // Will be handled in separate dialog
-    console.log('Editing expense will open dialog:', expense.id);
-    this.snackBar.open('Funkcja edycji wydatku zostanie zaimplementowana w osobnym dialogu', 'Zamknij', {
-      duration: 3000
-    });
+  // Helper method to get manual items count for an expense
+  getManualItemsCount(): number {
+    // This would be implemented in the dialog, but here for reference
+    return 1; // Default for create mode
   }
 
   // Utility methods

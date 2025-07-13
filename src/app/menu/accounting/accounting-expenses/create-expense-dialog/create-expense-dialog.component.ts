@@ -1,7 +1,7 @@
 // src/app/menu/accounting/accounting-expenses/create-expense-dialog/create-expense-dialog.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -9,15 +9,28 @@ import {
   ExpenseService,
   CreateExpenseRequest,
   CreateExpenseItemRequest,
-  ExpenseCategory
+  UpdateExpenseRequest,
+  UpdateExpenseItemRequest,
+  ExpenseCategory,
+  ExpenseResponse,
+  ExpenseEntry
 } from '../../../../utility/service/expense.service';
 
 interface ExpenseItemForm {
+  id?: string; // Add id for existing items
   name: string;
   netAmount: number;
   grossAmount: number;
-  taxPercentage: number; // Added for UI calculations only
-  autoCalculate: boolean; // Added for auto-calculation toggle
+  taxPercentage: number;
+  autoCalculate: boolean;
+  costInvoiceId?: string; // For invoice items
+  isInvoiceItem?: boolean; // Flag to identify invoice items
+}
+
+export interface CreateExpenseDialogData {
+  mode: 'create' | 'edit';
+  expenseId?: string;
+  initialData?: Partial<ExpenseResponse>;
 }
 
 @Component({
@@ -30,6 +43,12 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
 
   expenseForm!: FormGroup;
   isCreating = false;
+  isLoading = false;
+
+  // Dialog mode
+  isEditMode = false;
+  expenseId?: string;
+  originalExpense?: ExpenseResponse;
 
   // Available options
   typeOptions = [
@@ -41,16 +60,24 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
 
   constructor(
     public dialogRef: MatDialogRef<CreateExpenseDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: CreateExpenseDialogData,
     private fb: FormBuilder,
     private expenseService: ExpenseService,
     private snackBar: MatSnackBar
   ) {
     this.initializeForm();
+    this.isEditMode = data?.mode === 'edit';
+    this.expenseId = data?.expenseId;
   }
 
   ngOnInit(): void {
     this.categoryOptions = this.expenseService.getAvailableCategories();
-    this.prefillWithDefaults();
+
+    if (this.isEditMode && this.expenseId) {
+      this.loadExpenseForEdit();
+    } else {
+      this.prefillWithDefaults();
+    }
   }
 
   ngOnDestroy(): void {
@@ -68,9 +95,89 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
       cyclic: [false],
       items: this.fb.array([])
     });
+  }
 
-    // Add one default item
-    this.addExpenseItem();
+  private loadExpenseForEdit(): void {
+    if (!this.expenseId) return;
+
+    this.isLoading = true;
+
+    this.expenseService.getExpense(this.expenseId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (expense: ExpenseResponse) => {
+          this.originalExpense = expense;
+          this.populateFormWithExpense(expense);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading expense for edit:', error);
+          this.snackBar.open('Błąd podczas ładowania wydatku', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.isLoading = false;
+          this.dialogRef.close({ success: false });
+        }
+      });
+  }
+
+  private populateFormWithExpense(expense: ExpenseResponse): void {
+    // Populate basic fields
+    this.expenseForm.patchValue({
+      name: expense.name,
+      type: expense.type,
+      category: expense.category,
+      description: expense.description || '',
+      tags: expense.tags ? expense.tags.join(', ') : '',
+      cyclic: expense.cyclic
+    });
+
+    // Clear existing items and add loaded items
+    this.itemsFormArray.clear();
+
+    if (expense.items && expense.items.length > 0) {
+      expense.items.forEach(item => {
+        this.addExpenseItemFromData(item);
+      });
+    } else {
+      // Add one empty item if no items exist
+      this.addExpenseItem();
+    }
+  }
+
+  private addExpenseItemFromData(item: ExpenseEntry): void {
+    const isInvoiceItem = !!item.costInvoiceId;
+
+    const itemForm = this.fb.group({
+      id: [item.id],
+      name: [item.name, [Validators.required, Validators.minLength(2)]],
+      netAmount: [item.netAmount, [Validators.required, Validators.min(0.01)]],
+      grossAmount: [item.grossAmount, [Validators.required, Validators.min(0.01)]],
+      taxPercentage: [this.calculateTaxPercentage(item.netAmount, item.grossAmount), [Validators.required, Validators.min(0), Validators.max(100)]],
+      autoCalculate: [!isInvoiceItem], // Invoice items should not auto-calculate
+      costInvoiceId: [item.costInvoiceId || null],
+      isInvoiceItem: [isInvoiceItem]
+    });
+
+    // Only setup tax calculations for non-invoice items
+    if (!isInvoiceItem) {
+      this.setupTaxCalculations(itemForm);
+    } else {
+      // Disable form controls for invoice items
+      itemForm.get('netAmount')?.disable();
+      itemForm.get('grossAmount')?.disable();
+      itemForm.get('taxPercentage')?.disable();
+      itemForm.get('autoCalculate')?.disable();
+    }
+
+    this.itemsFormArray.push(itemForm);
+  }
+
+  private calculateTaxPercentage(netAmount: number, grossAmount: number): number {
+    if (netAmount <= 0) return 23; // Default VAT
+    const taxAmount = grossAmount - netAmount;
+    return Math.round((taxAmount / netAmount) * 100);
   }
 
   private prefillWithDefaults(): void {
@@ -88,6 +195,9 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
       type: 'VARIABLE',
       category: ExpenseCategory.OTHER
     });
+
+    // Add one default item for create mode
+    this.addExpenseItem();
   }
 
   get itemsFormArray(): FormArray {
@@ -100,11 +210,14 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
 
   addExpenseItem(): void {
     const itemForm = this.fb.group({
+      id: [null], // No ID for new items
       name: ['', [Validators.required, Validators.minLength(2)]],
       netAmount: [0, [Validators.required, Validators.min(0.01)]],
       grossAmount: [0, [Validators.required, Validators.min(0.01)]],
       taxPercentage: [23, [Validators.required, Validators.min(0), Validators.max(100)]],
-      autoCalculate: [true] // New field for auto-calculation toggle
+      autoCalculate: [true],
+      costInvoiceId: [null],
+      isInvoiceItem: [false]
     });
 
     this.setupTaxCalculations(itemForm);
@@ -112,11 +225,11 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
   }
 
   private setupTaxCalculations(itemForm: FormGroup): void {
-    let isCalculating = false; // Flag to prevent infinite loops
+    let isCalculating = false;
 
     // Calculate gross amount when net amount or tax percentage changes
     itemForm.get('netAmount')?.valueChanges.subscribe(netAmount => {
-      if (isCalculating || !itemForm.get('autoCalculate')?.value) return;
+      if (isCalculating || !itemForm.get('autoCalculate')?.value || itemForm.get('isInvoiceItem')?.value) return;
 
       const taxPercentage = itemForm.get('taxPercentage')?.value || 23;
       if (netAmount && netAmount > 0 && taxPercentage >= 0) {
@@ -130,7 +243,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
 
     // Calculate net amount when gross amount changes
     itemForm.get('grossAmount')?.valueChanges.subscribe(grossAmount => {
-      if (isCalculating || !itemForm.get('autoCalculate')?.value) return;
+      if (isCalculating || !itemForm.get('autoCalculate')?.value || itemForm.get('isInvoiceItem')?.value) return;
 
       const taxPercentage = itemForm.get('taxPercentage')?.value || 23;
       if (grossAmount && grossAmount > 0 && taxPercentage >= 0) {
@@ -142,9 +255,9 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Recalculate when tax percentage changes (uses net as base)
+    // Recalculate when tax percentage changes
     itemForm.get('taxPercentage')?.valueChanges.subscribe(taxPercentage => {
-      if (isCalculating || !itemForm.get('autoCalculate')?.value) return;
+      if (isCalculating || !itemForm.get('autoCalculate')?.value || itemForm.get('isInvoiceItem')?.value) return;
 
       const netAmount = itemForm.get('netAmount')?.value;
       if (netAmount && netAmount > 0 && taxPercentage >= 0) {
@@ -158,17 +271,35 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
   }
 
   removeExpenseItem(index: number): void {
-    if (this.itemsFormArray.length > 1) {
-      this.itemsFormArray.removeAt(index);
-    } else {
-      this.snackBar.open('Wydatek musi mieć przynajmniej jedną pozycję', 'Zamknij', {
+    const itemForm = this.itemsFormArray.at(index) as FormGroup;
+    const isInvoiceItem = itemForm.get('isInvoiceItem')?.value;
+
+    if (isInvoiceItem) {
+      this.snackBar.open('Nie można usunąć pozycji pochodzącej z faktury. Usuń przypisanie faktury w sekcji Faktury.', 'Zamknij', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    if (this.getManualItemsCount() <= 1) {
+      this.snackBar.open('Wydatek musi mieć przynajmniej jedną pozycję manualną', 'Zamknij', {
         duration: 3000,
         panelClass: ['error-snackbar']
       });
+      return;
     }
+
+    this.itemsFormArray.removeAt(index);
   }
 
-  async createExpense(): Promise<void> {
+  protected getManualItemsCount(): number {
+    return this.itemsFormArray.controls.filter(control =>
+      !control.get('isInvoiceItem')?.value
+    ).length;
+  }
+
+  async saveExpense(): Promise<void> {
     if (this.expenseForm.invalid) {
       this.markFormGroupTouched(this.expenseForm);
       return;
@@ -177,59 +308,139 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
     this.isCreating = true;
 
     try {
-      const formValue = this.expenseForm.value;
+      if (this.isEditMode) {
+        await this.updateExpense();
+      } else {
+        await this.createExpense();
+      }
+    } catch (error) {
+      console.error('Error saving expense:', error);
+      this.snackBar.open(
+        this.isEditMode ? 'Błąd podczas aktualizacji wydatku' : 'Błąd podczas tworzenia wydatku',
+        'Zamknij',
+        {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        }
+      );
+      this.isCreating = false;
+    }
+  }
 
-      // Parse tags
-      const tags = formValue.tags ?
-        formValue.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) :
-        [];
+  private async createExpense(): Promise<void> {
+    const formValue = this.expenseForm.value;
+    const tags = this.parseTags(formValue.tags);
 
-      // Create expense request
-      const createRequest: CreateExpenseRequest = {
-        name: formValue.name,
-        description: formValue.description || undefined,
-        type: formValue.type,
-        cyclic: formValue.cyclic || false,
-        category: formValue.category,
-        tags: tags
-      };
+    const createRequest: CreateExpenseRequest = {
+      name: formValue.name,
+      description: formValue.description || undefined,
+      type: formValue.type,
+      cyclic: formValue.cyclic || false,
+      category: formValue.category,
+      tags: tags
+    };
 
-      // Create the expense
-      const createdExpense = await this.expenseService.createExpense(createRequest).toPromise();
+    const createdExpense = await this.expenseService.createExpense(createRequest).toPromise();
 
-      if (!createdExpense) {
-        throw new Error('Failed to create expense');
+    if (!createdExpense) {
+      throw new Error('Failed to create expense');
+    }
+
+    // Add manual items only
+    const items: ExpenseItemForm[] = formValue.items;
+    for (const item of items) {
+      if (!item.isInvoiceItem && item.name && item.netAmount > 0 && item.grossAmount > 0) {
+        const itemRequest: CreateExpenseItemRequest = {
+          name: item.name,
+          netAmount: Number(item.netAmount),
+          grossAmount: Number(item.grossAmount)
+        };
+
+        await this.expenseService.addManualItem(createdExpense.id, itemRequest).toPromise();
+      }
+    }
+
+    this.snackBar.open('Wydatek został utworzony pomyślnie', 'Zamknij', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+
+    this.dialogRef.close({ success: true, expense: createdExpense, action: 'created' });
+  }
+
+  private async updateExpense(): Promise<void> {
+    if (!this.expenseId || !this.originalExpense) return;
+
+    const formValue = this.expenseForm.value;
+    const tags = this.parseTags(formValue.tags);
+
+    // Update basic expense info
+    const updateRequest: UpdateExpenseRequest = {
+      name: formValue.name,
+      description: formValue.description || undefined,
+      type: formValue.type,
+      cyclic: formValue.cyclic || false,
+      category: formValue.category
+    };
+
+    await this.expenseService.updateExpense(this.expenseId, updateRequest).toPromise();
+
+    // Handle item updates
+    const items: ExpenseItemForm[] = formValue.items;
+    const originalItems = this.originalExpense.items || [];
+
+    for (const item of items) {
+      if (item.isInvoiceItem) {
+        // Skip invoice items - they cannot be modified here
+        continue;
       }
 
-      // Add all manual items
-      const items: ExpenseItemForm[] = formValue.items;
-      for (const item of items) {
+      if (item.id) {
+        // Update existing manual item
+        const updateItemRequest: UpdateExpenseItemRequest = {
+          name: item.name,
+          netAmount: Number(item.netAmount),
+          grossAmount: Number(item.grossAmount)
+        };
+
+        await this.expenseService.updateExpenseItem(this.expenseId, item.id, updateItemRequest).toPromise();
+      } else {
+        // Add new manual item
         if (item.name && item.netAmount > 0 && item.grossAmount > 0) {
-          const itemRequest: CreateExpenseItemRequest = {
+          const createItemRequest: CreateExpenseItemRequest = {
             name: item.name,
             netAmount: Number(item.netAmount),
             grossAmount: Number(item.grossAmount)
-            // Note: taxPercentage is not sent to backend - it's only for UI calculations
           };
 
-          await this.expenseService.addManualItem(createdExpense.id, itemRequest).toPromise();
+          await this.expenseService.addManualItem(this.expenseId, createItemRequest).toPromise();
         }
       }
-
-      this.snackBar.open('Wydatek został utworzony pomyślnie', 'Zamknij', {
-        duration: 3000,
-        panelClass: ['success-snackbar']
-      });
-
-      this.dialogRef.close({ success: true, expense: createdExpense });
-    } catch (error) {
-      console.error('Error creating expense:', error);
-      this.snackBar.open('Błąd podczas tworzenia wydatku', 'Zamknij', {
-        duration: 3000,
-        panelClass: ['error-snackbar']
-      });
-      this.isCreating = false;
     }
+
+    // Check for deleted manual items
+    const currentItemIds = items.filter(item => item.id).map(item => item.id);
+    const deletedItems = originalItems.filter(originalItem =>
+      !originalItem.costInvoiceId && // Only manual items
+      !currentItemIds.includes(originalItem.id)
+    );
+
+    for (const deletedItem of deletedItems) {
+      await this.expenseService.deleteExpenseItem(this.expenseId, deletedItem.id).toPromise();
+    }
+
+    this.snackBar.open('Wydatek został zaktualizowany pomyślnie', 'Zamknij', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+
+    this.dialogRef.close({ success: true, action: 'updated' });
+  }
+
+  private parseTags(tagsString: string): string[] {
+    return tagsString ?
+      tagsString.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) :
+      [];
   }
 
   cancel(): void {
@@ -314,20 +525,41 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
     return this.getTotalGrossAmount() - this.getTotalNetAmount();
   }
 
-  // Check if item has auto-calculation enabled
+  // Check if item has auto-calculation enabled and is not invoice item
   isAutoCalculateEnabled(index: number): boolean {
     const itemGroup = this.itemsFormArray.at(index) as FormGroup;
-    return itemGroup.get('autoCalculate')?.value || false;
+    const autoCalculate = itemGroup.get('autoCalculate')?.value || false;
+    const isInvoiceItem = itemGroup.get('isInvoiceItem')?.value || false;
+    return autoCalculate && !isInvoiceItem;
+  }
+
+  // Check if item is from invoice
+  isItemFromInvoice(index: number): boolean {
+    const itemGroup = this.itemsFormArray.at(index) as FormGroup;
+    return itemGroup.get('isInvoiceItem')?.value || false;
+  }
+
+  // Check if item can be removed
+  canRemoveItem(index: number): boolean {
+    const isInvoiceItem = this.isItemFromInvoice(index);
+    const manualItemsCount = this.getManualItemsCount();
+
+    if (isInvoiceItem) return false; // Never remove invoice items
+    return manualItemsCount > 1; // Always keep at least one manual item
   }
 
   // Toggle auto-calculation for specific item
   toggleAutoCalculate(index: number): void {
     const itemGroup = this.itemsFormArray.at(index) as FormGroup;
     const currentValue = itemGroup.get('autoCalculate')?.value;
-    itemGroup.get('autoCalculate')?.setValue(!currentValue);
+    const isInvoiceItem = itemGroup.get('isInvoiceItem')?.value;
+
+    if (!isInvoiceItem) {
+      itemGroup.get('autoCalculate')?.setValue(!currentValue);
+    }
   }
 
-  get canCreate(): boolean {
+  get canSave(): boolean {
     return this.expenseForm.valid && !this.isCreating && this.itemsFormArray.length > 0;
   }
 
@@ -337,5 +569,22 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
 
   get isVariableExpense(): boolean {
     return this.expenseForm.get('type')?.value === 'VARIABLE';
+  }
+
+  get dialogTitle(): string {
+    return this.isEditMode ? 'Edytuj wydatek' : 'Utwórz nowy wydatek';
+  }
+
+  get dialogSubtitle(): string {
+    return this.isEditMode ?
+      'Edytuj informacje o wydatku i jego pozycje' :
+      'Dodaj wydatek z pozycjami manualnymi';
+  }
+
+  get saveButtonText(): string {
+    if (this.isCreating) {
+      return this.isEditMode ? 'Aktualizowanie...' : 'Tworzenie...';
+    }
+    return this.isEditMode ? 'Zaktualizuj wydatek' : 'Utwórz wydatek';
   }
 }

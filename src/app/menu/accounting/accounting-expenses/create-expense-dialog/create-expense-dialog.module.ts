@@ -20,6 +20,9 @@ import { TextFieldModule } from '@angular/cdk/text-field';
 // Component
 import { CreateExpenseDialogComponent } from './create-expense-dialog.component';
 
+// Services
+import { ExpenseService } from '../../../../utility/service/expense.service';
+
 @NgModule({
   declarations: [
     CreateExpenseDialogComponent
@@ -39,6 +42,9 @@ import { CreateExpenseDialogComponent } from './create-expense-dialog.component'
     MatSlideToggleModule,
     MatTooltipModule,
     TextFieldModule
+  ],
+  providers: [
+    ExpenseService
   ],
   exports: [
     CreateExpenseDialogComponent

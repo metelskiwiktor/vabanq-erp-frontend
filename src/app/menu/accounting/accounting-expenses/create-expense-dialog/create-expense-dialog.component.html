@@ -4,11 +4,11 @@
   <div class="dialog-header">
     <div class="dialog-title">
       <div class="dialog-icon green">
-        <mat-icon>add_business</mat-icon>
+        <mat-icon>{{ isEditMode ? 'edit' : 'add_business' }}</mat-icon>
       </div>
       <div>
-        <h2>Utwórz nowy wydatek</h2>
-        <div class="dialog-subtitle">Dodaj wydatek z pozycjami manualnymi</div>
+        <h2>{{ dialogTitle }}</h2>
+        <div class="dialog-subtitle">{{ dialogSubtitle }}</div>
       </div>
     </div>
     <button mat-icon-button class="close-button" (click)="cancel()">
@@ -18,7 +18,13 @@
 
   <!-- Content -->
   <div class="dialog-content">
-    <form [formGroup]="expenseForm" (ngSubmit)="createExpense()">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Ładowanie danych wydatku...</p>
+    </div>
+
+    <form [formGroup]="expenseForm" (ngSubmit)="saveExpense()" *ngIf="!isLoading">
       <!-- Basic Expense Information -->
       <div class="form-section">
         <div class="section-title">
@@ -113,20 +119,31 @@
             <span class="info-title">Informacja</span>
           </div>
           <div class="info-text">
-            Tutaj możesz dodać tylko pozycje manualne. Aby przypisać faktury do wydatków,
-            przejdź do sekcji "Faktury" w panelu księgowości.
+            <span *ngIf="!isEditMode">
+              Tutaj możesz dodać tylko pozycje manualne. Aby przypisać faktury do wydatków,
+              przejdź do sekcji "Faktury" w panelu księgowości.
+            </span>
+            <span *ngIf="isEditMode">
+              Pozycje pochodzące z faktur (oznaczone <strong>Faktura</strong>) nie mogą być edytowane tutaj.
+              Aby usunąć przypisanie faktury, przejdź do sekcji "Faktury".
+            </span>
           </div>
         </div>
 
         <div class="expense-items-container" formArrayName="items">
           <div *ngFor="let itemGroup of expenseItems; let i = index"
                class="expense-item-form"
+               [class.invoice-item]="isItemFromInvoice(i)"
                [formGroupName]="i">
 
             <div class="item-header">
-              <h4>Pozycja {{ i + 1 }}</h4>
+              <h4>
+                Pozycja {{ i + 1 }}
+                <span *ngIf="isItemFromInvoice(i)" class="invoice-badge">Faktura</span>
+                <span *ngIf="!isItemFromInvoice(i)" class="manual-badge">Manualna</span>
+              </h4>
               <div class="item-header-actions">
-                <div class="auto-calculate-toggle">
+                <div class="auto-calculate-toggle" *ngIf="!isItemFromInvoice(i)">
                   <mat-slide-toggle
                     [checked]="isAutoCalculateEnabled(i)"
                     (change)="toggleAutoCalculate(i)"
@@ -138,7 +155,8 @@
                         mat-icon-button
                         class="remove-item-btn"
                         (click)="removeExpenseItem(i)"
-                        [disabled]="expenseItems.length <= 1">
+                        [disabled]="!canRemoveItem(i)"
+                        [matTooltip]="isItemFromInvoice(i) ? 'Nie można usunąć pozycji z faktury' : 'Usuń pozycję'">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
@@ -150,7 +168,8 @@
                   <mat-label>Nazwa pozycji *</mat-label>
                   <input matInput
                          formControlName="name"
-                         placeholder="Np. Filament PLA 1kg">
+                         placeholder="Np. Filament PLA 1kg"
+                         [readonly]="isItemFromInvoice(i)">
                   <mat-error *ngIf="hasFieldError('name', i)">
                     {{ getFieldError('name', i) }}
                   </mat-error>
@@ -167,7 +186,8 @@
                          formControlName="netAmount"
                          placeholder="0.00"
                          min="0.01"
-                         step="0.01">
+                         step="0.01"
+                         [readonly]="isItemFromInvoice(i)">
                   <span matTextSuffix>PLN</span>
                   <mat-error *ngIf="hasFieldError('netAmount', i)">
                     {{ getFieldError('netAmount', i) }}
@@ -183,7 +203,8 @@
                          formControlName="grossAmount"
                          placeholder="0.00"
                          min="0.01"
-                         step="0.01">
+                         step="0.01"
+                         [readonly]="isItemFromInvoice(i)">
                   <span matTextSuffix>PLN</span>
                   <mat-error *ngIf="hasFieldError('grossAmount', i)">
                     {{ getFieldError('grossAmount', i) }}
@@ -201,26 +222,35 @@
                          min="0"
                          max="100"
                          step="1"
-                         [readonly]="!isAutoCalculateEnabled(i)">
+                         [readonly]="!isAutoCalculateEnabled(i) || isItemFromInvoice(i)">
                   <span matTextSuffix>%</span>
                   <mat-error *ngIf="hasFieldError('taxPercentage', i)">
                     {{ getFieldError('taxPercentage', i) }}
                   </mat-error>
-                  <mat-hint *ngIf="isAutoCalculateEnabled(i)">Automatyczne przeliczanie</mat-hint>
-                  <mat-hint *ngIf="!isAutoCalculateEnabled(i)">Przeliczanie wyłączone</mat-hint>
+                  <mat-hint *ngIf="isItemFromInvoice(i)">Z faktury</mat-hint>
+                  <mat-hint *ngIf="!isItemFromInvoice(i) && isAutoCalculateEnabled(i)">Automatyczne przeliczanie</mat-hint>
+                  <mat-hint *ngIf="!isItemFromInvoice(i) && !isAutoCalculateEnabled(i)">Przeliczanie wyłączone</mat-hint>
                 </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Invoice ID display for invoice items -->
+            <div *ngIf="isItemFromInvoice(i)" class="invoice-info">
+              <div class="invoice-id-display">
+                <mat-icon>receipt</mat-icon>
+                <span>ID faktury: {{ itemGroup.get('costInvoiceId')?.value }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="add-item-section">
+        <div class="add-item-section" *ngIf="!isEditMode || getManualItemsCount() > 0">
           <button type="button"
                   mat-stroked-button
                   (click)="addExpenseItem()"
                   class="add-item-btn">
             <mat-icon>add</mat-icon>
-            <span>Dodaj kolejną pozycję</span>
+            <span>Dodaj kolejną pozycję manualną</span>
           </button>
         </div>
 
@@ -244,19 +274,19 @@
   </div>
 
   <!-- Actions -->
-  <div class="dialog-actions">
+  <div class="dialog-actions" *ngIf="!isLoading">
     <button mat-stroked-button (click)="cancel()">
       <mat-icon>close</mat-icon>
       <span>Anuluj</span>
     </button>
     <button mat-raised-button
             color="primary"
-            [disabled]="!canCreate"
-            (click)="createExpense()"
+            [disabled]="!canSave"
+            (click)="saveExpense()"
             class="btn-green">
       <mat-spinner *ngIf="isCreating" diameter="20"></mat-spinner>
-      <mat-icon *ngIf="!isCreating">add_business</mat-icon>
-      <span>{{ isCreating ? 'Tworzenie...' : 'Utwórz wydatek' }}</span>
+      <mat-icon *ngIf="!isCreating">{{ isEditMode ? 'save' : 'add_business' }}</mat-icon>
+      <span>{{ saveButtonText }}</span>
     </button>
   </div>
 </div>
