@@ -1,4 +1,4 @@
-// src/app/menu/accounting/accounting-invoices/accounting-invoices.component.ts
+// accounting-invoices.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { environment } from '../../../../environments/environment';
@@ -8,11 +8,16 @@ import {
   AssignInvoiceDialogComponent,
   AssignInvoiceDialogData
 } from "./expense/assign-invoice-dialog/assign-invoice-dialog.component";
+import { ExpenseService } from '../../../utility/service/expense.service';
 
 interface CurrencyTotal {
   currency: string;
   netTotal: number;
   grossTotal: number;
+}
+
+interface InvoiceAssignmentStatus {
+  [invoiceId: string]: boolean;
 }
 
 @Component({
@@ -22,6 +27,7 @@ interface CurrencyTotal {
 })
 export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   invoices: CostInvoice[] = [];
+  invoiceAssignmentStatus: InvoiceAssignmentStatus = {};
 
   // Pagination - controlled by backend
   currentPage: number = 0;
@@ -49,22 +55,28 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   dateTo: Date | null = null;
   useCustomDateRange: boolean = false;
 
-  // Available options
-  availableCategories: { key: CostInvoiceCategory; displayName: string }[] = [];
-  availableCurrencies: string[] = ['PLN', 'EUR', 'CZK', 'HUF'];
+  // Helper properties for date inputs
+  get dateFromString(): string {
+    return this.dateFrom ? this.dateFrom.toISOString().split('T')[0] : '';
+  }
 
-  // Search timeout for debouncing
-  private searchTimeout: any;
+  get dateToString(): string {
+    return this.dateTo ? this.dateTo.toISOString().split('T')[0] : '';
+  }
+
+  // Search debounce
+  searchTimeout: any;
 
   constructor(
+    private costInvoiceService: CostInvoiceService,
+    private expenseService: ExpenseService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar,
-    private costInvoiceService: CostInvoiceService
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    this.availableCategories = this.costInvoiceService.getAvailableCategories();
     this.loadInvoices();
+    this.loadInvoiceAssignmentStatuses();
   }
 
   ngOnDestroy(): void {
@@ -76,26 +88,15 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Get effective date range for filtering
-  private getEffectiveDateRange(): { startDate: Date; endDate: Date } {
-    if (this.useCustomDateRange && this.dateFrom && this.dateTo) {
-      return {
-        startDate: new Date(this.dateFrom),
-        endDate: new Date(this.dateTo.getTime() + 24 * 60 * 60 * 1000 - 1) // End of day
-      };
-    } else {
-      // Use selected month
-      const startOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1);
-      const endOfMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0, 23, 59, 59);
-      return { startDate: startOfMonth, endDate: endOfMonth };
-    }
-  }
-
-  // Load invoices from backend with pagination
+  // Data loading
   loadInvoices(): void {
     this.isLoading = true;
 
-    const { startDate, endDate } = this.getEffectiveDateRange();
+    const createdFrom = this.useCustomDateRange ? this.dateFrom :
+      new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1);
+
+    const createdTo = this.useCustomDateRange ? this.dateTo :
+      new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0);
 
     this.costInvoiceService.getCostInvoices(
       this.currentPage,
@@ -103,31 +104,75 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
       this.filterText || undefined,
       this.filterCurrency || undefined,
       this.filterCategory || undefined,
-      startDate,
-      endDate
+      createdFrom || undefined,
+      createdTo || undefined
     ).subscribe({
-      next: (page: CostInvoicePage) => {
-        this.invoices = page.content.map(invoice => ({
-          ...invoice,
-          netPrice: Number(invoice.netPrice),
-          grossPrice: Number(invoice.grossPrice)
-        }));
-
-        this.totalElements = page.totalElements;
-        this.totalPages = page.totalPages;
-        this.currentPage = page.number;
+      next: (response: CostInvoicePage) => {
+        this.invoices = response.content;
+        this.totalElements = response.totalElements;
+        this.totalPages = response.totalPages;
+        this.currentPage = response.number;
         this.isLoading = false;
 
-        console.log(`Loaded ${this.invoices.length} invoices from page ${this.currentPage + 1}/${this.totalPages}`);
+        // Load assignment statuses for current invoices
+        this.loadInvoiceAssignmentStatuses();
       },
       error: (error) => {
         console.error('Error loading invoices:', error);
+        this.snackBar.open('Błąd podczas ładowania faktur', 'Zamknij', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.isLoading = false;
-        this.invoices = [];
-        this.totalElements = 0;
-        this.totalPages = 0;
       }
     });
+  }
+
+  // Load invoice assignment statuses
+  loadInvoiceAssignmentStatuses(): void {
+    if (this.invoices.length === 0) return;
+
+    // Check which invoices are already assigned to expenses
+    // This would require a new endpoint in the backend to check assignment status
+    // For now, we'll implement a simple check using the expense service
+    this.expenseService.listExpensesForMonth(
+      this.useCustomDateRange ?
+        { year: this.dateFrom?.getFullYear() || new Date().getFullYear(), month: this.dateFrom?.getMonth() || new Date().getMonth() + 1 } :
+        { year: this.selectedMonth.getFullYear(), month: this.selectedMonth.getMonth() + 1 }
+    ).subscribe({
+      next: (expenses) => {
+        const assignedInvoiceIds = new Set<string>();
+
+        expenses.forEach(expense => {
+          expense.items?.forEach(item => {
+            if (item.costInvoiceId) {
+              assignedInvoiceIds.add(item.costInvoiceId);
+            }
+          });
+        });
+
+        // Update assignment status for current invoices
+        this.invoiceAssignmentStatus = {};
+        this.invoices.forEach(invoice => {
+          this.invoiceAssignmentStatus[invoice.id] = assignedInvoiceIds.has(invoice.id);
+        });
+      },
+      error: (error) => {
+        console.error('Error loading invoice assignment statuses:', error);
+      }
+    });
+  }
+
+  // Check if invoice is assigned to an expense
+  isInvoiceAssigned(invoice: CostInvoice): boolean {
+    return !!this.invoiceAssignmentStatus[invoice.id];
+  }
+
+  // Generate Infakt URL for invoice
+  getInfaktUrl(invoice: CostInvoice): string {
+    // This would typically be configured in environment or fetched from backend
+    // For now, we'll use a placeholder URL structure
+    return `https://app.infakt.pl/app/faktury/koszty/${invoice.id}`;
   }
 
   private getInfaktApiKey(): string | null {
@@ -144,11 +189,16 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  // Synchronize invoices with Infakt
-  synchronizeInvoices(): void {
-    const infaktApiKey = this.getInfaktApiKey();
+  // Synchronization
+  synchronizeWithInfakt(): void {
+    // Get API key from local storage or environment
+    const infaktApiKey =  this.getInfaktApiKey();
+
     if (!infaktApiKey) {
-      alert('Brak klucza API Infakt. Skonfiguruj integrację w ustawieniach.');
+      this.snackBar.open('Brak klucza API Infakt. Skonfiguruj integrację w ustawieniach.', 'Zamknij', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      });
       return;
     }
 
@@ -157,55 +207,57 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.lastKnownTotalElements = this.totalElements;
 
     this.costInvoiceService.synchronizeCosts(infaktApiKey).subscribe({
-      next: () => {
-        console.log('Synchronization started');
-        this.startSynchronizePolling();
+      next: (response) => {
+        this.startSynchronizationPolling();
       },
       error: (error) => {
-        console.error('Error starting synchronization:', error);
+        console.error('Synchronization error:', error);
+        this.snackBar.open('Błąd podczas synchronizacji z Infakt', 'Zamknij', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
         this.isSynchronizing = false;
-        alert('Błąd podczas uruchamiania synchronizacji');
       }
     });
   }
 
-  // Poll for synchronization completion
-  startSynchronizePolling(): void {
+  private startSynchronizationPolling(): void {
     this.synchronizeInterval = setInterval(() => {
       this.synchronizeAttempts++;
 
-      if (this.synchronizeAttempts >= this.maxSynchronizeAttempts) {
-        this.stopSynchronizePolling();
-        return;
-      }
+      this.costInvoiceService.getCostInvoices(0, 1).subscribe({
+        next: (response) => {
+          if (response.totalElements > this.lastKnownTotalElements ||
+            this.synchronizeAttempts >= this.maxSynchronizeAttempts) {
+            this.stopSynchronizationPolling();
 
-      const { startDate, endDate } = this.getEffectiveDateRange();
+            if (response.totalElements > this.lastKnownTotalElements) {
+              this.snackBar.open(
+                `Synchronizacja zakończona. Pobrano ${response.totalElements - this.lastKnownTotalElements} nowych faktur.`,
+                'Zamknij',
+                { duration: 5000, panelClass: ['success-snackbar'] }
+              );
+            } else {
+              this.snackBar.open('Synchronizacja zakończona bez nowych danych.', 'Zamknij', {
+                duration: 3000
+              });
+            }
 
-      this.costInvoiceService.getCostInvoices(
-        0, // first page
-        this.pageSize,
-        this.filterText || undefined,
-        this.filterCurrency || undefined,
-        this.filterCategory || undefined,
-        startDate,
-        endDate
-      ).subscribe({
-        next: (page: CostInvoicePage) => {
-          if (page.totalElements !== this.lastKnownTotalElements) {
-            // Content changed, reload current view and stop polling
             this.loadInvoices();
-            this.stopSynchronizePolling();
-            console.log('Synchronization completed, new invoices detected');
           }
         },
-        error: (error) => {
-          console.error('Error during polling:', error);
+        error: () => {
+          this.stopSynchronizationPolling();
+          this.snackBar.open('Błąd podczas sprawdzania statusu synchronizacji', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
         }
       });
-    }, 2000); // Check every 2 seconds
+    }, 2000);
   }
 
-  stopSynchronizePolling(): void {
+  private stopSynchronizationPolling(): void {
     if (this.synchronizeInterval) {
       clearInterval(this.synchronizeInterval);
       this.synchronizeInterval = null;
@@ -214,41 +266,28 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.synchronizeAttempts = 0;
   }
 
-  // Filter and pagination - now handled by backend
-  applyFilters(): void {
-    // Reset to first page when filters change
-    this.currentPage = 0;
-    this.loadInvoices();
-  }
-
-  // Month navigation
+  // Date navigation
   previousMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() - 1, 1);
-    this.currentPage = 0;
     if (!this.useCustomDateRange) {
+      this.currentPage = 0;
       this.loadInvoices();
     }
   }
 
   nextMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 1);
-    this.currentPage = 0;
     if (!this.useCustomDateRange) {
+      this.currentPage = 0;
       this.loadInvoices();
     }
   }
 
-  // Toggle between month selector and custom date range
-  toggleDateRangeMode(): void {
-    this.useCustomDateRange = !this.useCustomDateRange;
-    if (!this.useCustomDateRange) {
-      this.dateFrom = null;
-      this.dateTo = null;
-    }
-    this.applyFilters();
+  onCustomDateRangeToggle(): void {
+    this.currentPage = 0;
+    this.loadInvoices();
   }
 
-  // Date range change handlers
   onDateFromChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.dateFrom = target.value ? new Date(target.value) : null;
@@ -280,6 +319,36 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     }
   }
 
+  getVisiblePages(): number[] {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(0, this.currentPage - delta);
+         i <= Math.min(this.totalPages - 1, this.currentPage + delta);
+         i++) {
+      range.push(i);
+    }
+
+    if (range[0] > 1) {
+      rangeWithDots.push(0);
+      if (range[0] > 2) {
+        rangeWithDots.push(-1); // Represents dots
+      }
+    }
+
+    rangeWithDots.push(...range);
+
+    if (range[range.length - 1] < this.totalPages - 2) {
+      if (range[range.length - 1] < this.totalPages - 3) {
+        rangeWithDots.push(-1); // Represents dots
+      }
+      rangeWithDots.push(this.totalPages - 1);
+    }
+
+    return rangeWithDots.filter(page => page >= 0);
+  }
+
   // Filter methods
   onFilterTextChange(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -303,6 +372,11 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  clearSearch(): void {
+    this.filterText = '';
+    this.applyFilters();
+  }
+
   clearFilters(): void {
     this.filterText = '';
     this.filterCategory = '';
@@ -311,6 +385,11 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.dateFrom = null;
     this.dateTo = null;
     this.useCustomDateRange = false;
+    this.currentPage = 0;
+    this.loadInvoices();
+  }
+
+  private applyFilters(): void {
     this.currentPage = 0;
     this.loadInvoices();
   }
@@ -341,21 +420,13 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
             ? 'Wydatek został utworzony i faktura została przypisana'
             : 'Faktura została przypisana do wydatku',
           'Zamknij',
-          {
-            duration: 5000,
-            panelClass: ['success-snackbar']
-          }
+          { duration: 3000, panelClass: ['success-snackbar'] }
         );
 
-        // Reload invoices to reflect any changes
+        // Reload data to refresh assignment statuses
         this.loadInvoices();
       }
     });
-  }
-
-  openInfaktView(invoice: CostInvoice): void {
-    const infaktUrl = `${environment.infaktUrl || 'https://app.infakt.pl'}/app/koszty/${invoice.id}`;
-    window.open(infaktUrl, '_blank');
   }
 
   // Utility methods
@@ -377,57 +448,14 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     });
   }
 
-  getDateRangeDisplayName(): string {
-    if (this.useCustomDateRange && this.dateFrom && this.dateTo) {
-      return `${this.formatDate(this.dateFrom.toISOString())} - ${this.formatDate(this.dateTo.toISOString())}`;
-    }
-    return this.getMonthDisplayName();
-  }
-
   getCategoryDisplayName(category: CostInvoiceCategory | string | undefined): string {
     return this.costInvoiceService.getCategoryDisplayName(category as CostInvoiceCategory);
   }
 
-  // Calculate totals by currency
-  getCurrencyTotals(): CurrencyTotal[] {
-    const totalsMap = new Map<string, CurrencyTotal>();
-
-    this.invoices.forEach(invoice => {
-      const currency = invoice.currency || 'PLN';
-
-      if (!totalsMap.has(currency)) {
-        totalsMap.set(currency, {
-          currency: currency,
-          netTotal: 0,
-          grossTotal: 0
-        });
-      }
-
-      const total = totalsMap.get(currency)!;
-      total.netTotal += invoice.netPrice;
-      total.grossTotal += invoice.grossPrice;
-    });
-
-    return Array.from(totalsMap.values()).sort((a, b) => a.currency.localeCompare(b.currency));
+  getAvailableCategories(): { key: CostInvoiceCategory; displayName: string }[] {
+    return this.costInvoiceService.getAvailableCategories();
   }
 
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    const maxPagesToShow = 5;
-
-    let startPage = Math.max(0, this.currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(this.totalPages - 1, startPage + maxPagesToShow - 1);
-
-    if (endPage - startPage < maxPagesToShow - 1) {
-      startPage = Math.max(0, endPage - maxPagesToShow + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return pages;
-  }
-
-  protected readonly Math = Math;
+  // Add Math reference for template
+  Math = Math;
 }

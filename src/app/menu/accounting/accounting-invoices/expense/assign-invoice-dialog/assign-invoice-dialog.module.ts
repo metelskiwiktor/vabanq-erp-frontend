@@ -1,7 +1,7 @@
 // src/app/menu/accounting/accounting-invoices/expense/assign-invoice-dialog/assign-invoice-dialog.module.ts
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 // Angular Material
 import { MatDialogModule } from '@angular/material/dialog';
@@ -26,20 +26,21 @@ import { ExpenseCategoryMapperService } from '../../../../../utility/service/exp
   declarations: [
     AssignInvoiceDialogComponent
   ],
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatRadioModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule
-  ],
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatDialogModule,
+        MatButtonModule,
+        MatIconModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatCheckboxModule,
+        MatRadioModule,
+        MatProgressSpinnerModule,
+        MatSnackBarModule,
+        FormsModule
+    ],
   providers: [
     ExpenseService,
     ExpenseCategoryMapperService

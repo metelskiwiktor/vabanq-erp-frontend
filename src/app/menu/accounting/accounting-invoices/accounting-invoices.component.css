@@ -1,36 +1,122 @@
-/* Main Container */
+/* accounting-invoices.component.css */
+
+/* Invoice Number Link Styling */
+.invoice-number-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.invoice-number-link:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.external-link-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  opacity: 0.7;
+}
+
+.invoice-number-link:hover .external-link-icon {
+  opacity: 1;
+}
+
+/* Updated Action Button Styling */
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.action-button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.add-expense-btn:hover {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+/* Expense Assignment Status */
+.add-expense-btn.expense-assigned {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-color: #10b981;
+}
+
+.add-expense-btn.expense-assigned:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.assigned-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Existing styles... */
 .invoices-page {
   padding: 20px;
-  background: #f5f7fa;
+  background: #f8fafc;
   min-height: 100vh;
 }
 
-/* Header */
 .page-header {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   margin-bottom: 24px;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 24px;
+  align-items: flex-start;
+  gap: 20px;
 }
 
-.page-title h1 {
+.header-title h1 {
   margin: 0 0 8px 0;
   font-size: 28px;
   font-weight: 700;
   color: #1f2937;
 }
 
-.page-subtitle {
+.header-subtitle {
   margin: 0;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .header-actions {
@@ -38,102 +124,63 @@
   gap: 12px;
 }
 
-.sync-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sync-button:hover:not(:disabled) {
-  background: #2563eb;
-  transform: translateY(-1px);
-}
-
-.sync-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Filters Section */
-.filters-section {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  margin-bottom: 24px;
-  overflow: hidden;
-}
-
+/* Filters */
 .filters-container {
   display: flex;
-  flex-wrap: wrap;
   gap: 16px;
-  padding: 20px;
-  align-items: center;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
 }
 
 .search-container {
-  position: relative;
   flex: 1;
   min-width: 300px;
 }
 
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  font-size: 20px;
-}
-
-.search-input {
+.search-field {
   width: 100%;
-  padding: 12px 12px 12px 44px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: #f9fafb;
-  transition: all 0.2s ease;
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.date-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* Date Range Filters */
-.filter-checkbox {
+.category-currency-filters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  min-width: 120px;
   cursor: pointer;
 }
 
-.checkbox-label {
-  font-size: 14px;
-  color: #374151;
-  font-weight: 500;
+.filter-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .month-selector {
@@ -180,79 +227,6 @@
 
 .date-input {
   min-width: 140px;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-label {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  background: white;
-  min-width: 120px;
-  cursor: pointer;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.clear-filters-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: white;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.clear-filters-btn:hover {
-  background: #f9fafb;
-  color: #374151;
-}
-
-/* Filters Summary */
-.filters-summary {
-  display: flex;
-  gap: 32px;
-  padding: 16px 20px;
-  background: #f9fafb;
-  flex-wrap: wrap;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.summary-label {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.summary-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
 }
 
 /* Table Section */
@@ -333,7 +307,7 @@
 
 .actions-column {
   text-align: center;
-  width: 100px;
+  width: 80px;
 }
 
 .date-column {
@@ -345,12 +319,6 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.invoice-number {
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 14px;
 }
 
 .invoice-id {
@@ -424,35 +392,6 @@
   display: flex;
   gap: 6px;
   justify-content: center;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-button:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.add-expense-btn:hover {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.view-btn:hover {
-  background: #dbeafe;
-  color: #1e40af;
 }
 
 /* Empty State */
@@ -549,39 +488,6 @@
   gap: 4px;
 }
 
-/* Page Size Selector */
-.page-size-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 16px;
-  padding-left: 16px;
-  border-left: 1px solid #e5e7eb;
-}
-
-.page-size-label {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.page-size-select {
-  padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  background: white;
-  cursor: pointer;
-  min-width: 70px;
-}
-
-.page-size-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
 /* Button Styles */
 .btn {
   display: flex;
@@ -616,6 +522,75 @@
 .btn-outline:hover {
   background: #f9fafb;
   color: #374151;
+}
+
+/* Filters Summary */
+.filters-summary {
+  display: flex;
+  gap: 32px;
+  padding: 16px 20px;
+  background: #f9fafb;
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.summary-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Page Size Selector */
+.page-size-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid #e5e7eb;
+}
+
+.page-size-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.page-size-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  min-width: 70px;
+}
+
+.page-size-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
 }
 
 /* Responsive Design */
@@ -694,5 +669,16 @@
 
   .filters-summary {
     grid-template-columns: 1fr;
+  }
+
+  .invoice-number-link {
+    font-size: 12px;
+    padding: 2px 4px;
+  }
+
+  .external-link-icon {
+    font-size: 12px !important;
+    width: 12px !important;
+    height: 12px !important;
   }
 }

@@ -78,6 +78,11 @@ export interface CreateExpenseTagRequest {
   name: string;
 }
 
+export interface YearMonthParam {
+  year: number;
+  month: number; // 1-12
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -343,6 +348,28 @@ export class ExpenseService {
       count: 0,
       itemsCount: 0
     });
+  }
+
+  listExpensesForMonth(yearMonth?: YearMonthParam | string): Observable<ExpenseResponse[]> {
+    let params = new HttpParams();
+
+    if (yearMonth) {
+      let monthParam: string;
+
+      if (typeof yearMonth === 'string') {
+        // Jeśli przekazano string w formacie YYYY-MM
+        monthParam = yearMonth;
+      } else {
+        // Jeśli przekazano obiekt YearMonthParam
+        const monthStr = yearMonth.month.toString().padStart(2, '0');
+        monthParam = `${yearMonth.year}-${monthStr}`;
+      }
+
+      params = params.set('month', monthParam);
+    }
+    // Jeśli nie przekazano parametru, backend użyje aktualnego miesiąca
+
+    return this.http.get<ExpenseResponse[]>(this.apiUrl, { params });
   }
 }
 

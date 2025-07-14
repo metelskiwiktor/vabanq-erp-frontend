@@ -1,121 +1,119 @@
+<!-- accounting-invoices.component.html -->
 <div class="invoices-page">
   <!-- Header -->
   <div class="page-header">
     <div class="header-content">
-      <div class="page-title">
+      <div class="header-title">
         <h1>Faktury kosztów</h1>
-        <p class="page-subtitle">Zarządzanie fakturami kosztów z systemu Infakt</p>
+        <p class="header-subtitle">Zarządzanie fakturami kosztów i przypisywanie do wydatków</p>
       </div>
+
       <div class="header-actions">
-        <button
-          class="btn btn-primary sync-button"
-          [disabled]="isSynchronizing"
-          (click)="synchronizeInvoices()">
-          <mat-icon [class.spinning]="isSynchronizing">
-            {{ isSynchronizing ? 'sync' : 'sync' }}
-          </mat-icon>
+        <button class="btn btn-outline" (click)="clearFilters()" [disabled]="isLoading">
+          <mat-icon>clear_all</mat-icon>
+          Wyczyść filtry
+        </button>
+        <button class="btn btn-primary" (click)="synchronizeWithInfakt()" [disabled]="isSynchronizing">
+          <mat-icon [class.spinning]="isSynchronizing">sync</mat-icon>
           {{ isSynchronizing ? 'Synchronizowanie...' : 'Synchronizuj' }}
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="filters-section">
-    <div class="filters-container">
-      <!-- Search -->
-      <div class="search-container">
-        <mat-icon class="search-icon">search</mat-icon>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Szukaj po numerze, sprzedawcy, opisie..."
-          [value]="filterText"
-          (input)="onFilterTextChange($event)">
-      </div>
+  <!-- Search and Filters -->
+  <div class="filters-container">
+    <!-- Search -->
+    <div class="search-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Szukaj po numerze, sprzedawcy lub opisie</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput
+               [value]="filterText"
+               (input)="onFilterTextChange($event)"
+               placeholder="Wpisz tekst do wyszukania...">
+        <button matSuffix mat-icon-button *ngIf="filterText" (click)="clearSearch()">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
 
-      <!-- Date Range Toggle -->
+    <!-- Date Filter -->
+    <div class="date-filter-container">
       <div class="filter-group">
-        <label class="filter-checkbox">
-          <input type="checkbox" [checked]="useCustomDateRange" (change)="toggleDateRangeMode()">
-          <span class="checkbox-label">Własny zakres dat</span>
+        <label class="filter-label">
+          <input type="checkbox"
+                 [(ngModel)]="useCustomDateRange"
+                 (change)="onCustomDateRangeToggle()">
+          Zakres dat
         </label>
-      </div>
-
-      <!-- Month selector (when not using custom range) -->
-      <div *ngIf="!useCustomDateRange" class="month-selector">
-        <button class="month-nav-btn" (click)="previousMonth()">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <span class="selected-month">{{ getMonthDisplayName() }}</span>
-        <button class="month-nav-btn" (click)="nextMonth()">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </div>
-
-      <!-- Custom date range inputs -->
-      <div *ngIf="useCustomDateRange" class="date-range-inputs">
-        <div class="filter-group">
-          <label class="filter-label">Od:</label>
-          <input
-            type="date"
-            class="filter-select date-input"
-            [value]="dateFrom!.toISOString().split('T')[0] || ''"
-            (change)="onDateFromChange($event)">
+        <div *ngIf="!useCustomDateRange" class="month-selector">
+          <button class="month-nav-btn" (click)="previousMonth()">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="selected-month">{{ getMonthDisplayName() }}</span>
+          <button class="month-nav-btn" (click)="nextMonth()">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
         </div>
-        <div class="filter-group">
-          <label class="filter-label">Do:</label>
-          <input
-            type="date"
-            class="filter-select date-input"
-            [value]="dateTo!.toISOString().split('T')[0] || ''"
-            (change)="onDateToChange($event)">
+        <div *ngIf="useCustomDateRange" class="date-range-inputs">
+          <mat-form-field appearance="outline" class="date-input">
+            <mat-label>Od</mat-label>
+            <input matInput type="date" [value]="dateFromString" (change)="onDateFromChange($event)">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="date-input">
+            <mat-label>Do</mat-label>
+            <input matInput type="date" [value]="dateToString" (change)="onDateToChange($event)">
+          </mat-form-field>
         </div>
       </div>
+    </div>
 
-      <!-- Currency filter -->
-      <div class="filter-group">
-        <label class="filter-label">Waluta:</label>
-        <select class="filter-select" [value]="filterCurrency" (change)="onCurrencyFilterChange($event)">
-          <option value="">Wszystkie waluty</option>
-          <option *ngFor="let currency of availableCurrencies" [value]="currency">
-            {{ currency }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Category filter -->
+    <!-- Category and Currency Filters -->
+    <div class="category-currency-filters">
       <div class="filter-group">
         <label class="filter-label">Kategoria:</label>
         <select class="filter-select" [value]="filterCategory" (change)="onCategoryFilterChange($event)">
-          <option value="">Wszystkie kategorie</option>
-          <option *ngFor="let category of availableCategories" [value]="category.key">
+          <option value="">Wszystkie</option>
+          <option *ngFor="let category of getAvailableCategories()" [value]="category.key">
             {{ category.displayName }}
           </option>
         </select>
       </div>
 
-      <!-- Clear filters -->
-      <button class="btn btn-outline clear-filters-btn" (click)="clearFilters()">
-        <mat-icon>filter_alt_off</mat-icon>
-        Wyczyść
-      </button>
+      <div class="filter-group">
+        <label class="filter-label">Waluta:</label>
+        <select class="filter-select" [value]="filterCurrency" (change)="onCurrencyFilterChange($event)">
+          <option value="">Wszystkie</option>
+          <option value="PLN">PLN</option>
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+        </select>
+      </div>
     </div>
+  </div>
 
-    <!-- Summary -->
-    <div class="filters-summary">
-      <div class="summary-item">
-        <span class="summary-label">Okres:</span>
-        <span class="summary-value">{{ getDateRangeDisplayName() }}</span>
-      </div>
-      <div *ngFor="let total of getCurrencyTotals()" class="summary-item">
-        <span class="summary-label">Netto {{ total.currency }}:</span>
-        <span class="summary-value">{{ formatCurrency(total.netTotal, total.currency) }}</span>
-      </div>
-<!--      <div *ngFor="let total of getCurrencyTotals()" class="summary-item">-->
-<!--        <span class="summary-label">Brutto {{ total.currency }}:</span>-->
-<!--        <span class="summary-value">{{ formatCurrency(total.grossTotal, total.currency) }}</span>-->
-<!--      </div>-->
+  <!-- Filters Summary -->
+  <div class="filters-summary" *ngIf="totalElements > 0">
+    <div class="summary-item">
+      <span class="summary-label">Znaleziono:</span>
+      <span class="summary-value">{{ totalElements }} faktur</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Strona:</span>
+      <span class="summary-value">{{ currentPage + 1 }} z {{ totalPages }}</span>
+    </div>
+    <div class="summary-item" *ngIf="filterText">
+      <span class="summary-label">Filtr tekst:</span>
+      <span class="summary-value">"{{ filterText }}"</span>
+    </div>
+    <div class="summary-item" *ngIf="filterCategory">
+      <span class="summary-label">Kategoria:</span>
+      <span class="summary-value">{{ getCategoryDisplayName(filterCategory) }}</span>
+    </div>
+    <div class="summary-item" *ngIf="filterCurrency">
+      <span class="summary-label">Waluta:</span>
+      <span class="summary-value">{{ filterCurrency }}</span>
     </div>
   </div>
 
@@ -150,10 +148,16 @@
       </thead>
       <tbody>
       <tr *ngFor="let invoice of invoices" class="invoice-row">
-        <!-- Invoice Number -->
+        <!-- Invoice Number - Now as clickable link -->
         <td>
           <div class="invoice-info">
-            <div class="invoice-number">{{ invoice.number }}</div>
+            <a href="{{ getInfaktUrl(invoice) }}"
+               target="_blank"
+               class="invoice-number-link"
+               title="Otwórz fakturę w Infakt">
+              {{ invoice.number }}
+              <mat-icon class="external-link-icon">open_in_new</mat-icon>
+            </a>
             <div class="invoice-id" *ngIf="invoice.sellerTaxCode !== 'null'">
               NIP: {{ invoice.sellerTaxCode }}
             </div>
@@ -209,16 +213,11 @@
           <div class="action-buttons">
             <button
               class="action-button add-expense-btn"
-              title="Dodaj wydatek"
+              [class.expense-assigned]="isInvoiceAssigned(invoice)"
+              [title]="isInvoiceAssigned(invoice) ? 'Faktura ma już przypisany wydatek' : 'Dodaj wydatek'"
               (click)="openExpenseDialog(invoice)">
-              <mat-icon>add_business</mat-icon>
-            </button>
-
-            <button
-              class="action-button view-btn"
-              title="Podgląd w Infakt"
-              (click)="openInfaktView(invoice)">
-              <mat-icon>open_in_new</mat-icon>
+              <mat-icon *ngIf="!isInvoiceAssigned(invoice)">add_business</mat-icon>
+              <mat-icon *ngIf="isInvoiceAssigned(invoice)" class="assigned-icon">business_center</mat-icon>
             </button>
           </div>
         </td>
@@ -238,12 +237,12 @@
         Nie znaleziono faktur spełniających wybrane kryteria filtrowania.
       </p>
       <div class="empty-actions">
-        <button *ngIf="totalElements === 0" class="btn btn-primary" (click)="synchronizeInvoices()">
+        <button class="btn btn-primary" (click)="synchronizeWithInfakt()" *ngIf="totalElements === 0">
           <mat-icon>sync</mat-icon>
           Synchronizuj z Infakt
         </button>
-        <button *ngIf="totalElements > 0" class="btn btn-outline" (click)="clearFilters()">
-          <mat-icon>filter_alt_off</mat-icon>
+        <button class="btn btn-outline" (click)="clearFilters()" *ngIf="totalElements > 0">
+          <mat-icon>clear_all</mat-icon>
           Wyczyść filtry
         </button>
       </div>
@@ -251,43 +250,39 @@
   </div>
 
   <!-- Pagination -->
-  <div class="pagination-container" *ngIf="!isLoading && invoices.length > 0">
+  <div class="pagination-container" *ngIf="!isLoading && totalElements > 0">
     <div class="pagination-info">
-      <span>
-        Wyświetlanie {{ (currentPage * pageSize) + 1 }} -
-        {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
-        z {{ totalElements }} faktur
-      </span>
+      Pokazuję {{ (currentPage * pageSize) + 1 }} - {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
+      z {{ totalElements }} faktur
     </div>
 
     <div class="pagination-controls">
-      <button
-        class="page-btn"
-        [disabled]="currentPage === 0"
-        (click)="goToPage(currentPage - 1)">
+      <button class="page-btn" (click)="goToPage(0)" [disabled]="currentPage === 0">
+        <mat-icon>first_page</mat-icon>
+      </button>
+      <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0">
         <mat-icon>chevron_left</mat-icon>
       </button>
 
       <div class="page-numbers">
-        <button
-          *ngFor="let page of getPageNumbers()"
-          class="page-btn"
-          [class.active]="page === currentPage"
-          (click)="goToPage(page)">
+        <button *ngFor="let page of getVisiblePages()"
+                class="page-btn"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">
           {{ page + 1 }}
         </button>
       </div>
 
-      <button
-        class="page-btn"
-        [disabled]="currentPage === totalPages - 1"
-        (click)="goToPage(currentPage + 1)">
+      <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage >= totalPages - 1">
         <mat-icon>chevron_right</mat-icon>
       </button>
+      <button class="page-btn" (click)="goToPage(totalPages - 1)" [disabled]="currentPage >= totalPages - 1">
+        <mat-icon>last_page</mat-icon>
+      </button>
 
-      <!-- Page size selector moved here -->
+      <!-- Page Size Selector -->
       <div class="page-size-group">
-        <label class="page-size-label">Pokaż:</label>
+        <label class="page-size-label">Pozycji na stronie:</label>
         <select class="page-size-select" [value]="pageSize" (change)="changePageSize($event)">
           <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
         </select>
