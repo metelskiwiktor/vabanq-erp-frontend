@@ -1,4 +1,4 @@
-// assign-invoice-dialog.component.ts
+// assign-invoice-dialog.component.ts - Updated with pre-selection and month filtering
 import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -36,6 +36,7 @@ interface ExpenseOption {
 
 export interface AssignInvoiceDialogData {
   invoice: CostInvoice;
+  currentExpenseId?: string; // Add current expense ID for pre-selection
 }
 
 type DialogView = 'assign' | 'create';
@@ -68,6 +69,9 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
   isAssigning: boolean = false;
   isCreating: boolean = false;
 
+  // Invoice month for filtering
+  invoiceMonth!: { year: number; month: number };
+
   constructor(
     public dialogRef: MatDialogRef<AssignInvoiceDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: AssignInvoiceDialogData,
@@ -76,18 +80,13 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     private expenseCategoryMapper: ExpenseCategoryMapperService,
     private snackBar: MatSnackBar
   ) {
-    this.createExpenseForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      description: [''],
-      type: ['VARIABLE', Validators.required],
-      category: ['', Validators.required],
-      tags: ['']
-    });
+    this.initializeForms();
+    this.calculateInvoiceMonth();
   }
 
   ngOnInit(): void {
-    this.loadAvailableCategories();
-    this.loadAvailableExpenses();
+    this.loadCategories();
+    this.loadExpensesForInvoiceMonth();
   }
 
   ngOnDestroy(): void {
@@ -95,35 +94,52 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadAvailableCategories(): void {
+  private calculateInvoiceMonth(): void {
+    const invoiceDate = new Date(this.data.invoice.createdAt);
+    this.invoiceMonth = {
+      year: invoiceDate.getFullYear(),
+      month: invoiceDate.getMonth() + 1 // Convert to 1-12
+    };
+  }
+
+  private initializeForms(): void {
+    this.createExpenseForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(3)]],
+      description: [''],
+      type: ['VARIABLE', Validators.required],
+      category: ['', Validators.required],
+      cyclic: [false],
+      tags: ['']
+    });
+  }
+
+  private loadCategories(): void {
     this.availableCategories = this.expenseService.getAvailableCategories();
   }
 
-  private loadAvailableExpenses(): void {
+  private loadExpensesForInvoiceMonth(): void {
     this.isLoading = true;
 
-    // Get current month expenses to check for existing assignments
-    const currentDate = new Date();
-    const yearMonth = { year: currentDate.getFullYear(), month: currentDate.getMonth() + 1 };
-
-    this.expenseService.listExpensesForMonth(yearMonth)
+    // Load expenses only for the month of the invoice
+    this.expenseService.listExpensesForMonth(this.invoiceMonth)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (expenses: ExpenseResponse[]) => {
+        next: (expenses) => {
           this.availableExpenses = expenses.map(expense => ({
             id: expense.id,
             name: expense.name,
             type: expense.type,
             category: expense.category,
-            totalGrossCost: expense.totalGrossCost || 0,
-            totalNetCost: expense.totalNetCost || 0,
-            currency: 'PLN', // Default currency
-            period: this.formatExpensePeriod(expense.createdAt),
+            totalGrossCost: expense.totalGrossCost,
+            totalNetCost: expense.totalNetCost,
+            currency: 'PLN',
+            period: this.formatPeriod(expense.createdAt),
             description: expense.description,
-            items: expense.items || []
+            items: expense.items
           }));
 
           this.applyFilters();
+          this.preselectCurrentExpense();
           this.isLoading = false;
         },
         error: (error) => {
@@ -137,57 +153,58 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
       });
   }
 
-  private formatExpensePeriod(createdAt: string): string {
+  private preselectCurrentExpense(): void {
+    if (this.data.currentExpenseId) {
+      // Find and pre-select the current expense
+      const currentExpense = this.availableExpenses.find(exp => exp.id === this.data.currentExpenseId);
+      if (currentExpense) {
+        this.selectedExpenseId = this.data.currentExpenseId;
+      }
+    }
+  }
+
+  protected formatPeriod(createdAt: string): string {
     const date = new Date(createdAt);
-    return date.toLocaleDateString('pl-PL', { year: 'numeric', month: 'long' });
+    const monthNames = [
+      'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+      'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
+    ];
+    return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
   }
 
-  // Check if expense has invoice items assigned
-  hasInvoiceAssigned(expense: ExpenseOption): boolean {
-    return expense.items ? expense.items.some(item => !!item.costInvoiceId) : false;
+  // Filtering
+  applyFilters(): void {
+    let filtered = this.availableExpenses;
+
+    if (this.searchTerm) {
+      const searchLower = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(expense =>
+        expense.name.toLowerCase().includes(searchLower) ||
+        (expense.description && expense.description.toLowerCase().includes(searchLower))
+      );
+    }
+
+    if (this.typeFilter) {
+      filtered = filtered.filter(expense => expense.type === this.typeFilter);
+    }
+
+    if (this.categoryFilter) {
+      filtered = filtered.filter(expense => expense.category === this.categoryFilter);
+    }
+
+    this.filteredExpenses = filtered;
   }
 
-  // Count invoice items for an expense
-  getInvoiceItemsCount(expense: ExpenseOption): number {
-    return expense.items ? expense.items.filter(item => !!item.costInvoiceId).length : 0;
-  }
-
-  // Get selected expense object
-  getSelectedExpense(): ExpenseOption | null {
-    return this.availableExpenses.find(expense => expense.id === this.selectedExpenseId) || null;
-  }
-
-  // Search and filtering
   onSearchChange(): void {
     this.applyFilters();
   }
 
-  clearSearch(): void {
-    this.searchTerm = '';
+  onTypeFilterChange(): void {
     this.applyFilters();
   }
 
-  onTypeFilterChange(value: string): void {
-    this.typeFilter = value;
+  onCategoryFilterChange(): void {
     this.applyFilters();
-  }
-
-  onCategoryFilterChange(value: string): void {
-    this.categoryFilter = value;
-    this.applyFilters();
-  }
-
-  private applyFilters(): void {
-    this.filteredExpenses = this.availableExpenses.filter(expense => {
-      const matchesSearch = !this.searchTerm ||
-        expense.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        (expense.description && expense.description.toLowerCase().includes(this.searchTerm.toLowerCase()));
-
-      const matchesType = !this.typeFilter || expense.type === this.typeFilter;
-      const matchesCategory = !this.categoryFilter || expense.category === this.categoryFilter;
-
-      return matchesSearch && matchesType && matchesCategory;
-    });
   }
 
   // Expense selection
@@ -199,33 +216,54 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     return this.selectedExpenseId === expense.id;
   }
 
-  trackByExpenseId(index: number, expense: ExpenseOption): string {
-    return expense.id;
+  getSelectedExpense(): ExpenseOption | null {
+    return this.availableExpenses.find(exp => exp.id === this.selectedExpenseId) || null;
+  }
+
+  // Utility methods
+  hasInvoiceAssigned(expense: ExpenseOption): boolean {
+    return expense.items! && expense.items.length > 0 &&
+      expense.items.some(item => item.costInvoiceId);
+  }
+
+  getInvoiceItemsCount(expense: ExpenseOption): number {
+    if (!expense.items) return 0;
+    return expense.items.filter(item => item.costInvoiceId).length;
+  }
+
+  getCategoryDisplayName(category: ExpenseCategory): string {
+    return this.expenseService.getCategoryDisplayName(category);
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: 'PLN'
+    }).format(amount);
   }
 
   // View switching
   switchToCreateView(): void {
     this.currentView = 'create';
-    // Pre-fill form with invoice data using mapper service
+    this.prefillCreateForm();
+  }
+
+  private prefillCreateForm(): void {
     const invoice = this.data.invoice;
 
-    // Use mapper service to generate smart defaults
+    // Generate suggested name
     const suggestedName = this.expenseCategoryMapper.generateExpenseNameFromInvoice(
       invoice.number,
       invoice.sellerName,
       invoice.description
     );
 
+    // Map category
     const suggestedCategory = this.expenseCategoryMapper.mapInvoiceCategoryToExpenseCategory(
       invoice.category
     );
 
-    const suggestedType = this.expenseCategoryMapper.suggestExpenseType(
-      invoice.category,
-      invoice.sellerName,
-      invoice.netPrice
-    );
-
+    // Generate tags
     const suggestedTags = this.expenseCategoryMapper.generateTagsFromInvoice(
       invoice.category,
       invoice.sellerName,
@@ -234,10 +272,8 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
 
     this.createExpenseForm.patchValue({
       name: suggestedName,
-      type: suggestedType,
       category: suggestedCategory,
-      description: invoice.description && invoice.description !== 'null' ?
-        invoice.description : '',
+      description: invoice.description !== 'null' ? invoice.description : '',
       tags: suggestedTags.join(', ')
     });
   }
@@ -293,14 +329,15 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
         formValue.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) :
         [];
 
-      // Create expense request
+      // Create expense request with invoice date for proper month assignment
       const createRequest: CreateExpenseRequest = {
         name: formValue.name,
         description: formValue.description || undefined,
         type: formValue.type,
-        cyclic: false, // Default to false for now
+        cyclic: formValue.cyclic || false,
         category: formValue.category,
-        tags: tags
+        tags: tags,
+        createdAt: this.data.invoice.createdAt // Use invoice date for expense month
       };
 
       // Create the expense
@@ -322,9 +359,9 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
         panelClass: ['success-snackbar']
       });
 
-      this.dialogRef.close({ success: true, action: 'created' });
+      this.dialogRef.close({ success: true, action: 'created', expenseId: createdExpense.id });
     } catch (error) {
-      console.error('Error creating expense and assigning invoice:', error);
+      console.error('Error creating expense:', error);
       this.snackBar.open('Błąd podczas tworzenia wydatku', 'Zamknij', {
         duration: 3000,
         panelClass: ['error-snackbar']
@@ -333,7 +370,6 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Helper methods
   private markFormGroupTouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
@@ -341,44 +377,22 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
     });
   }
 
-  formatCurrency(amount: number, currency: string = 'PLN'): string {
-    return new Intl.NumberFormat('pl-PL', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('pl-PL');
-  }
-
-  getCategoryDisplayName(category: CostInvoiceCategory | ExpenseCategory): string {
-    if (typeof category === 'string') {
-      // Handle CostInvoiceCategory
-      const categoryDisplayNames: { [key: string]: string } = {
-        'HOUSING_FEES': 'Opłaty mieszkaniowe',
-        'ELECTRONIC_SERVICES': 'Usługi elektroniczne',
-        'ACCOUNTING_SERVICES': 'Usługi księgowe',
-        'ENTREPRENEUR_EXPENSES': 'Wydatki przedsiębiorcy',
-        'SALARY': 'Wynagrodzenie',
-        'EMPLOYEE_SOCIAL_SECURITY': 'ZUS za pracownika',
-        'GOODS_OR_MATERIALS_PURCHASE': 'Zakup towarów i/lub materiałów',
-        'NONE': 'Brak przypisanej kategorii',
-        'OTHER': 'Inne',
-        // ExpenseCategory mappings
-        'SERVICES': 'Usługi',
-        'ACCOUNTING': 'Księgowość',
-        'OFFICE_SUPPLIES': 'Biuro',
-        'TRAVEL': 'Podróże'
-      };
-      return categoryDisplayNames[category] || 'Nieznana kategoria';
-    }
-    return this.expenseService.getCategoryDisplayName(category as ExpenseCategory);
-  }
-
-  hasFieldError(fieldName: string, errorType: string = 'required'): boolean {
+  // Form validation helpers
+  isFieldInvalid(fieldName: string): boolean {
     const field = this.createExpenseForm.get(fieldName);
-    return !!(field && field.hasError(errorType) && (field.dirty || field.touched));
+    return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
+  getFieldError(fieldName: string): string {
+    const field = this.createExpenseForm.get(fieldName);
+    if (field?.errors && (field.dirty || field.touched)) {
+      if (field.errors['required']) return `Pole ${fieldName} jest wymagane`;
+      if (field.errors['minlength']) return `Minimum ${field.errors['minlength'].requiredLength} znaków`;
+    }
+    return '';
+  }
+
+  cancel(): void {
+    this.dialogRef.close();
+  }
 }

@@ -42,6 +42,7 @@ export interface CreateExpenseRequest {
   cyclic: boolean;
   category: ExpenseCategory;
   tags: string[];
+  createdAt?: string;
 }
 
 export interface AttachInvoiceRequest {
