@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PageEvent } from '@angular/material/paginator';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { RaportService, FinancialReportResponse, OfferProfitabilityResponse, PricePair } from '../../../utility/service/raport.service';
 
 interface CostItem {
@@ -13,7 +14,21 @@ interface CostItem {
 @Component({
   selector: 'app-accounting-dashboard',
   templateUrl: './accounting-dashboard.component.html',
-  styleUrl: './accounting-dashboard.component.css'
+  styleUrl: './accounting-dashboard.component.css',
+  animations: [
+    trigger('slideInOut', [
+      state('in', style({
+        opacity: 1,
+        transform: 'translateY(0)'
+      })),
+      state('out', style({
+        opacity: 0,
+        transform: 'translateY(-10px)'
+      })),
+      transition('in => out', animate('200ms ease-out')),
+      transition('out => in', animate('300ms ease-in'))
+    ])
+  ]
 })
 export class AccountingDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -34,9 +49,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   profitMargin = 0;
   costBreakdown: CostItem[] = [];
 
-  // Export functionality
-  isExporting = false;
-
   // Pagination for offers table
   offersPageSize = 10;
   offersPageIndex = 0;
@@ -47,21 +59,21 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   offerSearchQuery = '';
   filteredOffers: OfferProfitabilityResponse[] = [];
 
-  // Table columns
+  // Table columns - simplified
   displayedColumns: string[] = [
+    'expand',
     'offerId',
     'offerName',
-    'productNames',
     'quantitySold',
     'pricePerQuantity',
     'revenue',
-    'materialCost',
-    'laborCost',
-    'powerCost',
-    'packagingCost',
+    'totalCost',
     'profit',
     'margin'
   ];
+
+  // Expanded rows tracking
+  expandedOffers = new Set<string>();
 
   constructor(
     private raportService: RaportService,
@@ -76,6 +88,15 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+  // // Custom predicate for expanded rows
+  // isExpanded = (index: number, item: any) => {
+  //   return this.expandedOffers.has(item.offerId);
+  // };
+
+  isExpandedRow = (index: number, item: any) => {
+    return this.expandedOffers.has(item.offerId);
+  };
 
   // Toggle between net and gross prices
   togglePriceMode(): void {
@@ -224,85 +245,39 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     }).format(this.selectedMonth);
   }
 
-  // Export functionality
-  exportReport(): void {
-    if (!this.reportData) {
-      this.snackBar.open('Brak danych do eksportu', 'Zamknij', {
-        duration: 3000,
-        panelClass: ['warning-snackbar']
-      });
-      return;
-    }
+  // Get total cost for offer
+  getTotalCost(offer: OfferProfitabilityResponse): number {
+    return this.getPrice(offer.materialCost) +
+      this.getPrice(offer.laborCost) +
+      this.getPrice(offer.powerCost) +
+      this.getPrice(offer.packagingCost);
+  }
 
-    this.isExporting = true;
-
-    try {
-      const csvContent = this.generateCSV();
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `raport-finansowy-${this.formatMonthForBackend(this.selectedMonth)}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      this.snackBar.open('Raport został wyeksportowany', 'Zamknij', {
-        duration: 3000,
-        panelClass: ['success-snackbar']
-      });
-    } catch (error) {
-      this.snackBar.open('Błąd podczas eksportu raportu', 'Zamknij', {
-        duration: 3000,
-        panelClass: ['error-snackbar']
-      });
-    } finally {
-      this.isExporting = false;
+  // Toggle expanded state for offer
+  toggleExpanded(offerId: string): void {
+    if (this.expandedOffers.has(offerId)) {
+      this.expandedOffers.delete(offerId);
+    } else {
+      this.expandedOffers.add(offerId);
     }
   }
 
-  // Generate CSV content
-  private generateCSV(): string {
-    if (!this.reportData) return '';
+  // Calculate single unit production cost
+  getUnitProductionCost(offer: OfferProfitabilityResponse): number {
+    if (offer.quantitySold === 0) return 0;
+    return this.getTotalCost(offer) / offer.quantitySold;
+  }
 
-    const priceMode = this.showNetPrices ? 'netto' : 'brutto';
-    const headers = [
-      'ID Oferty',
-      'Nazwa oferty',
-      'Produkty',
-      'Sprzedano (szt.)',
-      `Cena za sztukę ${priceMode} (zł)`,
-      `Przychód ${priceMode} (zł)`,
-      `Koszty materiałów ${priceMode} (zł)`,
-      `Koszty pracy ${priceMode} (zł)`,
-      `Koszty energii ${priceMode} (zł)`,
-      `Koszty opakowań ${priceMode} (zł)`,
-      `Koszty produkcji ${priceMode} (zł)`,
-      `Zysk ${priceMode} (zł)`,
-      'Marża (%)'
-    ];
+  // Calculate single unit profit
+  getUnitProfit(offer: OfferProfitabilityResponse): number {
+    return this.getPrice(offer.pricePerQuantity) - this.getUnitProductionCost(offer);
+  }
 
-    const rows = this.reportData.offers.map(offer => [
-      offer.offerId,
-      offer.offerName,
-      offer.productNames.join('; '),
-      offer.quantitySold.toString(),
-      this.getPrice(offer.pricePerQuantity).toFixed(2),
-      this.getPrice(offer.revenue).toFixed(2),
-      this.getPrice(offer.materialCost).toFixed(2),
-      this.getPrice(offer.laborCost).toFixed(2),
-      this.getPrice(offer.powerCost).toFixed(2),
-      this.getPrice(offer.packagingCost).toFixed(2),
-      this.getPrice(offer.productionCost).toFixed(2),
-      this.getPrice(offer.profit).toFixed(2),
-      this.getOfferMargin(offer).toFixed(1)
-    ]);
-
-    return [headers, ...rows].map(row => row.join(',')).join('\n');
+  // Calculate unit margin
+  getUnitMargin(offer: OfferProfitabilityResponse): number {
+    const pricePerUnit = this.getPrice(offer.pricePerQuantity);
+    if (pricePerUnit === 0) return 0;
+    return (this.getUnitProfit(offer) / pricePerUnit) * 100;
   }
 
   // Helper methods
@@ -352,6 +327,10 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   clearOfferSearch(): void {
     this.offerSearchQuery = '';
     this.onOfferSearch();
+  }
+
+  isExpanded(offerId: string): boolean {
+    return this.expandedOffers.has(offerId);
   }
 
   // Navigation methods

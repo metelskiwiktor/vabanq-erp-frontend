@@ -480,7 +480,7 @@
 
 .offers-table {
   width: 100%;
-  min-width: 1200px; /* Ensure minimum width for all columns */
+  min-width: 1000px; /* Reduced from 1200px since we have fewer columns */
 }
 
 .offers-table .mat-mdc-header-cell {
@@ -506,6 +506,22 @@
   transition: background-color 0.2s ease;
 }
 
+.offers-table .mat-mdc-row.expanded-row {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+/* Expand Column */
+.expand-cell {
+  width: 48px;
+  text-align: center;
+}
+
+.expand-button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
 /* Table Cell Styles */
 .offer-id {
   color: #3b82f6;
@@ -516,8 +532,178 @@
 
 .offer-name {
   font-weight: 500;
-  max-width: 200px;
+  max-width: 250px;
   word-wrap: break-word;
+}
+
+.quantity, .price, .revenue, .cost {
+  text-align: right;
+  font-family: 'Monaco', 'Menlo', monospace;
+  min-width: 100px;
+}
+
+.profit, .margin {
+  text-align: right;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+  min-width: 100px;
+}
+
+/* Expanded Detail Row */
+.detail-row {
+  background: #f8fafc !important;
+}
+
+.detail-cell {
+  border: none !important;
+  padding: 0 !important;
+}
+
+.offer-details {
+  padding: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.detail-section {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.detail-section.full-width {
+  grid-column: span 2;
+}
+
+.detail-section h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-section h4 mat-icon {
+  font-size: 1.25rem;
+  color: #6b7280;
+}
+
+/* Products Detail */
+.products-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.product-tag {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Unit Metrics */
+.unit-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metric-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.metric-item:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Cost Breakdown */
+.costs-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.cost-breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 4px solid #3b82f6;
+}
+
+.cost-category {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cost-category mat-icon {
+  font-size: 1.125rem;
+  color: #6b7280;
+}
+
+.cost-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.total-cost {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.unit-cost {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Animations */
+@keyframes slideInOut {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .products-list {
