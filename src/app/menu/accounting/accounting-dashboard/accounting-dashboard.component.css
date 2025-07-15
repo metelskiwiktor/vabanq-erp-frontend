@@ -1,8 +1,10 @@
+/* Updated CSS for fixed accounting dashboard */
+
 /* Dashboard Container - Full Width */
 .dashboard-container {
   padding: 1.5rem;
   width: 100%;
-  max-width: none; /* Remove max-width restriction */
+  max-width: none;
   margin: 0;
 }
 
@@ -126,29 +128,6 @@
 
 .toggle-button:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.export-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #059669;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: background 0.2s ease;
-}
-
-.export-button:hover:not(:disabled) {
-  background: #047857;
-}
-
-.export-button:disabled {
-  background: #9ca3af;
   cursor: not-allowed;
 }
 
@@ -480,7 +459,7 @@
 
 .offers-table {
   width: 100%;
-  min-width: 1000px; /* Reduced from 1200px since we have fewer columns */
+  min-width: 1000px;
 }
 
 .offers-table .mat-mdc-header-cell {
@@ -549,20 +528,36 @@
   min-width: 100px;
 }
 
-/* Expanded Detail Row */
+/* Detail Row Styles - UPDATED */
 .detail-row {
   background: #f8fafc !important;
+  border-top: 2px solid #e2e8f0 !important;
 }
 
 .detail-cell {
   border: none !important;
   padding: 0 !important;
+  border-bottom: none !important;
 }
 
 .offer-details {
   padding: 1.5rem;
-  border-top: 2px solid #e2e8f0;
   background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding: 0 1.5rem;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    padding: 1.5rem;
+  }
 }
 
 .details-grid {
@@ -694,39 +689,6 @@
   font-family: 'Monaco', 'Menlo', monospace;
 }
 
-/* Animations */
-@keyframes slideInOut {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.products-list {
-  font-size: 0.75rem;
-  color: #64748b;
-  max-width: 180px;
-  line-height: 1.4;
-  word-wrap: break-word;
-}
-
-.quantity, .price, .revenue, .cost {
-  text-align: right;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 100px;
-}
-
-.profit, .margin {
-  text-align: right;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 100px;
-}
-
 /* Profit Status Classes */
 .profit-positive {
   color: #059669 !important;
@@ -800,6 +762,14 @@
   .month-selector {
     justify-content: center;
   }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-section.full-width {
+    grid-column: span 1;
+  }
 }
 
 @media (max-width: 768px) {
@@ -845,6 +815,14 @@
   .search-field {
     min-width: 250px;
   }
+
+  .offer-details {
+    padding: 1rem;
+  }
+
+  .costs-breakdown {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -871,5 +849,9 @@
 
   .offers-table {
     min-width: 900px;
+  }
+
+  .offer-details {
+    padding: 0.75rem;
   }
 }

@@ -1,3 +1,4 @@
+<!-- src/app/menu/accounting/accounting-dashboard/accounting-dashboard.component.html -->
 <div class="dashboard-container">
   <!-- Header -->
   <div class="page-header">
@@ -219,16 +220,20 @@
 
       <!-- Offers Table -->
       <div class="table-container" *ngIf="filteredOffers.length > 0; else noOffersData">
-        <table mat-table [dataSource]="paginatedOffers" class="offers-table">
+        <table mat-table
+               [dataSource]="paginatedOffers"
+               class="offers-table"
+               [trackBy]="trackByOfferId">
 
           <!-- Expand Column -->
           <ng-container matColumnDef="expand">
             <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let offer" class="expand-cell">
+            <td mat-cell *matCellDef="let element" class="expand-cell">
               <button mat-icon-button
-                      (click)="toggleExpanded(offer.offerId)"
+                      *ngIf="!element.detailRow"
+                      (click)="toggleExpanded(element.offerId)"
                       class="expand-button">
-                <mat-icon>{{ isExpanded(offer.offerId) ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+                <mat-icon>{{ isExpanded(element.offerId) ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
               </button>
             </td>
           </ng-container>
@@ -236,65 +241,79 @@
           <!-- ID Column -->
           <ng-container matColumnDef="offerId">
             <th mat-header-cell *matHeaderCellDef>ID Oferty</th>
-            <td mat-cell *matCellDef="let offer" class="offer-id">{{ offer.offerId }}</td>
+            <td mat-cell *matCellDef="let element" class="offer-id">
+              <span *ngIf="!element.detailRow">{{ element.offerId }}</span>
+            </td>
           </ng-container>
 
           <!-- Name Column -->
           <ng-container matColumnDef="offerName">
             <th mat-header-cell *matHeaderCellDef>Nazwa oferty</th>
-            <td mat-cell *matCellDef="let offer" class="offer-name">{{ offer.offerName }}</td>
+            <td mat-cell *matCellDef="let element" class="offer-name">
+              <span *ngIf="!element.detailRow">{{ element.offerName }}</span>
+            </td>
           </ng-container>
 
           <!-- Quantity Column -->
           <ng-container matColumnDef="quantitySold">
             <th mat-header-cell *matHeaderCellDef>Sprzedano</th>
-            <td mat-cell *matCellDef="let offer" class="quantity">{{ offer.quantitySold }} szt.</td>
+            <td mat-cell *matCellDef="let element" class="quantity">
+              <span *ngIf="!element.detailRow">{{ element.quantitySold }} szt.</span>
+            </td>
           </ng-container>
 
           <!-- Price Per Quantity Column -->
           <ng-container matColumnDef="pricePerQuantity">
             <th mat-header-cell *matHeaderCellDef>Cena/szt</th>
-            <td mat-cell *matCellDef="let offer" class="price">{{ formatCurrency(getPrice(offer.pricePerQuantity)) }}</td>
+            <td mat-cell *matCellDef="let element" class="price">
+              <span *ngIf="!element.detailRow">{{ formatCurrency(getPrice(element.pricePerQuantity)) }}</span>
+            </td>
           </ng-container>
 
           <!-- Revenue Column -->
           <ng-container matColumnDef="revenue">
             <th mat-header-cell *matHeaderCellDef>Przychód</th>
-            <td mat-cell *matCellDef="let offer" class="revenue">{{ formatCurrency(getPrice(offer.revenue)) }}</td>
+            <td mat-cell *matCellDef="let element" class="revenue">
+              <span *ngIf="!element.detailRow">{{ formatCurrency(getPrice(element.revenue)) }}</span>
+            </td>
           </ng-container>
 
           <!-- Total Cost Column -->
           <ng-container matColumnDef="totalCost">
             <th mat-header-cell *matHeaderCellDef>Koszt</th>
-            <td mat-cell *matCellDef="let offer" class="cost">{{ formatCurrency(getTotalCost(offer)) }}</td>
+            <td mat-cell *matCellDef="let element" class="cost">
+              <span *ngIf="!element.detailRow">{{ formatCurrency(getTotalCost(element)) }}</span>
+            </td>
           </ng-container>
 
           <!-- Profit Column -->
           <ng-container matColumnDef="profit">
             <th mat-header-cell *matHeaderCellDef>Zysk</th>
-            <td mat-cell *matCellDef="let offer" class="profit" [ngClass]="getProfitStatusClass(getPrice(offer.profit))">
-              {{ formatCurrency(getPrice(offer.profit)) }}
+            <td mat-cell *matCellDef="let element" class="profit" [ngClass]="!element.detailRow ? getProfitStatusClass(getPrice(element.profit)) : ''">
+              <span *ngIf="!element.detailRow">{{ formatCurrency(getPrice(element.profit)) }}</span>
             </td>
           </ng-container>
 
           <!-- Margin Column -->
           <ng-container matColumnDef="margin">
             <th mat-header-cell *matHeaderCellDef>Marża</th>
-            <td mat-cell *matCellDef="let offer" class="margin" [ngClass]="getProfitStatusClass(getPrice(offer.profit))">
-              {{ formatPercentage(getOfferMargin(offer)) }}
+            <td mat-cell *matCellDef="let element" class="margin" [ngClass]="!element.detailRow ? getProfitStatusClass(getPrice(element.profit)) : ''">
+              <span *ngIf="!element.detailRow">{{ formatPercentage(getOfferMargin(element)) }}</span>
             </td>
           </ng-container>
 
           <!-- Expanded Detail Column -->
           <ng-container matColumnDef="expandedDetail">
-            <td mat-cell *matCellDef="let row" [attr.colspan]="displayedColumns.length" class="detail-cell">
-              <div class="offer-details" [@slideInOut]="isExpanded(row.offerId) ? 'in' : 'out'">
+            <td mat-cell *matCellDef="let element" [attr.colspan]="displayedColumns.length" class="detail-cell">
+              <div class="offer-details"
+                   *ngIf="element.detailRow"
+                   [@slideInOut]="'in'">
                 <div class="details-grid">
                   <!-- Products Section -->
                   <div class="detail-section">
                     <h4><mat-icon>inventory</mat-icon>Produkty</h4>
                     <div class="products-detail">
-                      <span *ngFor="let product of row.productNames" class="product-tag">
+                      <span *ngFor="let product of element.productNames" class="product-tag">
                         {{ product }}
                       </span>
                     </div>
@@ -306,18 +325,18 @@
                     <div class="unit-metrics">
                       <div class="metric-item">
                         <span class="metric-label">Koszt produkcji/szt:</span>
-                        <span class="metric-value">{{ formatCurrency(getUnitProductionCost(row)) }}</span>
+                        <span class="metric-value">{{ formatCurrency(getUnitProductionCost(element)) }}</span>
                       </div>
                       <div class="metric-item">
                         <span class="metric-label">Zysk/szt:</span>
-                        <span class="metric-value" [ngClass]="getProfitStatusClass(getUnitProfit(row))">
-                          {{ formatCurrency(getUnitProfit(row)) }}
+                        <span class="metric-value" [ngClass]="getProfitStatusClass(getUnitProfit(element))">
+                          {{ formatCurrency(getUnitProfit(element)) }}
                         </span>
                       </div>
                       <div class="metric-item">
                         <span class="metric-label">Marża jednostkowa:</span>
-                        <span class="metric-value" [ngClass]="getProfitStatusClass(getUnitProfit(row))">
-                          {{ formatPercentage(getUnitMargin(row)) }}
+                        <span class="metric-value" [ngClass]="getProfitStatusClass(getUnitProfit(element))">
+                          {{ formatPercentage(getUnitMargin(element)) }}
                         </span>
                       </div>
                     </div>
@@ -333,8 +352,8 @@
                           <span>Materiały</span>
                         </div>
                         <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(row.materialCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(row.materialCost) / row.quantitySold) }}/szt)</span>
+                          <span class="total-cost">{{ formatCurrency(getPrice(element.materialCost)) }}</span>
+                          <span class="unit-cost">({{ formatCurrency(getPrice(element.materialCost) / element.quantitySold) }}/szt)</span>
                         </div>
                       </div>
 
@@ -344,8 +363,8 @@
                           <span>Praca</span>
                         </div>
                         <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(row.laborCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(row.laborCost) / row.quantitySold) }}/szt)</span>
+                          <span class="total-cost">{{ formatCurrency(getPrice(element.laborCost)) }}</span>
+                          <span class="unit-cost">({{ formatCurrency(getPrice(element.laborCost) / element.quantitySold) }}/szt)</span>
                         </div>
                       </div>
 
@@ -355,8 +374,8 @@
                           <span>Energia</span>
                         </div>
                         <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(row.powerCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(row.powerCost) / row.quantitySold) }}/szt)</span>
+                          <span class="total-cost">{{ formatCurrency(getPrice(element.powerCost)) }}</span>
+                          <span class="unit-cost">({{ formatCurrency(getPrice(element.powerCost) / element.quantitySold) }}/szt)</span>
                         </div>
                       </div>
 
@@ -366,8 +385,8 @@
                           <span>Opakowania</span>
                         </div>
                         <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(row.packagingCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(row.packagingCost) / row.quantitySold) }}/szt)</span>
+                          <span class="total-cost">{{ formatCurrency(getPrice(element.packagingCost)) }}</span>
+                          <span class="unit-cost">({{ formatCurrency(getPrice(element.packagingCost) / element.quantitySold) }}/szt)</span>
                         </div>
                       </div>
                     </div>
@@ -380,8 +399,9 @@
           <!-- Table Rows -->
           <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-              [class.hover-row]="true"
-              [class.expanded-row]="isExpanded(row.offerId)"></tr>
+              [class.hover-row]="!row.detailRow"
+              [class.expanded-row]="!row.detailRow && isExpanded(row.offerId)"
+              [style.display]="row.detailRow ? 'none' : ''"></tr>
           <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; when: isExpandedRow"
               class="detail-row"></tr>
         </table>

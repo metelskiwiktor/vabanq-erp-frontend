@@ -1,3 +1,4 @@
+// src/app/menu/accounting/accounting-dashboard/accounting-dashboard.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -19,11 +20,13 @@ interface CostItem {
     trigger('slideInOut', [
       state('in', style({
         opacity: 1,
-        transform: 'translateY(0)'
+        transform: 'translateY(0)',
+        height: '*'
       })),
       state('out', style({
         opacity: 0,
-        transform: 'translateY(-10px)'
+        transform: 'translateY(-10px)',
+        height: '0px'
       })),
       transition('in => out', animate('200ms ease-out')),
       transition('out => in', animate('300ms ease-in'))
@@ -89,13 +92,9 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // // Custom predicate for expanded rows
-  // isExpanded = (index: number, item: any) => {
-  //   return this.expandedOffers.has(item.offerId);
-  // };
-
+  // Custom predicate for expanded detail rows
   isExpandedRow = (index: number, item: any) => {
-    return this.expandedOffers.has(item.offerId);
+    return item.hasOwnProperty('detailRow');
   };
 
   // Toggle between net and gross prices
@@ -160,7 +159,21 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   private updatePaginatedOffers(): void {
     const startIndex = this.offersPageIndex * this.offersPageSize;
     const endIndex = startIndex + this.offersPageSize;
-    this.paginatedOffers = this.filteredOffers.slice(startIndex, endIndex);
+
+    // Create flattened data source with detail rows
+    this.paginatedOffers = [];
+    const pageOffers = this.filteredOffers.slice(startIndex, endIndex);
+
+    pageOffers.forEach(offer => {
+      this.paginatedOffers.push(offer);
+      if (this.expandedOffers.has(offer.offerId)) {
+        // Add detail row
+        this.paginatedOffers.push({
+          ...offer,
+          detailRow: true
+        } as any);
+      }
+    });
   }
 
   // Handle offers search
@@ -260,6 +273,13 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     } else {
       this.expandedOffers.add(offerId);
     }
+    // Rebuild paginated data to include/exclude detail rows
+    this.updatePaginatedOffers();
+  }
+
+  // Check if offer is expanded
+  isExpanded(offerId: string): boolean {
+    return this.expandedOffers.has(offerId);
   }
 
   // Calculate single unit production cost
@@ -319,18 +339,14 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   }
 
   // TrackBy function for offers table performance
-  trackByOfferId(index: number, offer: OfferProfitabilityResponse): string {
-    return offer.offerId;
+  trackByOfferId(index: number, offer: any): string {
+    return offer.detailRow ? `${offer.offerId}_detail` : offer.offerId;
   }
 
   // Clear search filter
   clearOfferSearch(): void {
     this.offerSearchQuery = '';
     this.onOfferSearch();
-  }
-
-  isExpanded(offerId: string): boolean {
-    return this.expandedOffers.has(offerId);
   }
 
   // Navigation methods
