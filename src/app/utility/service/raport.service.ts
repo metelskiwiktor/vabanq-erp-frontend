@@ -1,17 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {environment} from "../../../environments/environment";
+import { environment } from "../../../environments/environment";
+
+export interface PricePair {
+  net: number;
+  gross: number;
+}
 
 export interface FinancialReportResponse {
-  revenue: number;
-  materialCost: number;
-  powerCost: number;
-  packagingCost: number;
-  laborCost: number;
-  productionCost: number;
-  expenses: number;
-  profit: number;
+  revenue: PricePair;
+  materialCost: PricePair;
+  powerCost: PricePair;
+  packagingCost: PricePair;
+  laborCost: PricePair;
+  productionCost: PricePair;
+  expenses: PricePair;
+  profit: PricePair;
   offers: OfferProfitabilityResponse[];
 }
 
@@ -20,13 +25,14 @@ export interface OfferProfitabilityResponse {
   offerName: string;
   productNames: string[];
   quantitySold: number;
-  revenue: number;
-  materialCost: number;
-  powerCost: number;
-  packagingCost: number;
-  laborCost: number;
-  productionCost: number;
-  profit: number;
+  pricePerQuantity: PricePair;
+  revenue: PricePair;
+  materialCost: PricePair;
+  powerCost: PricePair;
+  packagingCost: PricePair;
+  laborCost: PricePair;
+  productionCost: PricePair;
+  profit: PricePair;
 }
 
 @Injectable({

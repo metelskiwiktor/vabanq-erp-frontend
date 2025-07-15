@@ -7,8 +7,9 @@
     </div>
   </div>
 
-  <!-- Month Navigation -->
-  <div class="month-navigation">
+  <!-- Controls Bar -->
+  <div class="controls-bar">
+    <!-- Month Navigation -->
     <div class="month-selector">
       <button class="month-nav-btn" (click)="previousMonth()" [disabled]="isLoading">
         <mat-icon>chevron_left</mat-icon>
@@ -21,6 +22,20 @@
         Bieżący miesiąc
       </button>
     </div>
+
+    <!-- Price Mode Toggle -->
+    <div class="price-mode-toggle">
+      <button
+        class="toggle-button"
+        [class.active]="showNetPrices"
+        (click)="togglePriceMode()"
+        [disabled]="isLoading">
+        <mat-icon>{{ showNetPrices ? 'money_off' : 'attach_money' }}</mat-icon>
+        {{ showNetPrices ? 'Ceny netto' : 'Ceny brutto' }}
+      </button>
+    </div>
+
+    <!-- Export Button -->
     <button
       class="export-button"
       (click)="exportReport()"
@@ -43,8 +58,8 @@
       <div class="metric-card">
         <div class="metric-header">
           <div class="metric-info">
-            <p class="metric-label">Przychód</p>
-            <h3 class="metric-value">{{ formatCurrency(reportData.revenue) }}</h3>
+            <p class="metric-label">Przychód ({{ getPriceModeLabel() }})</p>
+            <h3 class="metric-value">{{ formatCurrency(getPrice(reportData.revenue)) }}</h3>
           </div>
           <span class="metric-badge positive">
             <mat-icon>trending_up</mat-icon>
@@ -58,13 +73,13 @@
       <div class="metric-card">
         <div class="metric-header">
           <div class="metric-info">
-            <p class="metric-label">Zysk brutto</p>
-            <h3 class="metric-value" [ngClass]="getProfitStatusClass(reportData.profit)">
-              {{ formatCurrency(reportData.profit) }}
+            <p class="metric-label">Zysk ({{ getPriceModeLabel() }})</p>
+            <h3 class="metric-value" [ngClass]="getProfitStatusClass(getPrice(reportData.profit))">
+              {{ formatCurrency(getPrice(reportData.profit)) }}
             </h3>
           </div>
-          <span class="metric-badge" [ngClass]="reportData.profit >= 0 ? 'positive' : 'negative'">
-            <mat-icon>{{ reportData.profit >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          <span class="metric-badge" [ngClass]="getPrice(reportData.profit) >= 0 ? 'positive' : 'negative'">
+            <mat-icon>{{ getPrice(reportData.profit) >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
           </span>
         </div>
         <div class="metric-footer">
@@ -75,8 +90,8 @@
       <div class="metric-card">
         <div class="metric-header">
           <div class="metric-info">
-            <p class="metric-label">Koszty produkcji</p>
-            <h3 class="metric-value">{{ formatCurrency(reportData.productionCost) }}</h3>
+            <p class="metric-label">Koszty produkcji ({{ getPriceModeLabel() }})</p>
+            <h3 class="metric-value">{{ formatCurrency(getPrice(reportData.productionCost)) }}</h3>
           </div>
           <span class="metric-badge warning">
             <mat-icon>build</mat-icon>
@@ -84,7 +99,7 @@
         </div>
         <div class="metric-footer">
           <p class="metric-comparison">
-            % przychodów: {{ formatPercentage(reportData.revenue > 0 ? (reportData.productionCost / reportData.revenue) * 100 : 0) }}
+            % przychodów: {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (getPrice(reportData.productionCost) / getPrice(reportData.revenue)) * 100 : 0) }}
           </p>
         </div>
       </div>
@@ -92,8 +107,8 @@
       <div class="metric-card">
         <div class="metric-header">
           <div class="metric-info">
-            <p class="metric-label">Wydatki</p>
-            <h3 class="metric-value">{{ formatCurrency(reportData.expenses) }}</h3>
+            <p class="metric-label">Wydatki ({{ getPriceModeLabel() }})</p>
+            <h3 class="metric-value">{{ formatCurrency(getPrice(reportData.expenses)) }}</h3>
           </div>
           <span class="metric-badge warning">
             <mat-icon>receipt_long</mat-icon>
@@ -101,7 +116,7 @@
         </div>
         <div class="metric-footer">
           <p class="metric-comparison">
-            % przychodów: {{ formatPercentage(reportData.revenue > 0 ? (reportData.expenses / reportData.revenue) * 100 : 0) }}
+            % przychodów: {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (getPrice(reportData.expenses) / getPrice(reportData.revenue)) * 100 : 0) }}
           </p>
         </div>
       </div>
@@ -112,9 +127,9 @@
       <!-- Cost Breakdown Chart -->
       <div class="chart-card">
         <div class="section-header">
-          <h2 class="section-title">Struktura kosztów produkcji</h2>
+          <h2 class="section-title">Struktura kosztów produkcji ({{ getPriceModeLabel() }})</h2>
           <div class="total-cost">
-            Razem: {{ formatCurrency(reportData.productionCost) }}
+            Razem: {{ formatCurrency(getPrice(reportData.productionCost)) }}
           </div>
         </div>
 
@@ -143,12 +158,12 @@
       <!-- Profit Overview -->
       <div class="chart-card">
         <div class="section-header">
-          <h2 class="section-title">Rentowność</h2>
+          <h2 class="section-title">Rentowność ({{ getPriceModeLabel() }})</h2>
         </div>
 
         <div class="profit-overview">
           <div class="profit-chart">
-            <div class="profit-circle" [ngClass]="reportData.profit >= 0 ? 'profitable' : 'unprofitable'">
+            <div class="profit-circle" [ngClass]="getPrice(reportData.profit) >= 0 ? 'profitable' : 'unprofitable'">
               <div class="profit-percentage">{{ formatPercentage(profitMargin) }}</div>
               <div class="profit-label">Marża</div>
             </div>
@@ -159,7 +174,7 @@
               <mat-icon>trending_up</mat-icon>
               <div class="profit-info">
                 <div class="profit-name">Przychód</div>
-                <div class="profit-amount">{{ formatCurrency(reportData.revenue) }}</div>
+                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.revenue)) }}</div>
               </div>
             </div>
 
@@ -167,15 +182,15 @@
               <mat-icon>trending_down</mat-icon>
               <div class="profit-info">
                 <div class="profit-name">Koszty całkowite</div>
-                <div class="profit-amount">{{ formatCurrency(reportData.productionCost + reportData.expenses) }}</div>
+                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.productionCost) + getPrice(reportData.expenses)) }}</div>
               </div>
             </div>
 
-            <div class="profit-item" [ngClass]="getProfitStatusClass(reportData.profit)">
+            <div class="profit-item" [ngClass]="getProfitStatusClass(getPrice(reportData.profit))">
               <mat-icon>account_balance_wallet</mat-icon>
               <div class="profit-info">
-                <div class="profit-name">Zysk brutto</div>
-                <div class="profit-amount">{{ formatCurrency(reportData.profit) }}</div>
+                <div class="profit-name">Zysk</div>
+                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.profit)) }}</div>
               </div>
             </div>
           </div>
@@ -186,59 +201,140 @@
     <!-- Offers Profitability Table -->
     <div class="offers-section">
       <div class="section-header">
-        <h2 class="section-title">Rentowność ofert</h2>
+        <h2 class="section-title">Rentowność ofert ({{ getPriceModeLabel() }})</h2>
         <div class="offers-summary">
-          <span class="offers-count">{{ reportData.offers.length }} ofert</span>
+          <span class="offers-count">{{ totalOffers }} ofert</span>
         </div>
       </div>
 
-      <div class="table-container" *ngIf="reportData.offers.length > 0; else noOffersData">
-        <table class="offers-table">
-          <thead>
-          <tr>
-            <th>ID Oferty</th>
-            <th>Nazwa oferty</th>
-            <th>Produkty</th>
-            <th>Sprzedano</th>
-            <th>Przychód</th>
-            <th>Materiały</th>
-            <th>Praca</th>
-            <th>Energia</th>
-            <th>Opakowania</th>
-            <th>Zysk</th>
-            <th>Marża</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let offer of reportData.offers; trackBy: trackByOfferId">
-            <td class="offer-id">{{ offer.offerId }}</td>
-            <td class="offer-name">{{ offer.offerName }}</td>
-            <td class="products-list">
-                <span *ngFor="let product of offer.productNames; let last = last">
-                  {{ product }}<span *ngIf="!last">, </span>
-                </span>
+      <!-- Offers Search and Filters -->
+      <div class="offers-controls">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-label>Szukaj ofert...</mat-label>
+          <input matInput
+                 [(ngModel)]="offerSearchQuery"
+                 (ngModelChange)="onOfferSearch()"
+                 placeholder="ID oferty, nazwa lub produkt">
+          <mat-icon matSuffix>search</mat-icon>
+          <button *ngIf="offerSearchQuery"
+                  matSuffix
+                  mat-icon-button
+                  (click)="clearOfferSearch()"
+                  class="clear-search-btn">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
+
+      <!-- Offers Table -->
+      <div class="table-container" *ngIf="filteredOffers.length > 0; else noOffersData">
+        <table mat-table [dataSource]="paginatedOffers" class="offers-table">
+          <!-- ID Column -->
+          <ng-container matColumnDef="offerId">
+            <th mat-header-cell *matHeaderCellDef>ID Oferty</th>
+            <td mat-cell *matCellDef="let offer" class="offer-id">{{ offer.offerId }}</td>
+          </ng-container>
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="offerName">
+            <th mat-header-cell *matHeaderCellDef>Nazwa oferty</th>
+            <td mat-cell *matCellDef="let offer" class="offer-name">{{ offer.offerName }}</td>
+          </ng-container>
+
+          <!-- Products Column -->
+          <ng-container matColumnDef="productNames">
+            <th mat-header-cell *matHeaderCellDef>Produkty</th>
+            <td mat-cell *matCellDef="let offer" class="products-list">
+              <span *ngFor="let product of offer.productNames; let last = last">
+                {{ product }}<span *ngIf="!last">, </span>
+              </span>
             </td>
-            <td class="quantity">{{ offer.quantitySold }} szt.</td>
-            <td class="revenue">{{ formatCurrency(offer.revenue) }}</td>
-            <td class="cost">{{ formatCurrency(offer.materialCost) }}</td>
-            <td class="cost">{{ formatCurrency(offer.laborCost) }}</td>
-            <td class="cost">{{ formatCurrency(offer.powerCost) }}</td>
-            <td class="cost">{{ formatCurrency(offer.packagingCost) }}</td>
-            <td class="profit" [ngClass]="getProfitStatusClass(offer.profit)">
-              {{ formatCurrency(offer.profit) }}
+          </ng-container>
+
+          <!-- Quantity Column -->
+          <ng-container matColumnDef="quantitySold">
+            <th mat-header-cell *matHeaderCellDef>Sprzedano</th>
+            <td mat-cell *matCellDef="let offer" class="quantity">{{ offer.quantitySold }} szt.</td>
+          </ng-container>
+
+          <!-- Price Per Quantity Column -->
+          <ng-container matColumnDef="pricePerQuantity">
+            <th mat-header-cell *matHeaderCellDef>Cena za sztukę</th>
+            <td mat-cell *matCellDef="let offer" class="price">{{ formatCurrency(getPrice(offer.pricePerQuantity)) }}</td>
+          </ng-container>
+
+          <!-- Revenue Column -->
+          <ng-container matColumnDef="revenue">
+            <th mat-header-cell *matHeaderCellDef>Przychód</th>
+            <td mat-cell *matCellDef="let offer" class="revenue">{{ formatCurrency(getPrice(offer.revenue)) }}</td>
+          </ng-container>
+
+          <!-- Material Cost Column -->
+          <ng-container matColumnDef="materialCost">
+            <th mat-header-cell *matHeaderCellDef>Materiały</th>
+            <td mat-cell *matCellDef="let offer" class="cost">{{ formatCurrency(getPrice(offer.materialCost)) }}</td>
+          </ng-container>
+
+          <!-- Labor Cost Column -->
+          <ng-container matColumnDef="laborCost">
+            <th mat-header-cell *matHeaderCellDef>Praca</th>
+            <td mat-cell *matCellDef="let offer" class="cost">{{ formatCurrency(getPrice(offer.laborCost)) }}</td>
+          </ng-container>
+
+          <!-- Power Cost Column -->
+          <ng-container matColumnDef="powerCost">
+            <th mat-header-cell *matHeaderCellDef>Energia</th>
+            <td mat-cell *matCellDef="let offer" class="cost">{{ formatCurrency(getPrice(offer.powerCost)) }}</td>
+          </ng-container>
+
+          <!-- Packaging Cost Column -->
+          <ng-container matColumnDef="packagingCost">
+            <th mat-header-cell *matHeaderCellDef>Opakowania</th>
+            <td mat-cell *matCellDef="let offer" class="cost">{{ formatCurrency(getPrice(offer.packagingCost)) }}</td>
+          </ng-container>
+
+          <!-- Profit Column -->
+          <ng-container matColumnDef="profit">
+            <th mat-header-cell *matHeaderCellDef>Zysk</th>
+            <td mat-cell *matCellDef="let offer" class="profit" [ngClass]="getProfitStatusClass(getPrice(offer.profit))">
+              {{ formatCurrency(getPrice(offer.profit)) }}
             </td>
-            <td class="margin" [ngClass]="getProfitStatusClass(offer.profit)">
+          </ng-container>
+
+          <!-- Margin Column -->
+          <ng-container matColumnDef="margin">
+            <th mat-header-cell *matHeaderCellDef>Marża</th>
+            <td mat-cell *matCellDef="let offer" class="margin" [ngClass]="getProfitStatusClass(getPrice(offer.profit))">
               {{ formatPercentage(getOfferMargin(offer)) }}
             </td>
-          </tr>
-          </tbody>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+              [class.hover-row]="true"></tr>
         </table>
+
+        <!-- Pagination -->
+        <mat-paginator
+          [length]="totalOffers"
+          [pageSize]="offersPageSize"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          [pageIndex]="offersPageIndex"
+          (page)="onOffersPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
       </div>
 
       <ng-template #noOffersData>
         <div class="no-data-message">
           <mat-icon>shopping_bag</mat-icon>
-          <p>Brak danych o sprzedaży ofert w wybranym miesiącu</p>
+          <p>{{ offerSearchQuery ? 'Brak ofert pasujących do wyszukiwania' : 'Brak danych o sprzedaży ofert w wybranym miesiącu' }}</p>
+          <button *ngIf="offerSearchQuery"
+                  mat-button
+                  color="primary"
+                  (click)="clearOfferSearch()">
+            Wyczyść filtr
+          </button>
         </div>
       </ng-template>
     </div>

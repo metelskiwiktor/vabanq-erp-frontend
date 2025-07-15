@@ -1,8 +1,9 @@
-/* Dashboard Container */
+/* Dashboard Container - Full Width */
 .dashboard-container {
   padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none; /* Remove max-width restriction */
+  margin: 0;
 }
 
 /* Page Header */
@@ -23,11 +24,13 @@
   margin: 0;
 }
 
-/* Month Navigation */
-.month-navigation {
+/* Controls Bar */
+.controls-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-bottom: 2rem;
   background: white;
   padding: 1rem 1.5rem;
@@ -87,6 +90,43 @@
 .current-month-btn:hover:not(:disabled) {
   background: #3b82f6;
   color: white;
+}
+
+/* Price Mode Toggle */
+.price-mode-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.toggle-button:hover:not(:disabled) {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.toggle-button.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.toggle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .export-button {
@@ -387,13 +427,14 @@
   color: #0f172a;
 }
 
-/* Offers Section */
+/* Offers Section - Full Width */
 .offers-section {
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
+  width: 100%;
 }
 
 .offers-summary {
@@ -410,45 +451,67 @@
   border-radius: 9999px;
 }
 
+/* Offers Controls */
+.offers-controls {
+  margin: 1rem 0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.search-field {
+  min-width: 300px;
+  flex: 1;
+  max-width: 500px;
+}
+
+.clear-search-btn {
+  margin-right: -8px;
+}
+
+/* Table Container - Full Width */
 .table-container {
+  width: 100%;
   overflow-x: auto;
   margin-top: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
 
 .offers-table {
   width: 100%;
-  border-collapse: collapse;
-  min-width: 800px;
+  min-width: 1200px; /* Ensure minimum width for all columns */
 }
 
-.offers-table th {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  font-size: 0.75rem;
+.offers-table .mat-mdc-header-cell {
   font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: #374151;
   background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
-}
-
-.offers-table td {
-  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 12px 8px;
   font-size: 0.875rem;
-  border-bottom: 1px solid #e2e8f0;
-  vertical-align: middle;
 }
 
-.offers-table tbody tr:hover {
-  background: rgba(0, 0, 0, 0.02);
+.offers-table .mat-mdc-cell {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
 }
 
+.offers-table .mat-mdc-row:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.offers-table .mat-mdc-row.hover-row {
+  transition: background-color 0.2s ease;
+}
+
+/* Table Cell Styles */
 .offer-id {
   color: #3b82f6;
   font-weight: 600;
   font-family: 'Monaco', 'Menlo', monospace;
+  min-width: 120px;
 }
 
 .offer-name {
@@ -460,19 +523,22 @@
 .products-list {
   font-size: 0.75rem;
   color: #64748b;
-  max-width: 150px;
+  max-width: 180px;
   line-height: 1.4;
+  word-wrap: break-word;
 }
 
-.quantity, .revenue, .cost {
+.quantity, .price, .revenue, .cost {
   text-align: right;
   font-family: 'Monaco', 'Menlo', monospace;
+  min-width: 100px;
 }
 
 .profit, .margin {
   text-align: right;
   font-weight: 600;
   font-family: 'Monaco', 'Menlo', monospace;
+  min-width: 100px;
 }
 
 /* Profit Status Classes */
@@ -486,6 +552,12 @@
 
 .profit-neutral {
   color: #6b7280 !important;
+}
+
+/* Pagination */
+.mat-mdc-paginator {
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 /* No Data States */
@@ -532,6 +604,16 @@
     grid-template-columns: 80px 1fr 80px;
     gap: 0.75rem;
   }
+
+  .controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .month-selector {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 768px) {
@@ -543,14 +625,8 @@
     grid-template-columns: 1fr;
   }
 
-  .month-navigation {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .month-selector {
-    justify-content: center;
+  .controls-bar {
+    padding: 1rem;
   }
 
   .cost-item {
@@ -564,11 +640,12 @@
 
   .offers-table {
     font-size: 0.75rem;
+    min-width: 1000px;
   }
 
-  .offers-table th,
-  .offers-table td {
-    padding: 0.5rem 0.75rem;
+  .offers-table .mat-mdc-header-cell,
+  .offers-table .mat-mdc-cell {
+    padding: 8px 6px;
   }
 
   .profit-breakdown {
@@ -577,6 +654,10 @@
 
   .profit-item {
     padding: 0.5rem;
+  }
+
+  .search-field {
+    min-width: 250px;
   }
 }
 
@@ -596,5 +677,13 @@
 
   .section-title {
     font-size: 1.125rem;
+  }
+
+  .search-field {
+    min-width: 200px;
+  }
+
+  .offers-table {
+    min-width: 900px;
   }
 }

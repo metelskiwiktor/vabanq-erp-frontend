@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { RaportService, FinancialReportResponse, OfferProfitabilityResponse } from '../../../utility/service/raport.service';
+import { PageEvent } from '@angular/material/paginator';
+import { RaportService, FinancialReportResponse, OfferProfitabilityResponse, PricePair } from '../../../utility/service/raport.service';
 
 interface CostItem {
   name: string;
@@ -26,12 +27,41 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   // Report data
   reportData: FinancialReportResponse | null = null;
 
+  // Price display mode
+  showNetPrices = true; // Default to net prices
+
   // Computed values
   profitMargin = 0;
   costBreakdown: CostItem[] = [];
 
   // Export functionality
   isExporting = false;
+
+  // Pagination for offers table
+  offersPageSize = 10;
+  offersPageIndex = 0;
+  totalOffers = 0;
+  paginatedOffers: OfferProfitabilityResponse[] = [];
+
+  // Filtering
+  offerSearchQuery = '';
+  filteredOffers: OfferProfitabilityResponse[] = [];
+
+  // Table columns
+  displayedColumns: string[] = [
+    'offerId',
+    'offerName',
+    'productNames',
+    'quantitySold',
+    'pricePerQuantity',
+    'revenue',
+    'materialCost',
+    'laborCost',
+    'powerCost',
+    'packagingCost',
+    'profit',
+    'margin'
+  ];
 
   constructor(
     private raportService: RaportService,
@@ -47,6 +77,23 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // Toggle between net and gross prices
+  togglePriceMode(): void {
+    this.showNetPrices = !this.showNetPrices;
+    this.calculateMetrics();
+    this.prepareCostBreakdown();
+  }
+
+  // Get price value based on current mode
+  getPrice(pricePair: PricePair): number {
+    return this.showNetPrices ? pricePair.net : pricePair.gross;
+  }
+
+  // Get price mode label
+  getPriceModeLabel(): string {
+    return this.showNetPrices ? 'netto' : 'brutto';
+  }
+
   // Load financial report from backend
   loadFinancialReport(): void {
     this.isLoading = true;
@@ -59,6 +106,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
           this.reportData = data;
           this.calculateMetrics();
           this.prepareCostBreakdown();
+          this.prepareOffersData();
           this.isLoading = false;
         },
         error: (error) => {
@@ -72,6 +120,41 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Prepare offers data with filtering and pagination
+  private prepareOffersData(): void {
+    if (!this.reportData) return;
+
+    this.filteredOffers = this.reportData.offers.filter(offer =>
+      this.offerSearchQuery === '' ||
+      offer.offerName.toLowerCase().includes(this.offerSearchQuery.toLowerCase()) ||
+      offer.offerId.toLowerCase().includes(this.offerSearchQuery.toLowerCase()) ||
+      offer.productNames.some(name => name.toLowerCase().includes(this.offerSearchQuery.toLowerCase()))
+    );
+
+    this.totalOffers = this.filteredOffers.length;
+    this.updatePaginatedOffers();
+  }
+
+  // Update paginated offers based on current page
+  private updatePaginatedOffers(): void {
+    const startIndex = this.offersPageIndex * this.offersPageSize;
+    const endIndex = startIndex + this.offersPageSize;
+    this.paginatedOffers = this.filteredOffers.slice(startIndex, endIndex);
+  }
+
+  // Handle offers search
+  onOfferSearch(): void {
+    this.offersPageIndex = 0; // Reset to first page
+    this.prepareOffersData();
+  }
+
+  // Handle offers pagination
+  onOffersPageChange(event: PageEvent): void {
+    this.offersPageIndex = event.pageIndex;
+    this.offersPageSize = event.pageSize;
+    this.updatePaginatedOffers();
+  }
+
   // Format date for backend (YYYY-MM format)
   private formatMonthForBackend(date: Date): string {
     const year = date.getFullYear();
@@ -83,9 +166,10 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   private calculateMetrics(): void {
     if (!this.reportData) return;
 
-    this.profitMargin = this.reportData.revenue > 0
-      ? (this.reportData.profit / this.reportData.revenue) * 100
-      : 0;
+    const revenue = this.getPrice(this.reportData.revenue);
+    const profit = this.getPrice(this.reportData.profit);
+
+    this.profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
   }
 
   // Prepare cost breakdown for charts
@@ -95,22 +179,22 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.costBreakdown = [
       {
         name: 'Materiały',
-        value: this.reportData.materialCost,
+        value: this.getPrice(this.reportData.materialCost),
         color: '#3b82f6'
       },
       {
         name: 'Praca',
-        value: this.reportData.laborCost,
+        value: this.getPrice(this.reportData.laborCost),
         color: '#10b981'
       },
       {
         name: 'Energia',
-        value: this.reportData.powerCost,
+        value: this.getPrice(this.reportData.powerCost),
         color: '#f59e0b'
       },
       {
         name: 'Opakowania',
-        value: this.reportData.packagingCost,
+        value: this.getPrice(this.reportData.packagingCost),
         color: '#ef4444'
       }
     ].filter(item => item.value > 0); // Only show non-zero costs
@@ -185,18 +269,20 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   private generateCSV(): string {
     if (!this.reportData) return '';
 
+    const priceMode = this.showNetPrices ? 'netto' : 'brutto';
     const headers = [
       'ID Oferty',
       'Nazwa oferty',
       'Produkty',
       'Sprzedano (szt.)',
-      'Przychód (zł)',
-      'Koszty materiałów (zł)',
-      'Koszty pracy (zł)',
-      'Koszty energii (zł)',
-      'Koszty opakowań (zł)',
-      'Koszty produkcji (zł)',
-      'Zysk (zł)',
+      `Cena za sztukę ${priceMode} (zł)`,
+      `Przychód ${priceMode} (zł)`,
+      `Koszty materiałów ${priceMode} (zł)`,
+      `Koszty pracy ${priceMode} (zł)`,
+      `Koszty energii ${priceMode} (zł)`,
+      `Koszty opakowań ${priceMode} (zł)`,
+      `Koszty produkcji ${priceMode} (zł)`,
+      `Zysk ${priceMode} (zł)`,
       'Marża (%)'
     ];
 
@@ -205,14 +291,15 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
       offer.offerName,
       offer.productNames.join('; '),
       offer.quantitySold.toString(),
-      offer.revenue.toFixed(2),
-      offer.materialCost.toFixed(2),
-      offer.laborCost.toFixed(2),
-      offer.powerCost.toFixed(2),
-      offer.packagingCost.toFixed(2),
-      offer.productionCost.toFixed(2),
-      offer.profit.toFixed(2),
-      offer.revenue > 0 ? ((offer.profit / offer.revenue) * 100).toFixed(1) : '0'
+      this.getPrice(offer.pricePerQuantity).toFixed(2),
+      this.getPrice(offer.revenue).toFixed(2),
+      this.getPrice(offer.materialCost).toFixed(2),
+      this.getPrice(offer.laborCost).toFixed(2),
+      this.getPrice(offer.powerCost).toFixed(2),
+      this.getPrice(offer.packagingCost).toFixed(2),
+      this.getPrice(offer.productionCost).toFixed(2),
+      this.getPrice(offer.profit).toFixed(2),
+      this.getOfferMargin(offer).toFixed(1)
     ]);
 
     return [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -232,7 +319,9 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
 
   // Get profit margin for specific offer
   getOfferMargin(offer: OfferProfitabilityResponse): number {
-    return offer.revenue > 0 ? (offer.profit / offer.revenue) * 100 : 0;
+    const revenue = this.getPrice(offer.revenue);
+    const profit = this.getPrice(offer.profit);
+    return revenue > 0 ? (profit / revenue) * 100 : 0;
   }
 
   // Get status class for profit values
@@ -257,6 +346,12 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   // TrackBy function for offers table performance
   trackByOfferId(index: number, offer: OfferProfitabilityResponse): string {
     return offer.offerId;
+  }
+
+  // Clear search filter
+  clearOfferSearch(): void {
+    this.offerSearchQuery = '';
+    this.onOfferSearch();
   }
 
   // Navigation methods

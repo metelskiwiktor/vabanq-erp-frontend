@@ -1,4 +1,4 @@
-// src/app/menu/accounting/accounting.module.ts - Updated with CreateExpenseDialogModule
+// src/app/menu/accounting/accounting.module.ts - Updated with required Material modules
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -15,6 +15,8 @@ import {MatCardModule} from '@angular/material/card';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatDialogModule} from '@angular/material/dialog';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
+import {MatPaginatorModule} from '@angular/material/paginator'; // Added for pagination
+import {MatSortModule} from '@angular/material/sort'; // Added for sorting
 
 // Main components
 import {AccountingComponent} from './accounting.component';
@@ -55,9 +57,12 @@ import {RaportService} from "../../utility/service/raport.service";
   ],
   imports: [
     AssignInvoiceDialogModule,
-    CreateExpenseDialogModule, // Add the new module
+    CreateExpenseDialogModule,
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
+
+    // Material Design modules
     MatIconModule,
     MatButtonModule,
     MatTableModule,
@@ -69,10 +74,11 @@ import {RaportService} from "../../utility/service/raport.service";
     MatTooltipModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatPaginatorModule, // Added for offers table pagination
+    MatSortModule, // Added for future sorting capabilities
     MatChipSet,
     MatChip,
     MatProgressSpinner,
-    ReactiveFormsModule,
     MatRadioButton
   ],
   providers: [
