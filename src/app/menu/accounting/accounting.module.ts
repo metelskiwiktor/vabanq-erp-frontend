@@ -41,6 +41,7 @@ import { CreateExpenseDialogModule } from './accounting-expenses/create-expense-
 
 // Services
 import { ExpenseService } from '../../utility/service/expense.service';
+import {RaportService} from "../../utility/service/raport.service";
 
 @NgModule({
   declarations: [
@@ -75,7 +76,8 @@ import { ExpenseService } from '../../utility/service/expense.service';
     MatRadioButton
   ],
   providers: [
-    ExpenseService
+    ExpenseService,
+    RaportService
   ],
   exports: [
     AccountingComponent

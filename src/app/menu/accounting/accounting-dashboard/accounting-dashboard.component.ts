@@ -1,16 +1,7 @@
-import {Component, OnInit} from '@angular/core';
-import {DatePipe, NgClass, NgForOf} from "@angular/common";
-import {MatIcon} from "@angular/material/icon";
-
-// Mock data interfaces
-interface RevenueData {
-  date: string;
-  revenue: number;
-  prevRevenue: number;
-  profit: number;
-  prevProfit: number;
-  orders: number;
-}
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { RaportService, FinancialReportResponse, OfferProfitabilityResponse } from '../../../utility/service/raport.service';
 
 interface CostItem {
   name: string;
@@ -18,151 +9,213 @@ interface CostItem {
   color: string;
 }
 
-interface MockInvoice {
-  id: string;
-  customer: string;
-  amount: number;
-  date: string;
-  status: 'Paid' | 'Pending' | 'Overdue';
-  source: 'own' | 'own-shop' | 'allegro-pl' | 'allegro-cz' | 'allegro-de';
-}
-
 @Component({
   selector: 'app-accounting-dashboard',
   templateUrl: './accounting-dashboard.component.html',
   styleUrl: './accounting-dashboard.component.css'
 })
-export class AccountingDashboardComponent implements OnInit {
-  activePeriod: string = '30d';
-  showFixedCosts: boolean = true;
+export class AccountingDashboardComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
 
-  // Mock revenue data
-  revenueData: RevenueData[] = [];
+  // Loading state
+  isLoading = false;
 
-  // Mock cost data
-  costBreakdown: CostItem[] = [
-    { name: 'Materiały', value: 12500, color: '#8884d8' },
-    { name: 'Praca', value: 8000, color: '#82ca9d' },
-    { name: 'Media', value: 2000, color: '#ffc658' },
-    { name: 'Marketing', value: 3500, color: '#ff8042' },
-    { name: 'Wysyłka', value: 4000, color: '#0088fe' }
-  ];
+  // Selected month for report
+  selectedMonth: Date = new Date();
 
-  fixedCosts: CostItem[] = [
-    { name: 'Czynsz', value: 5000, color: '#8884d8' },
-    { name: 'Pensje', value: 15000, color: '#82ca9d' },
-    { name: 'Ubezpieczenie', value: 2000, color: '#ffc658' },
-    { name: 'Oprogramowanie', value: 1000, color: '#ff8042' },
-    { name: 'Media', value: 1500, color: '#0088fe' }
-  ];
+  // Report data
+  reportData: FinancialReportResponse | null = null;
 
-  // Mock recent invoices for preview
-  recentInvoices: MockInvoice[] = [
-    {
-      id: 'INV-2023-0125',
-      customer: 'Acme Corp',
-      amount: 4500,
-      date: '2023-05-01',
-      status: 'Paid',
-      source: 'own'
-    },
-    {
-      id: 'INV-2023-0126',
-      customer: 'TechStart Inc',
-      amount: 3200,
-      date: '2023-05-03',
-      status: 'Paid',
-      source: 'own'
-    },
-    {
-      id: 'INV-2023-0127',
-      customer: 'Global Services',
-      amount: 7800,
-      date: '2023-05-05',
-      status: 'Pending',
-      source: 'own-shop'
-    },
-    {
-      id: 'INV-2023-0128',
-      customer: 'Local Shop',
-      amount: 950,
-      date: '2023-05-08',
-      status: 'Paid',
-      source: 'allegro-pl'
-    },
-    {
-      id: 'INV-2023-0129',
-      customer: 'WebDesign Pro',
-      amount: 3600,
-      date: '2023-05-10',
-      status: 'Overdue',
-      source: 'allegro-cz'
-    }
-  ];
+  // Computed values
+  profitMargin = 0;
+  costBreakdown: CostItem[] = [];
 
-  // Calculated totals
-  totalRevenue: number = 0;
-  totalPreviousRevenue: number = 0;
-  totalProfit: number = 0;
-  totalOrders: number = 0;
-  totalCosts: number = 0;
-  totalFixedCosts: number = 0;
+  // Export functionality
+  isExporting = false;
+
+  constructor(
+    private raportService: RaportService,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit(): void {
-    this.generateMockRevenueData();
-    this.calculateTotals();
+    this.loadFinancialReport();
   }
 
-  generateMockRevenueData(): void {
-    const data: RevenueData[] = [];
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-    for (let i = 0; i < 30; i++) {
-      const currentDate = new Date();
-      currentDate.setDate(currentDate.getDate() - 29 + i);
-      const day = currentDate.getDate();
-      const month = currentDate.getMonth();
+  // Load financial report from backend
+  loadFinancialReport(): void {
+    this.isLoading = true;
+    const monthParam = this.formatMonthForBackend(this.selectedMonth);
 
-      const dayOfWeek = currentDate.getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      const baseValue = isWeekend ? 1500 : 3000;
-      const variance = isWeekend ? 500 : 1000;
-
-      const currentRevenue = Math.round(baseValue + Math.random() * variance);
-      const currentProfit = Math.round(currentRevenue * (0.3 + Math.random() * 0.1));
-      const prevRevenue = Math.round((baseValue + Math.random() * variance) * 0.85);
-      const prevProfit = Math.round(prevRevenue * (0.25 + Math.random() * 0.1));
-
-      const formattedDate = `${day}/${month + 1}`;
-
-      data.push({
-        date: formattedDate,
-        revenue: currentRevenue,
-        prevRevenue: prevRevenue,
-        profit: currentProfit,
-        prevProfit: prevProfit,
-        orders: Math.round(currentRevenue / 150)
+    this.raportService.getFinancialReport(monthParam)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data: FinancialReportResponse) => {
+          this.reportData = data;
+          this.calculateMetrics();
+          this.prepareCostBreakdown();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading financial report:', error);
+          this.snackBar.open('Błąd podczas ładowania raportu finansowego', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.isLoading = false;
+        }
       });
+  }
+
+  // Format date for backend (YYYY-MM format)
+  private formatMonthForBackend(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
+  // Calculate additional metrics
+  private calculateMetrics(): void {
+    if (!this.reportData) return;
+
+    this.profitMargin = this.reportData.revenue > 0
+      ? (this.reportData.profit / this.reportData.revenue) * 100
+      : 0;
+  }
+
+  // Prepare cost breakdown for charts
+  private prepareCostBreakdown(): void {
+    if (!this.reportData) return;
+
+    this.costBreakdown = [
+      {
+        name: 'Materiały',
+        value: this.reportData.materialCost,
+        color: '#3b82f6'
+      },
+      {
+        name: 'Praca',
+        value: this.reportData.laborCost,
+        color: '#10b981'
+      },
+      {
+        name: 'Energia',
+        value: this.reportData.powerCost,
+        color: '#f59e0b'
+      },
+      {
+        name: 'Opakowania',
+        value: this.reportData.packagingCost,
+        color: '#ef4444'
+      }
+    ].filter(item => item.value > 0); // Only show non-zero costs
+  }
+
+  // Month navigation
+  previousMonth(): void {
+    this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() - 1, 1);
+    this.loadFinancialReport();
+  }
+
+  nextMonth(): void {
+    this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 1);
+    this.loadFinancialReport();
+  }
+
+  currentMonth(): void {
+    this.selectedMonth = new Date();
+    this.loadFinancialReport();
+  }
+
+  // Get display name for selected month
+  getMonthDisplayName(): string {
+    return new Intl.DateTimeFormat('pl-PL', {
+      year: 'numeric',
+      month: 'long'
+    }).format(this.selectedMonth);
+  }
+
+  // Export functionality
+  exportReport(): void {
+    if (!this.reportData) {
+      this.snackBar.open('Brak danych do eksportu', 'Zamknij', {
+        duration: 3000,
+        panelClass: ['warning-snackbar']
+      });
+      return;
     }
 
-    this.revenueData = data;
+    this.isExporting = true;
+
+    try {
+      const csvContent = this.generateCSV();
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `raport-finansowy-${this.formatMonthForBackend(this.selectedMonth)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      this.snackBar.open('Raport został wyeksportowany', 'Zamknij', {
+        duration: 3000,
+        panelClass: ['success-snackbar']
+      });
+    } catch (error) {
+      this.snackBar.open('Błąd podczas eksportu raportu', 'Zamknij', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+    } finally {
+      this.isExporting = false;
+    }
   }
 
-  calculateTotals(): void {
-    this.totalRevenue = this.revenueData.reduce((sum, day) => sum + day.revenue, 0);
-    this.totalPreviousRevenue = this.revenueData.reduce((sum, day) => sum + day.prevRevenue, 0);
-    this.totalProfit = this.revenueData.reduce((sum, day) => sum + day.profit, 0);
-    this.totalOrders = this.revenueData.reduce((sum, day) => sum + day.orders, 0);
-    this.totalCosts = this.costBreakdown.reduce((sum, item) => sum + item.value, 0);
-    this.totalFixedCosts = this.fixedCosts.reduce((sum, item) => sum + item.value, 0);
-  }
+  // Generate CSV content
+  private generateCSV(): string {
+    if (!this.reportData) return '';
 
-  setActivePeriod(period: string): void {
-    this.activePeriod = period;
-    // Here you would typically reload data for the new period
-  }
+    const headers = [
+      'ID Oferty',
+      'Nazwa oferty',
+      'Produkty',
+      'Sprzedano (szt.)',
+      'Przychód (zł)',
+      'Koszty materiałów (zł)',
+      'Koszty pracy (zł)',
+      'Koszty energii (zł)',
+      'Koszty opakowań (zł)',
+      'Koszty produkcji (zł)',
+      'Zysk (zł)',
+      'Marża (%)'
+    ];
 
-  toggleFixedCosts(): void {
-    this.showFixedCosts = !this.showFixedCosts;
+    const rows = this.reportData.offers.map(offer => [
+      offer.offerId,
+      offer.offerName,
+      offer.productNames.join('; '),
+      offer.quantitySold.toString(),
+      offer.revenue.toFixed(2),
+      offer.materialCost.toFixed(2),
+      offer.laborCost.toFixed(2),
+      offer.powerCost.toFixed(2),
+      offer.packagingCost.toFixed(2),
+      offer.productionCost.toFixed(2),
+      offer.profit.toFixed(2),
+      offer.revenue > 0 ? ((offer.profit / offer.revenue) * 100).toFixed(1) : '0'
+    ]);
+
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
   }
 
   // Helper methods
@@ -173,34 +226,47 @@ export class AccountingDashboardComponent implements OnInit {
     }).format(value);
   }
 
-  getStatusTranslation(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'Paid': 'Zapłacona',
-      'Pending': 'Oczekująca',
-      'Overdue': 'Zaległa'
-    };
-    return statusMap[status] || status;
+  formatPercentage(value: number): string {
+    return `${value.toFixed(1)}%`;
   }
 
-  getStatusBadgeColor(status: string): string {
-    const colorMap: { [key: string]: string } = {
-      'Paid': 'status-paid',
-      'Pending': 'status-pending',
-      'Overdue': 'status-overdue'
-    };
-    return colorMap[status] || 'status-unknown';
+  // Get profit margin for specific offer
+  getOfferMargin(offer: OfferProfitabilityResponse): number {
+    return offer.revenue > 0 ? (offer.profit / offer.revenue) * 100 : 0;
   }
 
-  getCombinedCostData(): CostItem[] {
-    return this.showFixedCosts
-      ? [...this.costBreakdown, ...this.fixedCosts]
-      : this.costBreakdown;
+  // Get status class for profit values
+  getProfitStatusClass(profit: number): string {
+    if (profit > 0) return 'profit-positive';
+    if (profit < 0) return 'profit-negative';
+    return 'profit-neutral';
   }
 
-  // Navigation method to switch to invoices tab
+  // Get max value for cost chart scaling
+  getMaxCostValue(): number {
+    if (this.costBreakdown.length === 0) return 100;
+    return Math.max(...this.costBreakdown.map(item => item.value));
+  }
+
+  // Calculate cost percentage for chart bars
+  getCostPercentage(value: number): number {
+    const max = this.getMaxCostValue();
+    return max > 0 ? (value / max) * 100 : 0;
+  }
+
+  // TrackBy function for offers table performance
+  trackByOfferId(index: number, offer: OfferProfitabilityResponse): string {
+    return offer.offerId;
+  }
+
+  // Navigation methods
   navigateToInvoices(): void {
-    // This would typically emit an event to parent component
-    // For now, we'll just log
-    console.log('Navigate to invoices tab');
+    // This would typically use Router to navigate
+    console.log('Navigate to invoices');
+  }
+
+  navigateToExpenses(): void {
+    // This would typically use Router to navigate
+    console.log('Navigate to expenses');
   }
 }
