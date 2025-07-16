@@ -212,7 +212,7 @@
           <span class="info-title">Informacja o przypisaniu</span>
         </div>
         <p class="info-text">
-          Faktura {{ data.invoice.number }} zostanie przypisana do wybranego wydatku jako nowa pozycja.
+          Faktura {{ data.invoice.number }} zostanie przeniesiona do wybranego wydatku.
           <span *ngIf="getSelectedExpense() && hasInvoiceAssigned(getSelectedExpense()!)">
             <br><strong>Uwaga:</strong> Ten wydatek ma już przypisane inne faktury.
           </span>

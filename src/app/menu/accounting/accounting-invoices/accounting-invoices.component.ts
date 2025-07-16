@@ -17,7 +17,11 @@ interface CurrencyTotal {
 }
 
 interface InvoiceAssignmentStatus {
-  [invoiceId: string]: boolean;
+  [invoiceId: string]: {
+    isAssigned: boolean;
+    expenseId?: string;
+    expenseName?: string;
+  };
 }
 
 @Component({
@@ -132,40 +136,69 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   loadInvoiceAssignmentStatuses(): void {
     if (this.invoices.length === 0) return;
 
-    // Check which invoices are already assigned to expenses
-    // This would require a new endpoint in the backend to check assignment status
-    // For now, we'll implement a simple check using the expense service
-    this.expenseService.listExpensesForMonth(
-      this.useCustomDateRange ?
-        { year: this.dateFrom?.getFullYear() || new Date().getFullYear(), month: this.dateFrom?.getMonth() || new Date().getMonth() + 1 } :
-        { year: this.selectedMonth.getFullYear(), month: this.selectedMonth.getMonth() + 1 }
-    ).subscribe({
+    // Get the year and month based on current filter
+    const targetDate = this.useCustomDateRange && this.dateFrom ?
+      this.dateFrom :
+      this.selectedMonth;
+
+    const yearMonth = {
+      year: targetDate.getFullYear(),
+      month: targetDate.getMonth() + 1
+    };
+
+    this.expenseService.listExpensesForMonth(yearMonth).subscribe({
       next: (expenses) => {
-        const assignedInvoiceIds = new Set<string>();
+        // Reset assignment status
+        this.invoiceAssignmentStatus = {};
+
+        // Build a map of invoice ID to expense info
+        const invoiceToExpenseMap = new Map<string, { expenseId: string; expenseName: string }>();
 
         expenses.forEach(expense => {
           expense.items?.forEach(item => {
             if (item.costInvoiceId) {
-              assignedInvoiceIds.add(item.costInvoiceId);
+              invoiceToExpenseMap.set(item.costInvoiceId, {
+                expenseId: expense.id,
+                expenseName: expense.name
+              });
             }
           });
         });
 
         // Update assignment status for current invoices
-        this.invoiceAssignmentStatus = {};
         this.invoices.forEach(invoice => {
-          this.invoiceAssignmentStatus[invoice.id] = assignedInvoiceIds.has(invoice.id);
+          const assignmentInfo = invoiceToExpenseMap.get(invoice.id);
+          this.invoiceAssignmentStatus[invoice.id] = {
+            isAssigned: !!assignmentInfo,
+            expenseId: assignmentInfo?.expenseId,
+            expenseName: assignmentInfo?.expenseName
+          };
         });
       },
       error: (error) => {
         console.error('Error loading invoice assignment statuses:', error);
+        // Initialize empty status for all invoices
+        this.invoices.forEach(invoice => {
+          this.invoiceAssignmentStatus[invoice.id] = {
+            isAssigned: false
+          };
+        });
       }
     });
   }
 
   // Check if invoice is assigned to an expense
   isInvoiceAssigned(invoice: CostInvoice): boolean {
-    return !!this.invoiceAssignmentStatus[invoice.id];
+    return this.invoiceAssignmentStatus[invoice.id]?.isAssigned || false;
+  }
+
+  getAssignedExpenseId(invoice: CostInvoice): string | undefined {
+    return this.invoiceAssignmentStatus[invoice.id]?.expenseId;
+  }
+
+// Dodaj metodę getAssignedExpenseName:
+  getAssignedExpenseName(invoice: CostInvoice): string | undefined {
+    return this.invoiceAssignmentStatus[invoice.id]?.expenseName;
   }
 
   // Generate Infakt URL for invoice
@@ -397,7 +430,8 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   // Actions - Updated to use real API
   openExpenseDialog(invoice: CostInvoice): void {
     const dialogData: AssignInvoiceDialogData = {
-      invoice: invoice
+      invoice: invoice,
+      currentExpenseId: this.getAssignedExpenseId(invoice) // Dodaj tę linię
     };
 
     const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
@@ -414,7 +448,6 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
       if (result?.success) {
         console.log('Invoice assignment result:', result);
 
-        // Show success message
         this.snackBar.open(
           result.action === 'created'
             ? 'Wydatek został utworzony i faktura została przypisana'
@@ -423,12 +456,10 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
           { duration: 3000, panelClass: ['success-snackbar'] }
         );
 
-        // Reload data to refresh assignment statuses
         this.loadInvoices();
       }
     });
   }
-
   // Utility methods
   formatCurrency(amount: number, currency: string = 'PLN'): string {
     return new Intl.NumberFormat('pl-PL', {

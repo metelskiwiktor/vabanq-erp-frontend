@@ -32,7 +32,8 @@ export enum ExpenseCategory {
   OFFICE_SUPPLIES = 'OFFICE_SUPPLIES',
   TRAVEL = 'TRAVEL',
   SALARY = 'SALARY',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
+  ELECTRICITY = 'ELECTRICITY',
 }
 
 export interface CreateExpenseRequest {
@@ -284,6 +285,7 @@ export class ExpenseService {
       [ExpenseCategory.OFFICE_SUPPLIES]: 'Biuro',
       [ExpenseCategory.TRAVEL]: 'Podróże',
       [ExpenseCategory.SALARY]: 'Wynagrodzenie',
+      [ExpenseCategory.ELECTRICITY]: 'Prąd',
       [ExpenseCategory.OTHER]: 'Inne'
     };
     return categoryMap[category] || category;
@@ -306,6 +308,7 @@ export class ExpenseService {
       { key: ExpenseCategory.OFFICE_SUPPLIES, displayName: 'Biuro' },
       { key: ExpenseCategory.TRAVEL, displayName: 'Podróże' },
       { key: ExpenseCategory.SALARY, displayName: 'Wynagrodzenie' },
+      { key: ExpenseCategory.ELECTRICITY, displayName: 'Prąd' },
       { key: ExpenseCategory.OTHER, displayName: 'Inne' }
     ];
   }
