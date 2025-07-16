@@ -145,10 +145,10 @@
                 <mat-icon class="small-icon">category</mat-icon>
                 {{ getCategoryDisplayName(expense.category) }}
               </div>
-              <div class="meta-item">
-                <mat-icon class="small-icon">schedule</mat-icon>
-                {{ formatDate(expense.date) }}
-              </div>
+<!--              <div class="meta-item">-->
+<!--                <mat-icon class="small-icon">schedule</mat-icon>-->
+<!--                {{ formatDate(expense.date) }}-->
+<!--              </div>-->
               <div class="expense-tags">
                 <span *ngFor="let tag of expense.tags" class="tag">{{ tag }}</span>
               </div>

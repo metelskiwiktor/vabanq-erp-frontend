@@ -260,7 +260,8 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   // Actions - Updated with actual dialog implementation
   createNewExpense(): void {
     const dialogData: CreateExpenseDialogData = {
-      mode: 'create'
+      mode: 'create',
+      selectedMonth: this.selectedMonth
     };
 
     const dialogRef = this.dialog.open(CreateExpenseDialogComponent, {

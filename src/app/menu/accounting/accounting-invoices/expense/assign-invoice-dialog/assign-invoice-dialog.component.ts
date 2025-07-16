@@ -245,7 +245,7 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
   // View switching
   switchToCreateView(): void {
     this.currentView = 'create';
-    this.prefillCreateForm();
+    // this.prefillCreateForm();
   }
 
   private prefillCreateForm(): void {

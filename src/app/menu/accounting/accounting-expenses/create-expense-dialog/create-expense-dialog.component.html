@@ -34,7 +34,7 @@
 
         <div class="form-group">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nazwa wydatku *</mat-label>
+            <mat-label>Nazwa wydatku</mat-label>
             <input matInput
                    formControlName="name"
                    placeholder="Np. Koszty materiałów - Maj 2024">
@@ -47,7 +47,7 @@
         <div class="form-row">
           <div class="form-group">
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Typ wydatku *</mat-label>
+              <mat-label>Typ wydatku</mat-label>
               <mat-select formControlName="type">
                 <mat-option *ngFor="let option of typeOptions" [value]="option.value">
                   {{ option.label }}
@@ -61,7 +61,7 @@
 
           <div class="form-group">
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Kategoria *</mat-label>
+              <mat-label>Kategoria</mat-label>
               <mat-select formControlName="category">
                 <mat-option *ngFor="let option of categoryOptions" [value]="option.key">
                   {{ option.displayName }}
@@ -165,7 +165,7 @@
             <div class="item-form-row">
               <div class="form-group flex-grow">
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Nazwa pozycji *</mat-label>
+                  <mat-label>Nazwa pozycji</mat-label>
                   <input matInput
                          formControlName="name"
                          placeholder="Np. Filament PLA 1kg"
@@ -180,7 +180,7 @@
             <div class="item-form-row">
               <div class="form-group">
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Kwota netto *</mat-label>
+                  <mat-label>Kwota netto</mat-label>
                   <input matInput
                          type="number"
                          formControlName="netAmount"
@@ -197,7 +197,7 @@
 
               <div class="form-group">
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Kwota brutto *</mat-label>
+                  <mat-label>Kwota brutto</mat-label>
                   <input matInput
                          type="number"
                          formControlName="grossAmount"
@@ -271,22 +271,22 @@
         </div>
 
         <!-- Empty state when no items -->
-        <div *ngIf="itemsFormArray.length === 0" class="empty-items-state">
-          <div class="empty-items-content">
-            <mat-icon class="empty-icon">receipt_long</mat-icon>
-            <h3>Brak pozycji</h3>
-            <p>Ten wydatek nie ma żadnych pozycji (wartość 0zł)</p>
-            <p class="empty-hint">Dodaj pozycję manualną lub przypisz faktury w sekcji "Faktury"</p>
-            <button type="button"
-                    mat-raised-button
-                    color="primary"
-                    (click)="addExpenseItem()"
-                    class="add-first-item-btn">
-              <mat-icon>add</mat-icon>
-              <span>Dodaj pierwszą pozycję</span>
-            </button>
-          </div>
-        </div>
+<!--        <div *ngIf="itemsFormArray.length === 0" class="empty-items-state">-->
+<!--          <div class="empty-items-content">-->
+<!--            <mat-icon class="empty-icon">receipt_long</mat-icon>-->
+<!--            <h3>Brak pozycji</h3>-->
+<!--            <p>Ten wydatek nie ma żadnych pozycji (wartość 0zł)</p>-->
+<!--            <p class="empty-hint">Dodaj pozycję manualną lub przypisz faktury w sekcji "Faktury"</p>-->
+<!--            <button type="button"-->
+<!--                    mat-raised-button-->
+<!--                    color="primary"-->
+<!--                    (click)="addExpenseItem()"-->
+<!--                    class="add-first-item-btn">-->
+<!--              <mat-icon>add</mat-icon>-->
+<!--              <span>Dodaj pierwszą pozycję</span>-->
+<!--            </button>-->
+<!--          </div>-->
+<!--        </div>-->
       </div>
     </form>
   </div>

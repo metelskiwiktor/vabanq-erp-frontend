@@ -31,6 +31,7 @@ export interface CreateExpenseDialogData {
   mode: 'create' | 'edit';
   expenseId?: string;
   initialData?: Partial<ExpenseResponse>;
+  selectedMonth?: Date;
 }
 
 @Component({
@@ -58,6 +59,8 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
 
   categoryOptions: { key: ExpenseCategory; displayName: string }[] = [];
 
+  selectedMonth: Date = new Date();
+
   constructor(
     public dialogRef: MatDialogRef<CreateExpenseDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: CreateExpenseDialogData,
@@ -68,6 +71,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
     this.initializeForm();
     this.isEditMode = data?.mode === 'edit';
     this.expenseId = data?.expenseId;
+    this.selectedMonth = data?.selectedMonth || new Date();
   }
 
   ngOnInit(): void {
@@ -76,7 +80,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
     if (this.isEditMode && this.expenseId) {
       this.loadExpenseForEdit();
     } else {
-      this.prefillWithDefaults();
+      // this.prefillWithDefaults();
     }
   }
 
@@ -351,6 +355,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
   private async createExpense(): Promise<void> {
     const formValue = this.expenseForm.value;
     const tags = this.parseTags(formValue.tags);
+    const createdAtString = `${this.selectedMonth.getFullYear()}-${String(this.selectedMonth.getMonth() + 1).padStart(2, '0')}-01T12:00:00`;
 
     const createRequest: CreateExpenseRequest = {
       name: formValue.name,
@@ -358,7 +363,8 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
       type: formValue.type,
       cyclic: formValue.cyclic || false,
       category: formValue.category,
-      tags: tags
+      tags: tags,
+      createdAt: createdAtString
     };
 
     const createdExpense = await this.expenseService.createExpense(createRequest).toPromise();
