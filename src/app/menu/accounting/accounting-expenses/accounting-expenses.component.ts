@@ -11,6 +11,7 @@ import {
   ExpenseEntry
 } from '../../../utility/service/expense.service';
 import { CreateExpenseDialogComponent, CreateExpenseDialogData } from './create-expense-dialog/create-expense-dialog.component';
+import {ElectricityUsageResponse, ElectricityUsageService} from "../../../utility/service/electricity-usage.service";
 
 interface ExpenseItem {
   expanded: boolean;
@@ -90,12 +91,14 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   constructor(
     private snackBar: MatSnackBar,
     private expenseService: ExpenseService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private electricityService: ElectricityUsageService
   ) {}
 
   ngOnInit(): void {
     this.initializeCategoryOptions();
     this.loadExpenses();
+    this.loadElectricityData();
   }
 
   ngOnDestroy(): void {
@@ -203,11 +206,13 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   previousMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() - 1, 1);
     this.loadExpenses();
+    this.loadElectricityData();
   }
 
   nextMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 1);
     this.loadExpenses();
+    this.loadElectricityData();
   }
 
   // Filters
@@ -374,4 +379,98 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   getItemTypeDisplayName(item: ExpenseEntry): string {
     return this.isInvoiceItem(item) ? 'Faktura' : 'Manualny';
   }
+
+  currentDate = new Date();
+  currentMonth = this.currentDate.getMonth();
+  currentYear = this.currentDate.getFullYear();
+  getCurrentYearMonth(): string {
+    const month = (this.selectedMonth.getMonth()).toString().padStart(2, '0');
+    return `${this.currentYear}-${month}`;
+  }
+
+  electricityData = {
+    kwhPerHour: 0,
+    pricePerKwh: 0,
+    monthlyCost: 0
+  };
+  isElectricityLoading = false;
+  isElectricitySaving = false;
+
+  private loadElectricityData(): void {
+    this.isElectricityLoading = true;
+    const currentYearMonth = this.getCurrentYearMonth();
+
+    this.electricityService.getUsage(currentYearMonth)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: ElectricityUsageResponse) => {
+          this.electricityData = {
+            kwhPerHour: response.kwhPerHour,
+            pricePerKwh: response.pricePerKwh,
+            monthlyCost: this.electricityService.calculateMonthlyCost(
+              response.kwhPerHour,
+              response.pricePerKwh
+            )
+          };
+          this.isElectricityLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading electricity data:', error);
+          // W przypadku błędu (np. brak danych dla tego miesiąca), ustaw wartości domyślne
+          this.electricityData = {
+            kwhPerHour: 0,
+            pricePerKwh: 0,
+            monthlyCost: 0
+          };
+          this.isElectricityLoading = false;
+        }
+      });
+  }
+
+  calculateElectricityCost(): void {
+    this.electricityData.monthlyCost = this.electricityService.calculateMonthlyCost(
+      this.electricityData.kwhPerHour,
+      this.electricityData.pricePerKwh
+    );
+  }
+
+  saveElectricityData(): void {
+    if (this.electricityData.kwhPerHour < 0 || this.electricityData.pricePerKwh < 0) {
+      this.snackBar.open('Wartości nie mogą być ujemne', 'Zamknij', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    this.isElectricitySaving = true;
+    const currentYearMonth = this.getCurrentYearMonth();
+
+    const request = {
+      kwhPerHour: this.electricityData.kwhPerHour,
+      pricePerKwh: this.electricityData.pricePerKwh
+    };
+
+    this.electricityService.updateUsage(currentYearMonth, request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.calculateElectricityCost(); // Przelicz koszt po zapisaniu
+          this.snackBar.open('Dane elektryczności zostały zapisane', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
+          this.isElectricitySaving = false;
+        },
+        error: (error) => {
+          console.error('Error saving electricity data:', error);
+          this.snackBar.open('Błąd podczas zapisywania danych elektryczności', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+          this.isElectricitySaving = false;
+        }
+      });
+  }
+
 }

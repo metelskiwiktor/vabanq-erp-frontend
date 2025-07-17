@@ -28,61 +28,6 @@
     </div>
   </div>
 
-  <!-- Summary Cards -->
-  <div class="summary-section">
-    <div class="summary-card">
-      <div class="card-header">
-        <div class="card-icon total">
-          <mat-icon>account_balance_wallet</mat-icon>
-        </div>
-        <div>
-          <div class="card-title">Łączne wydatki</div>
-        </div>
-      </div>
-      <div class="card-amount">{{ formatCurrency(summary.totalGrossAmount) }}</div>
-      <div class="card-count">{{ summary.totalCount }} wydatków • Netto: {{ formatCurrency(summary.totalNetAmount) }}</div>
-    </div>
-
-    <div class="summary-card">
-      <div class="card-header">
-        <div class="card-icon fixed">
-          <mat-icon>schedule</mat-icon>
-        </div>
-        <div>
-          <div class="card-title">Wydatki stałe</div>
-        </div>
-      </div>
-      <div class="card-amount">{{ formatCurrency(summary.fixedGrossAmount) }}</div>
-      <div class="card-count">{{ summary.fixedCount }} wydatków • Netto: {{ formatCurrency(summary.fixedNetAmount) }}</div>
-    </div>
-
-    <div class="summary-card">
-      <div class="card-header">
-        <div class="card-icon variable">
-          <mat-icon>trending_up</mat-icon>
-        </div>
-        <div>
-          <div class="card-title">Wydatki zmienne</div>
-        </div>
-      </div>
-      <div class="card-amount">{{ formatCurrency(summary.variableGrossAmount) }}</div>
-      <div class="card-count">{{ summary.variableCount }} wydatków • Netto: {{ formatCurrency(summary.variableNetAmount) }}</div>
-    </div>
-
-    <div class="summary-card">
-      <div class="card-header">
-        <div class="card-icon invoices">
-          <mat-icon>receipt_long</mat-icon>
-        </div>
-        <div>
-          <div class="card-title">Przypisane faktury</div>
-        </div>
-      </div>
-      <div class="card-amount">{{ summary.assignedInvoices }} faktur</div>
-      <div class="card-count">z {{ summary.totalInvoices }} dostępnych</div>
-    </div>
-  </div>
-
   <!-- Expenses List -->
   <div class="expenses-section">
     <div class="section-header">
@@ -145,10 +90,10 @@
                 <mat-icon class="small-icon">category</mat-icon>
                 {{ getCategoryDisplayName(expense.category) }}
               </div>
-<!--              <div class="meta-item">-->
-<!--                <mat-icon class="small-icon">schedule</mat-icon>-->
-<!--                {{ formatDate(expense.date) }}-->
-<!--              </div>-->
+              <!--              <div class="meta-item">-->
+              <!--                <mat-icon class="small-icon">schedule</mat-icon>-->
+              <!--                {{ formatDate(expense.date) }}-->
+              <!--              </div>-->
               <div class="expense-tags">
                 <span *ngFor="let tag of expense.tags" class="tag">{{ tag }}</span>
               </div>
@@ -221,6 +166,123 @@
           <button *ngIf="expenses.length === 0" class="btn btn-primary" (click)="createNewExpense()">
             <mat-icon>add</mat-icon>
             Nowy wydatek
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+ <br> <br> <hr> <br>
+  <!-- Summary Cards -->
+  <div class="summary-section-new">
+    <!-- Lewa kolumna - karty pionowo -->
+    <div class="summary-cards-column">
+      <div class="summary-card">
+        <div class="card-header">
+          <div class="card-icon total">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <div>
+            <div class="card-title">Łączne wydatki</div>
+          </div>
+        </div>
+        <div class="card-amount">{{ formatCurrency(summary.totalGrossAmount) }}</div>
+        <div class="card-count">{{ summary.totalCount }} wydatków • Netto: {{ formatCurrency(summary.totalNetAmount) }}</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card-header">
+          <div class="card-icon fixed">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div>
+            <div class="card-title">Wydatki stałe</div>
+          </div>
+        </div>
+        <div class="card-amount">{{ formatCurrency(summary.fixedGrossAmount) }}</div>
+        <div class="card-count">{{ summary.fixedCount }} wydatków • Netto: {{ formatCurrency(summary.fixedNetAmount) }}</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card-header">
+          <div class="card-icon variable">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div>
+            <div class="card-title">Wydatki zmienne</div>
+          </div>
+        </div>
+        <div class="card-amount">{{ formatCurrency(summary.variableGrossAmount) }}</div>
+        <div class="card-count">{{ summary.variableCount }} wydatków • Netto: {{ formatCurrency(summary.variableNetAmount) }}</div>
+      </div>
+    </div>
+
+    <!-- Prawa kolumna - karta elektryczności Z PEŁNĄ INTEGRACJĄ API -->
+    <div class="electricity-card-container">
+      <div class="summary-card electricity-card">
+        <div class="card-header">
+          <div class="card-icon electricity">
+            <mat-icon>flash_on</mat-icon>
+          </div>
+          <div>
+            <div class="card-title">Elektryczność</div>
+            <div class="card-subtitle">{{ getMonthDisplayName() }}</div>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div *ngIf="isElectricityLoading" class="electricity-loading">
+          <mat-spinner diameter="24" color="accent"></mat-spinner>
+          <span>Ładowanie danych...</span>
+        </div>
+
+        <!-- Elektryczność form -->
+        <div *ngIf="!isElectricityLoading" class="electricity-form">
+          <div class="form-group">
+            <label>Zużycie (kWh/h)</label>
+            <mat-form-field appearance="outline" class="small-field">
+              <input matInput
+                     type="number"
+                     step="0.01"
+                     min="0"
+                     max="1000"
+                     [(ngModel)]="electricityData.kwhPerHour"
+                     (ngModelChange)="calculateElectricityCost()"
+                     placeholder="0.00"
+                     [disabled]="isElectricitySaving">
+              <span matSuffix>kWh/h</span>
+            </mat-form-field>
+          </div>
+
+          <div class="form-group">
+            <label>Cena netto za kWh</label>
+            <mat-form-field appearance="outline" class="small-field">
+              <input matInput
+                     type="number"
+                     step="0.01"
+                     min="0"
+                     max="10"
+                     [(ngModel)]="electricityData.pricePerKwh"
+                     (ngModelChange)="calculateElectricityCost()"
+                     placeholder="0.00"
+                     [disabled]="isElectricitySaving">
+              <span matSuffix>PLN</span>
+            </mat-form-field>
+          </div>
+
+          <div class="electricity-cost">
+            <div class="cost-label">Miesięczny koszt netto:</div>
+            <div class="cost-amount">{{ formatCurrency(electricityData.monthlyCost || 0) }}</div>
+            <div class="cost-calculation" *ngIf="electricityData.kwhPerHour > 0">
+              <small>{{ electricityData.kwhPerHour }} kWh/h × 730h × {{ electricityData.pricePerKwh }} PLN/kWh</small>
+            </div>
+          </div>
+
+          <button class="btn btn-elec btn-small"
+                  (click)="saveElectricityData()"
+                  [disabled]="isElectricitySaving || electricityData.kwhPerHour < 0 || electricityData.pricePerKwh < 0">
+            <mat-spinner *ngIf="isElectricitySaving" diameter="16" color="accent"></mat-spinner>
+            <mat-icon *ngIf="!isElectricitySaving">save</mat-icon>
+            {{ isElectricitySaving ? 'Zapisywanie...' : 'Zapisz' }}
           </button>
         </div>
       </div>

@@ -62,6 +62,24 @@
   transform: translateY(-1px);
 }
 
+.btn-elec {
+  background: linear-gradient(135deg, #ffd700, #ffa500); /* złoto-pomarańczowy gradient */
+  color: #222;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-elec:hover {
+  background: linear-gradient(135deg, #ffc107, #ff9800);
+  transform: scale(1.02);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+
 /* Month Navigation */
 .month-navigation {
   background: white;
@@ -704,4 +722,337 @@
   .item-amount {
     font-size: 13px;
   }
+}
+/* Dodaj do istniejącego accounting-expenses.component.css na końcu: */
+
+/* NOWY LAYOUT - Grid z kolumnami */
+.summary-section-new {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .summary-section-new {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Lewa kolumna - karty pionowo */
+.summary-cards-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Prawa kolumna - elektryczność */
+.electricity-card-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Karta elektryczności */
+.electricity-card {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+  color: white;
+}
+
+.electricity-card .card-title,
+.electricity-card .card-subtitle {
+  color: white !important;
+}
+
+.card-icon.electricity {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 2px;
+}
+
+/* Loading state elektryczności */
+.electricity-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+}
+
+/* Formularz elektryczności */
+.electricity-form {
+  margin-top: 16px;
+}
+
+.electricity-form .form-group {
+  margin-bottom: 12px;
+}
+
+.electricity-form label {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.small-field {
+  width: 100%;
+}
+
+.small-field .mat-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.small-field .mat-form-field-infix {
+  padding: 8px 0;
+  border-top: none;
+}
+
+.small-field input {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.small-field input:disabled {
+  background: rgba(255, 255, 255, 0.6);
+  color: #6b7280;
+}
+
+.small-field .mat-form-field-outline {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.small-field.mat-focused .mat-form-field-outline-thick {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.small-field .mat-form-field-suffix {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* Koszt miesięczny */
+.electricity-cost {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.cost-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+.cost-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.cost-calculation {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+}
+
+/* Przycisk zapisz */
+.btn-small {
+  padding: 8px 16px;
+  font-size: 12px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.btn-small:disabled {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  cursor: not-allowed;
+}
+
+.btn-small mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.btn-small mat-spinner {
+  margin: 0 !important;
+}
+
+/* Dodatkowe style dla Material Components */
+::ng-deep .electricity-card .mat-form-field-appearance-outline .mat-form-field-outline {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+::ng-deep .electricity-card .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline-thick {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+::ng-deep .electricity-card .mat-form-field-appearance-outline .mat-form-field-infix {
+  padding: 8px 12px;
+}
+
+/* Success/Error snackbar styles */
+::ng-deep .success-snackbar {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+::ng-deep .error-snackbar {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .summary-section-new {
+    gap: 16px;
+  }
+
+  .summary-cards-column {
+    gap: 12px;
+  }
+
+  .electricity-card {
+    margin-top: 0;
+  }
+
+  .small-field input {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}/* Dodaj do istniejącego accounting-expenses.component.css na końcu: */
+
+/* NOWY LAYOUT - Grid z kolumnami */
+.summary-section-new {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .summary-section-new {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Lewa kolumna - karty pionowo */
+.summary-cards-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Prawa kolumna - elektryczność */
+.electricity-card-container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Karta elektryczności */
+.electricity-card {
+  background: linear-gradient(135deg, #e6ca75, #dab94c) !important;
+  color: white;
+}
+
+.electricity-card .card-title,
+.electricity-card .card-subtitle {
+  color: white !important;
+}
+
+.card-icon.electricity {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 2px;
+}
+
+/* Formularz elektryczności */
+.electricity-form {
+  margin-top: 16px;
+}
+
+.electricity-form .form-group {
+  margin-bottom: 12px;
+}
+
+.electricity-form label {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.small-field {
+  width: 100%;
+}
+
+.small-field .mat-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.small-field .mat-form-field-infix {
+  padding: 8px 0;
+  border-top: none;
+}
+
+.small-field input {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+/* Koszt miesięczny */
+.electricity-cost {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.cost-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 4px;
+}
+
+.cost-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+}
+
+/* Przycisk zapisz */
+.btn-small {
+  padding: 8px 16px;
+  font-size: 12px;
+  width: 100%;
+}
+
+.btn-small mat-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
