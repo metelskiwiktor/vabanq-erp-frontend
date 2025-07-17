@@ -39,6 +39,10 @@ export interface CostInvoicePage {
   numberOfElements: number;
 }
 
+export interface SynchronizationRequest {
+  month: string; // Format: YYYY-MM
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -50,26 +54,19 @@ export class CostInvoiceService {
 
   /**
    * Get cost invoices with pagination and filtering
-   * @param page - Page number (0-based)
-   * @param size - Page size
-   * @param search - Search term
-   * @param currency - Currency filter
-   * @param category - Category filter
-   * @param createdFrom - Date from filter
-   * @param createdTo - Date to filter
    */
   getCostInvoices(
-      page: number = 0,
-      size: number = 15,
-      search?: string,
-      currency?: string,
-      category?: CostInvoiceCategory,
-      createdFrom?: Date,
-      createdTo?: Date
+    page: number = 0,
+    size: number = 15,
+    search?: string,
+    currency?: string,
+    category?: CostInvoiceCategory,
+    createdFrom?: Date,
+    createdTo?: Date
   ): Observable<CostInvoicePage> {
     let params = new HttpParams()
-        .set('page', page.toString())
-        .set('size', size.toString());
+      .set('page', page.toString())
+      .set('size', size.toString());
 
     if (search && search.trim()) {
       params = params.set('search', search.trim());
@@ -95,15 +92,55 @@ export class CostInvoiceService {
   }
 
   /**
-   * Synchronize cost invoices with Infakt
+   * Synchronize cost invoices with Infakt for specific month
    * @param infaktApiKey - API key for Infakt
+   * @param month - Target month in YYYY-MM format
    */
-  synchronizeCosts(infaktApiKey: string): Observable<any> {
+  synchronizeCosts(infaktApiKey: string, month: string): Observable<any> {
     const headers = new HttpHeaders({
       'infakt-api-key': infaktApiKey
     });
 
-    return this.http.post(`${this.apiUrl}/api/invoices/sync-costs`, {}, { headers });
+    const params = new HttpParams().set('month', month);
+
+    return this.http.post(`${this.apiUrl}/api/invoices/sync-costs`, {}, {
+      headers,
+      params
+    });
+  }
+
+  /**
+   * Check if month is in the future (cannot be synchronized)
+   */
+  isMonthInFuture(year: number, month: number): boolean {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // Convert to 1-12
+
+    return year > currentYear || (year === currentYear && month > currentMonth);
+  }
+
+  /**
+   * Format date to YearMonth string (YYYY-MM)
+   */
+  formatToYearMonth(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}-${month}`;
+  }
+
+  /**
+   * Parse YearMonth string to display name
+   */
+  parseYearMonthToDisplayName(yearMonth: string): string {
+    const [year, month] = yearMonth.split('-');
+    const monthNames = [
+      'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+      'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
+    ];
+
+    const monthIndex = parseInt(month) - 1;
+    return `${monthNames[monthIndex]} ${year}`;
   }
 
   /**

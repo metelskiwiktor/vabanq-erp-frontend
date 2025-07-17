@@ -1,4 +1,4 @@
-<!-- accounting-invoices.component.html -->
+<!-- accounting-invoices.component.html - Updated with per-month sync -->
 <div class="invoices-page">
   <!-- Header -->
   <div class="page-header">
@@ -13,9 +13,13 @@
           <mat-icon>clear_all</mat-icon>
           Wyczyść filtry
         </button>
-        <button class="btn btn-primary" (click)="synchronizeWithInfakt()" [disabled]="isSynchronizing">
+        <button
+          class="btn btn-primary"
+          (click)="synchronizeWithInfakt()"
+          [disabled]="isSynchronizing || !canSynchronizeCurrentMonth()"
+          [title]="!canSynchronizeCurrentMonth() ? 'Nie można synchronizować przyszłych miesięcy' : ''">
           <mat-icon [class.spinning]="isSynchronizing">sync</mat-icon>
-          {{ isSynchronizing ? 'Synchronizowanie...' : 'Synchronizuj' }}
+          {{ getSynchronizeButtonText() }}
         </button>
       </div>
     </div>
@@ -93,6 +97,15 @@
     </div>
   </div>
 
+  <!-- Synchronization Status -->
+  <div class="sync-status-banner" *ngIf="!canSynchronizeCurrentMonth() && !useCustomDateRange">
+    <mat-icon>info</mat-icon>
+    <span>
+      Wybrany miesiąc ({{ getMonthDisplayName() }}) znajduje się w przyszłości.
+      Synchronizacja możliwa tylko dla obecnego i przeszłych miesięcy.
+    </span>
+  </div>
+
   <!-- Filters Summary -->
   <div class="filters-summary" *ngIf="totalElements > 0">
     <div class="summary-item">
@@ -130,7 +143,13 @@
     <!-- Synchronizing indicator -->
     <div *ngIf="isSynchronizing" class="sync-indicator">
       <mat-icon class="spinning">sync</mat-icon>
-      <span>Synchronizowanie z Infakt... ({{ synchronizeAttempts }}/{{ maxSynchronizeAttempts }})</span>
+      <span>{{ getSynchronizeButtonText() }}</span>
+      <div class="sync-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="(synchronizeAttempts / maxSynchronizeAttempts) * 100"></div>
+        </div>
+        <span class="progress-text">{{ synchronizeAttempts }}/{{ maxSynchronizeAttempts }}</span>
+      </div>
     </div>
 
     <!-- Invoices Table -->
@@ -230,16 +249,24 @@
       <mat-icon class="empty-icon">receipt_long</mat-icon>
       <h3>Brak faktur kosztów</h3>
       <p *ngIf="totalElements === 0">
-        Nie znaleziono żadnych faktur kosztów.
-        <br>Kliknij "Synchronizuj" aby pobrać dane z systemu Infakt.
+        Nie znaleziono żadnych faktur kosztów dla {{ getMonthDisplayName() }}.
+        <br>
+        <span *ngIf="canSynchronizeCurrentMonth()">
+          Kliknij "{{ getSynchronizeButtonText() }}" aby pobrać dane z systemu Infakt.
+        </span>
+        <span *ngIf="!canSynchronizeCurrentMonth()">
+          Wybierz obecny lub przeszły miesiąc, aby móc synchronizować dane.
+        </span>
       </p>
       <p *ngIf="totalElements > 0">
         Nie znaleziono faktur spełniających wybrane kryteria filtrowania.
       </p>
       <div class="empty-actions">
-        <button class="btn btn-primary" (click)="synchronizeWithInfakt()" *ngIf="totalElements === 0">
+        <button class="btn btn-primary"
+                (click)="synchronizeWithInfakt()"
+                *ngIf="totalElements === 0 && canSynchronizeCurrentMonth()">
           <mat-icon>sync</mat-icon>
-          Synchronizuj z Infakt
+          {{ getSynchronizeButtonText() }}
         </button>
         <button class="btn btn-outline" (click)="clearFilters()" *ngIf="totalElements > 0">
           <mat-icon>clear_all</mat-icon>
@@ -253,7 +280,7 @@
   <div class="pagination-container" *ngIf="!isLoading && totalElements > 0">
     <div class="pagination-info">
       Pokazuję {{ (currentPage * pageSize) + 1 }} - {{ Math.min((currentPage + 1) * pageSize, totalElements) }}
-      z {{ totalElements }} faktur
+      z {{ totalElements }} faktur dla {{ getMonthDisplayName() }}
     </div>
 
     <div class="pagination-controls">

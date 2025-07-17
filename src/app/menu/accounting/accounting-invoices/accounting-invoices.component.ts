@@ -1,4 +1,4 @@
-// accounting-invoices.component.ts
+// accounting-invoices.component.ts - Updated with per-month synchronization
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { environment } from '../../../../environments/environment';
@@ -9,12 +9,6 @@ import {
   AssignInvoiceDialogData
 } from "./expense/assign-invoice-dialog/assign-invoice-dialog.component";
 import { ExpenseService } from '../../../utility/service/expense.service';
-
-interface CurrencyTotal {
-  currency: string;
-  netTotal: number;
-  grossTotal: number;
-}
 
 interface InvoiceAssignmentStatus {
   [invoiceId: string]: {
@@ -44,7 +38,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   isSynchronizing: boolean = false;
   synchronizeAttempts: number = 0;
-  maxSynchronizeAttempts: number = 10;
+  maxSynchronizeAttempts: number = 15; // Increased for per-month sync
   synchronizeInterval: any;
   lastKnownTotalElements: number = 0;
 
@@ -196,15 +190,12 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     return this.invoiceAssignmentStatus[invoice.id]?.expenseId;
   }
 
-// Dodaj metodę getAssignedExpenseName:
   getAssignedExpenseName(invoice: CostInvoice): string | undefined {
     return this.invoiceAssignmentStatus[invoice.id]?.expenseName;
   }
 
   // Generate Infakt URL for invoice
   getInfaktUrl(invoice: CostInvoice): string {
-    // This would typically be configured in environment or fetched from backend
-    // For now, we'll use a placeholder URL structure
     return `https://app.infakt.pl/app/faktury/koszty/${invoice.id}`;
   }
 
@@ -222,10 +213,9 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  // Synchronization
+  // Updated synchronization with month parameter
   synchronizeWithInfakt(): void {
-    // Get API key from local storage or environment
-    const infaktApiKey =  this.getInfaktApiKey();
+    const infaktApiKey = this.getInfaktApiKey();
 
     if (!infaktApiKey) {
       this.snackBar.open('Brak klucza API Infakt. Skonfiguruj integrację w ustawieniach.', 'Zamknij', {
@@ -235,18 +225,57 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Get target month for synchronization
+    const targetDate = this.useCustomDateRange && this.dateFrom ? this.dateFrom : this.selectedMonth;
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth() + 1;
+
+    // Check if trying to synchronize future month
+    if (this.costInvoiceService.isMonthInFuture(targetYear, targetMonth)) {
+      this.snackBar.open(
+        'Nie można synchronizować przyszłych miesięcy. Wybierz miesiąc do aktualnej daty włącznie.',
+        'Zamknij',
+        {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        }
+      );
+      return;
+    }
+
+    const yearMonthString = this.costInvoiceService.formatToYearMonth(targetDate);
+    const displayMonth = this.costInvoiceService.parseYearMonthToDisplayName(yearMonthString);
+
     this.isSynchronizing = true;
     this.synchronizeAttempts = 0;
     this.lastKnownTotalElements = this.totalElements;
 
-    this.costInvoiceService.synchronizeCosts(infaktApiKey).subscribe({
+    this.snackBar.open(`Rozpoczynanie synchronizacji dla: ${displayMonth}`, 'Zamknij', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+
+    this.costInvoiceService.synchronizeCosts(infaktApiKey, yearMonthString).subscribe({
       next: (response) => {
-        this.startSynchronizationPolling();
+        console.log('Synchronization started for month:', yearMonthString);
+        this.startSynchronizationPolling(yearMonthString, displayMonth);
       },
       error: (error) => {
         console.error('Synchronization error:', error);
-        this.snackBar.open('Błąd podczas synchronizacji z Infakt', 'Zamknij', {
-          duration: 3000,
+        let errorMessage = 'Błąd podczas synchronizacji z Infakt';
+
+        if (error.error?.message) {
+          errorMessage += ': ' + error.error.message;
+        } else if (error.status === 400) {
+          errorMessage = 'Nieprawidłowe parametry synchronizacji';
+        } else if (error.status === 401) {
+          errorMessage = 'Nieprawidłowy klucz API Infakt';
+        } else if (error.status === 403) {
+          errorMessage = 'Brak uprawnień do synchronizacji danych';
+        }
+
+        this.snackBar.open(errorMessage, 'Zamknij', {
+          duration: 5000,
           panelClass: ['error-snackbar']
         });
         this.isSynchronizing = false;
@@ -254,32 +283,49 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     });
   }
 
-  private startSynchronizationPolling(): void {
+  private startSynchronizationPolling(yearMonth: string, displayMonth: string): void {
     this.synchronizeInterval = setInterval(() => {
       this.synchronizeAttempts++;
 
-      this.costInvoiceService.getCostInvoices(0, 1).subscribe({
+      // Load current page to check for new invoices
+      this.costInvoiceService.getCostInvoices(
+        this.currentPage,
+        this.pageSize,
+        this.filterText || undefined,
+        this.filterCurrency || undefined,
+        this.filterCategory || undefined,
+        this.useCustomDateRange ? this.dateFrom || undefined :
+          new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth(), 1),
+        this.useCustomDateRange ? this.dateTo || undefined :
+          new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 0)
+      ).subscribe({
         next: (response) => {
-          if (response.totalElements > this.lastKnownTotalElements ||
-            this.synchronizeAttempts >= this.maxSynchronizeAttempts) {
+          const hasNewData = response.totalElements > this.lastKnownTotalElements;
+          const maxAttemptsReached = this.synchronizeAttempts >= this.maxSynchronizeAttempts;
+
+          if (hasNewData || maxAttemptsReached) {
             this.stopSynchronizationPolling();
 
-            if (response.totalElements > this.lastKnownTotalElements) {
+            if (hasNewData) {
+              const newInvoicesCount = response.totalElements - this.lastKnownTotalElements;
               this.snackBar.open(
-                `Synchronizacja zakończona. Pobrano ${response.totalElements - this.lastKnownTotalElements} nowych faktur.`,
+                `Synchronizacja ${displayMonth} zakończona. Pobrano ${newInvoicesCount} nowych faktur.`,
                 'Zamknij',
                 { duration: 5000, panelClass: ['success-snackbar'] }
               );
             } else {
-              this.snackBar.open('Synchronizacja zakończona bez nowych danych.', 'Zamknij', {
-                duration: 3000
-              });
+              this.snackBar.open(
+                `Synchronizacja ${displayMonth} zakończona bez nowych danych.`,
+                'Zamknij',
+                { duration: 3000 }
+              );
             }
 
             this.loadInvoices();
           }
         },
-        error: () => {
+        error: (error) => {
+          console.error('Error during synchronization polling:', error);
           this.stopSynchronizationPolling();
           this.snackBar.open('Błąd podczas sprawdzania statusu synchronizacji', 'Zamknij', {
             duration: 3000,
@@ -287,7 +333,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
           });
         }
       });
-    }, 2000);
+    }, 2000); // Check every 2 seconds
   }
 
   private stopSynchronizationPolling(): void {
@@ -297,6 +343,36 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     }
     this.isSynchronizing = false;
     this.synchronizeAttempts = 0;
+  }
+
+  // Check if current month can be synchronized
+  canSynchronizeCurrentMonth(): boolean {
+    const targetDate = this.useCustomDateRange && this.dateFrom ? this.dateFrom : this.selectedMonth;
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth() + 1;
+
+    return !this.costInvoiceService.isMonthInFuture(targetYear, targetMonth);
+  }
+
+  // Get synchronization button text
+  getSynchronizeButtonText(): string {
+    if (this.isSynchronizing) {
+      const targetDate = this.useCustomDateRange && this.dateFrom ? this.dateFrom : this.selectedMonth;
+      const displayMonth = this.costInvoiceService.parseYearMonthToDisplayName(
+        this.costInvoiceService.formatToYearMonth(targetDate)
+      );
+      return `Synchronizowanie ${displayMonth}... (${this.synchronizeAttempts}/${this.maxSynchronizeAttempts})`;
+    }
+
+    if (!this.canSynchronizeCurrentMonth()) {
+      return 'Nie można synchronizować';
+    }
+
+    const targetDate = this.useCustomDateRange && this.dateFrom ? this.dateFrom : this.selectedMonth;
+    const displayMonth = this.costInvoiceService.parseYearMonthToDisplayName(
+      this.costInvoiceService.formatToYearMonth(targetDate)
+    );
+    return `Synchronizuj ${displayMonth}`;
   }
 
   // Date navigation
@@ -427,11 +503,11 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     this.loadInvoices();
   }
 
-  // Actions - Updated to use real API
+  // Actions
   openExpenseDialog(invoice: CostInvoice): void {
     const dialogData: AssignInvoiceDialogData = {
       invoice: invoice,
-      currentExpenseId: this.getAssignedExpenseId(invoice) // Dodaj tę linię
+      currentExpenseId: this.getAssignedExpenseId(invoice)
     };
 
     const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
@@ -460,6 +536,7 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
       }
     });
   }
+
   // Utility methods
   formatCurrency(amount: number, currency: string = 'PLN'): string {
     return new Intl.NumberFormat('pl-PL', {
