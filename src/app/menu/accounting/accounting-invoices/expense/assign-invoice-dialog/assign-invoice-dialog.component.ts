@@ -258,11 +258,6 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
       invoice.description
     );
 
-    // Map category
-    const suggestedCategory = this.expenseCategoryMapper.mapInvoiceCategoryToExpenseCategory(
-      invoice.category
-    );
-
     // Generate tags
     const suggestedTags = this.expenseCategoryMapper.generateTagsFromInvoice(
       invoice.category,
@@ -272,7 +267,6 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
 
     this.createExpenseForm.patchValue({
       name: suggestedName,
-      category: suggestedCategory,
       description: invoice.description !== 'null' ? invoice.description : '',
       tags: suggestedTags.join(', ')
     });

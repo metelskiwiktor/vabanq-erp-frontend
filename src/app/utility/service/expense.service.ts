@@ -28,12 +28,12 @@ export interface ExpenseEntry {
 
 export enum ExpenseCategory {
   SERVICES = 'SERVICES',
-  ACCOUNTING = 'ACCOUNTING',
-  OFFICE_SUPPLIES = 'OFFICE_SUPPLIES',
-  TRAVEL = 'TRAVEL',
-  SALARY = 'SALARY',
-  OTHER = 'OTHER',
   ELECTRICITY = 'ELECTRICITY',
+  MATERIALS = 'MATERIALS',
+  EQUIPMENT = 'EQUIPMENT',
+  PACKAGING = 'PACKAGING ',
+  SOFTWARE = 'SOFTWARE',
+  OTHER = 'OTHER'
 }
 
 export interface CreateExpenseRequest {
@@ -281,12 +281,12 @@ export class ExpenseService {
   getCategoryDisplayName(category: ExpenseCategory): string {
     const categoryMap: { [key in ExpenseCategory]: string } = {
       [ExpenseCategory.SERVICES]: 'Usługi',
-      [ExpenseCategory.ACCOUNTING]: 'Księgowość',
-      [ExpenseCategory.OFFICE_SUPPLIES]: 'Biuro',
-      [ExpenseCategory.TRAVEL]: 'Podróże',
-      [ExpenseCategory.SALARY]: 'Wynagrodzenie',
       [ExpenseCategory.ELECTRICITY]: 'Prąd',
-      [ExpenseCategory.OTHER]: 'Inne'
+      [ExpenseCategory.OTHER]: 'Inne',
+      [ExpenseCategory.MATERIALS]: 'Materiały',
+      [ExpenseCategory.EQUIPMENT]: 'Sprzęt',
+      [ExpenseCategory.PACKAGING]: 'Opakowania',
+      [ExpenseCategory.SOFTWARE]: 'Oprogramowanie, licencje',
     };
     return categoryMap[category] || category;
   }
@@ -304,12 +304,12 @@ export class ExpenseService {
   getAvailableCategories(): { key: ExpenseCategory; displayName: string }[] {
     return [
       { key: ExpenseCategory.SERVICES, displayName: 'Usługi' },
-      { key: ExpenseCategory.ACCOUNTING, displayName: 'Księgowość' },
-      { key: ExpenseCategory.OFFICE_SUPPLIES, displayName: 'Biuro' },
-      { key: ExpenseCategory.TRAVEL, displayName: 'Podróże' },
-      { key: ExpenseCategory.SALARY, displayName: 'Wynagrodzenie' },
       { key: ExpenseCategory.ELECTRICITY, displayName: 'Prąd' },
-      { key: ExpenseCategory.OTHER, displayName: 'Inne' }
+      { key: ExpenseCategory.OTHER, displayName: 'Inne' },
+      { key: ExpenseCategory.MATERIALS, displayName: 'Materiały' },
+      { key: ExpenseCategory.EQUIPMENT, displayName: 'Sprzęt' },
+      { key: ExpenseCategory.PACKAGING, displayName: 'Opakowania' },
+      { key: ExpenseCategory.SOFTWARE, displayName: 'Oprogramowanie, licencje' },
     ];
   }
 

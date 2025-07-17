@@ -9,27 +9,6 @@ import { ExpenseCategory } from './expense.service';
 export class ExpenseCategoryMapperService {
 
   /**
-   * Mapuje kategorię faktury kosztowej na kategorię wydatku
-   */
-  mapInvoiceCategoryToExpenseCategory(invoiceCategory: CostInvoiceCategory | string | undefined): ExpenseCategory {
-    if (!invoiceCategory) return ExpenseCategory.OTHER;
-
-    const categoryMapping: { [key: string]: ExpenseCategory } = {
-      'GOODS_OR_MATERIALS_PURCHASE': ExpenseCategory.OTHER,
-      'ELECTRONIC_SERVICES': ExpenseCategory.SERVICES,
-      'ACCOUNTING_SERVICES': ExpenseCategory.ACCOUNTING,
-      'HOUSING_FEES': ExpenseCategory.OTHER,
-      'ENTREPRENEUR_EXPENSES': ExpenseCategory.OFFICE_SUPPLIES,
-      'SALARY': ExpenseCategory.SALARY,
-      'EMPLOYEE_SOCIAL_SECURITY': ExpenseCategory.SALARY,
-      'NONE': ExpenseCategory.OTHER,
-      'OTHER': ExpenseCategory.OTHER
-    };
-
-    return categoryMapping[invoiceCategory as string] || ExpenseCategory.OTHER;
-  }
-
-  /**
    * Pobiera sugerowaną nazwę wydatku na podstawie faktury
    */
   generateExpenseNameFromInvoice(
