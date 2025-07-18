@@ -36,8 +36,9 @@ interface CostItem {
 export class AccountingDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
-  // Loading state
+  // State management
   isLoading = false;
+  reportGenerated = false; // Nowy flag do sprawdzania czy raport został wygenerowany
 
   // Selected month for report
   selectedMonth: Date = new Date();
@@ -53,14 +54,19 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   costBreakdown: CostItem[] = [];
 
   // Pagination for offers table
-  offersPageSize = 10;
+  offersPageSize = 100;
   offersPageIndex = 0;
   totalOffers = 0;
   paginatedOffers: OfferProfitabilityResponse[] = [];
 
-  // Filtering
+  // Filtering and sorting
   offerSearchQuery = '';
   filteredOffers: OfferProfitabilityResponse[] = [];
+  minRevenue = '';
+  maxRevenue = '';
+  showProfitableOnly = false;
+  sortField = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   // Table columns - simplified
   displayedColumns: string[] = [
@@ -84,7 +90,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadFinancialReport();
+    // Nie ładuj raportu automatycznie - poczekaj na żądanie użytkownika
   }
 
   ngOnDestroy(): void {
@@ -96,6 +102,18 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   isExpandedRow = (index: number, item: any) => {
     return item.hasOwnProperty('detailRow');
   };
+
+  // Nowa metoda do generowania raportu
+  generateReport(): void {
+    this.loadFinancialReport();
+  }
+
+  // Odświeżenie raportu
+  refreshReport(): void {
+    if (this.reportGenerated) {
+      this.loadFinancialReport();
+    }
+  }
 
   // Toggle between net and gross prices
   togglePriceMode(): void {
@@ -117,6 +135,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   // Load financial report from backend
   loadFinancialReport(): void {
     this.isLoading = true;
+    this.reportGenerated = false;
     const monthParam = this.formatMonthForBackend(this.selectedMonth);
 
     this.raportService.getFinancialReport(monthParam)
@@ -124,6 +143,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data: FinancialReportResponse) => {
           this.reportData = data;
+          this.reportGenerated = true;
           this.calculateMetrics();
           this.prepareCostBreakdown();
           this.prepareOffersData();
@@ -136,6 +156,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
             panelClass: ['error-snackbar']
           });
           this.isLoading = false;
+          this.reportGenerated = false;
         }
       });
   }
@@ -144,14 +165,74 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   private prepareOffersData(): void {
     if (!this.reportData) return;
 
-    this.filteredOffers = this.reportData.offers.filter(offer =>
-      this.offerSearchQuery === '' ||
-      offer.offerName.toLowerCase().includes(this.offerSearchQuery.toLowerCase()) ||
-      offer.offerId.toLowerCase().includes(this.offerSearchQuery.toLowerCase()) ||
-      offer.productNames.some(name => name.toLowerCase().includes(this.offerSearchQuery.toLowerCase()))
-    );
+    // Apply all filters
+    this.filteredOffers = this.reportData.offers.filter(offer => {
+      // Text search
+      const matchesSearch = this.offerSearchQuery === '' ||
+        offer.offerName.toLowerCase().includes(this.offerSearchQuery.toLowerCase()) ||
+        offer.offerId.toLowerCase().includes(this.offerSearchQuery.toLowerCase()) ||
+        offer.productNames.some(name => name.toLowerCase().includes(this.offerSearchQuery.toLowerCase()));
+
+      // Revenue range filter
+      const revenue = this.getPrice(offer.revenue);
+      const matchesMinRevenue = this.minRevenue === '' || revenue >= parseFloat(this.minRevenue);
+      const matchesMaxRevenue = this.maxRevenue === '' || revenue <= parseFloat(this.maxRevenue);
+
+      // Profitability filter
+      const matchesProfitability = !this.showProfitableOnly || this.getPrice(offer.profit) > 0;
+
+      return matchesSearch && matchesMinRevenue && matchesMaxRevenue && matchesProfitability;
+    });
+
+    // Apply sorting
+    if (this.sortField) {
+      this.filteredOffers.sort((a, b) => {
+        let aValue: number;
+        let bValue: number;
+
+        switch (this.sortField) {
+          case 'offerId':
+            aValue = parseInt(a.offerId) || 0;
+            bValue = parseInt(b.offerId) || 0;
+            break;
+          case 'offerName':
+            return this.sortDirection === 'asc'
+              ? a.offerName.localeCompare(b.offerName)
+              : b.offerName.localeCompare(a.offerName);
+          case 'quantitySold':
+            aValue = a.quantitySold;
+            bValue = b.quantitySold;
+            break;
+          case 'pricePerQuantity':
+            aValue = this.getPrice(a.pricePerQuantity);
+            bValue = this.getPrice(b.pricePerQuantity);
+            break;
+          case 'revenue':
+            aValue = this.getPrice(a.revenue);
+            bValue = this.getPrice(b.revenue);
+            break;
+          case 'totalCost':
+            aValue = this.getTotalCost(a);
+            bValue = this.getTotalCost(b);
+            break;
+          case 'profit':
+            aValue = this.getPrice(a.profit);
+            bValue = this.getPrice(b.profit);
+            break;
+          case 'margin':
+            aValue = this.getOfferMargin(a);
+            bValue = this.getOfferMargin(b);
+            break;
+          default:
+            return 0;
+        }
+
+        return this.sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      });
+    }
 
     this.totalOffers = this.filteredOffers.length;
+    this.offersPageIndex = 0; // Reset to first page when filtering
     this.updatePaginatedOffers();
   }
 
@@ -176,10 +257,37 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Handle offers search
+  // Handle offers search and filtering
   onOfferSearch(): void {
-    this.offersPageIndex = 0; // Reset to first page
     this.prepareOffersData();
+  }
+
+  // Clear all filters
+  clearFilters(): void {
+    this.offerSearchQuery = '';
+    this.minRevenue = '';
+    this.maxRevenue = '';
+    this.showProfitableOnly = false;
+    this.sortField = '';
+    this.sortDirection = 'asc';
+    this.prepareOffersData();
+  }
+
+  // Handle column sorting
+  onSort(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.prepareOffersData();
+  }
+
+  // Get sort icon for column
+  getSortIcon(field: string): string {
+    if (this.sortField !== field) return 'unfold_more';
+    return this.sortDirection === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
   }
 
   // Handle offers pagination
@@ -237,17 +345,17 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   // Month navigation
   previousMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() - 1, 1);
-    this.loadFinancialReport();
+    this.reportGenerated = false; // Reset report state
   }
 
   nextMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 1);
-    this.loadFinancialReport();
+    this.reportGenerated = false; // Reset report state
   }
 
   currentMonth(): void {
     this.selectedMonth = new Date();
-    this.loadFinancialReport();
+    this.reportGenerated = false; // Reset report state
   }
 
   // Get display name for selected month
@@ -341,12 +449,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   // TrackBy function for offers table performance
   trackByOfferId(index: number, offer: any): string {
     return offer.detailRow ? `${offer.offerId}_detail` : offer.offerId;
-  }
-
-  // Clear search filter
-  clearOfferSearch(): void {
-    this.offerSearchQuery = '';
-    this.onOfferSearch();
   }
 
   // Navigation methods
