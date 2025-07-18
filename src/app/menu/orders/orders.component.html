@@ -242,16 +242,19 @@
               <!-- No Invoice - Show Generate Button -->
               <div *ngIf="(!order.invoices || order.invoices.length === 0) && !order.isInvoiceGenerating"
                    class="invoice-status">
-                <button class="action-btn primary"
-                        [class.invoice-required]="isInvoiceRequired(order)"
-                        [class.disabled]="isInvoiceGenerationDisabled(order)"
+                <button class="action-btn"
+                        [class.disabled-oss]="isInvoiceGenerationDisabled(order)"
+                        [class.invoice-required]="isInvoiceRequired(order) && !isInvoiceGenerationDisabled(order)"
+                        [class.primary]="!isInvoiceGenerationDisabled(order) && !isInvoiceRequired(order)"
                         [disabled]="isInvoiceGenerationDisabled(order)"
-                        [title]="isInvoiceGenerationDisabled(order) ? 'Funkcja dostępna tylko dla Allegro PL/CZ/SK/HU' : ''"
+                        [title]="isInvoiceGenerationDisabled(order) ? 'Faktury OSS wyłączone' : (isInvoiceRequired(order) ? 'Faktura wymagana' : 'Wystaw fakturę')"
                         (click)="generateInvoice(order, successTpl)">
                   <i class="bx bx-receipt"></i>
                   {{ getInvoiceButtonText(order) }}
                 </button>
-                <div *ngIf="isInvoiceRequired(order)" class="invoice-required-indicator">
+
+                <!-- Invoice Required Indicator -->
+                <div *ngIf="isInvoiceRequired(order) && !isInvoiceGenerationDisabled(order)" class="invoice-required-indicator">
                   <i class="bx bx-error-circle"></i>
                   Wymagana
                 </div>
