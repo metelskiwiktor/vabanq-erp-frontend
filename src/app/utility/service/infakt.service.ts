@@ -42,7 +42,7 @@ export class InfaktService {
   /**
    * Get Infakt API key from localStorage
    */
-  private getInfaktApiKey(): string | null {
+  public getInfaktApiKey(): string | null {
     const infaktData = this.localStorageService.getItem('infakt-credentials');
     if (infaktData) {
       try {

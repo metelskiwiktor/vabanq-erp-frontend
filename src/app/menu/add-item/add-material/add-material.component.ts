@@ -66,7 +66,7 @@ export class AddMaterialComponent implements OnInit {
 
   setFastenerData(fastener: FastenersAccessoryResponse): void {
     this.addMaterialRequest.name = fastener.name;
-    this.addMaterialRequest.price = fastener.netPricePerQuantity;
+    this.addMaterialRequest.price = fastener.pricePerQuantity;
     this.addMaterialRequest.description = fastener.description;
     this.addMaterialRequest.accessoryType = "FASTENERS";
   }
@@ -75,7 +75,7 @@ export class AddMaterialComponent implements OnInit {
     this.addMaterialRequest.name = packageData.name;
     this.addMaterialRequest.packagingSize = packageData.packagingSize;
     this.addMaterialRequest.dimensions = packageData.dimensions;
-    this.addMaterialRequest.price = packageData.netPricePerQuantity;
+    this.addMaterialRequest.price = packageData.pricePerQuantity;
     this.addMaterialRequest.description = packageData.description;
     this.addMaterialRequest.accessoryType = "PACKAGING";
     this.showPackageOptions = true;
@@ -178,7 +178,7 @@ export class AddMaterialComponent implements OnInit {
       case 'FASTENERS':
         requestPayload = {
           name: this.addMaterialRequest.name,
-          netPricePerQuantity: this.addMaterialRequest.price,
+          pricePerQuantity: this.addMaterialRequest.price,
           quantity: this.addMaterialRequest.quantity,
           description: this.addMaterialRequest.description
         };
@@ -214,7 +214,7 @@ export class AddMaterialComponent implements OnInit {
           name: this.addMaterialRequest.name,
           packagingSize: this.addMaterialRequest.packagingSize,
           dimensions: this.addMaterialRequest.dimensions,
-          netPricePerQuantity: this.addMaterialRequest.price,
+          pricePerQuantity: this.addMaterialRequest.price,
           quantity: this.addMaterialRequest.quantity,
           description: this.addMaterialRequest.description
         };

@@ -36,7 +36,7 @@ export interface Pair<T, U> {
 export interface FastenersAccessoryResponse {
   id: string;
   name: string;
-  netPricePerQuantity: number;
+  pricePerQuantity: number;
   quantity: number;
   description: string;
   wms: Wms;
@@ -61,7 +61,7 @@ export interface PackagingAccessoryResponse {
   name: string;
   packagingSize: string;
   dimensions: string;
-  netPricePerQuantity: number;
+  pricePerQuantity: number;
   quantity: number;
   description: string;
   wms: Wms;

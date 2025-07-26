@@ -119,7 +119,7 @@ export class AddProductComponent implements OnInit, OnDestroy {
           id: item.id,
           name: item.name,
           type: 'Elementy złączne',
-          price: item.netPricePerQuantity,
+          price: item.pricePerQuantity,
           q: 0
         }));
         const filaments = response.filaments.map(item => ({

@@ -44,7 +44,7 @@ export class OrdersComponent implements OnInit {
   OrderStatus = OrderStatus;
 
   // OSS Invoice Configuration - łatwa zmiana
-  readonly ossEnabled: boolean = false; // Zmień na true aby włączyć faktury OSS
+  readonly ossEnabled: boolean = true; // Zmień na true aby włączyć faktury OSS
 
   // Pagination properties
   currentPage: number = 0;
@@ -561,19 +561,30 @@ export class OrdersComponent implements OnInit {
    * Sprawdza czy można wystawić fakturę dla tego zamówienia
    */
   canGenerateInvoice(order: Order): boolean {
-    // Dla polskiego rynku zawsze można
     if (this.isPolishMarket(order)) {
       return true;
     }
 
-    // Dla zagranicznych rynków sprawdzamy czy OSS jest włączone
     if (this.isForeignMarket(order)) {
-      return this.ossEnabled;
+      if (!this.ossEnabled) {
+        return false;
+      }
+
+      const saleDate = new Date(order.saleDate);
+      const now = new Date();
+
+      const saleYear = saleDate.getFullYear();
+      const saleMonth = saleDate.getMonth(); // 0-indexed
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth(); // 0-indexed
+
+      // Reject if sale is from current month and year
+      return !(saleYear === currentYear && saleMonth === currentMonth);
     }
 
-    // Dla nieobsługiwanych rynków nie można
     return false;
   }
+
 
   /**
    * Sprawdza czy rynek jest obsługiwany przez system
@@ -592,15 +603,15 @@ export class OrdersComponent implements OnInit {
       return this.isInvoiceRequired(order) ? 'Wystaw fakturę wymaganą' : 'Wystaw fakturę';
     }
 
-    if (this.isForeignMarket(order)) {
+    if (this.canGenerateInvoice(order)) {
       if (this.ossEnabled) {
-        return `Wystaw fakturę OSS ${this.getMarketDisplayName(order.market)}`;
+        return `Wystaw zagraniczną fakturę ${this.getMarketDisplayName(order.market)}`;
       } else {
-        return 'Faktury OSS wyłączone';
+        return 'Faktury są wyłączone';
       }
     }
 
-    return 'Nieobsługiwany rynek';
+    return 'Zagraniczne faktury dla bieżącego miesiąca są niedostępne';
   }
 
   /**
@@ -608,40 +619,6 @@ export class OrdersComponent implements OnInit {
    */
   isInvoiceGenerationDisabled(order: Order): boolean {
     return !this.canGenerateInvoice(order);
-  }
-
-  /**
-   * Pobiera klasę CSS dla przycisku faktury
-   */
-  getInvoiceButtonClass(order: Order): string {
-    if (this.isInvoiceGenerationDisabled(order)) {
-      return 'disabled-oss';
-    }
-
-    if (this.isInvoiceRequired(order)) {
-      return 'invoice-required';
-    }
-
-    return 'primary';
-  }
-
-  /**
-   * Pobiera tooltip dla przycisku faktury
-   */
-  getInvoiceButtonTooltip(order: Order): string {
-    if (this.isPolishMarket(order)) {
-      return this.isInvoiceRequired(order) ? 'Faktura wymagana przez kupującego' : 'Wystaw fakturę standardową';
-    }
-
-    if (this.isForeignMarket(order)) {
-      if (this.ossEnabled) {
-        return `Wystaw fakturę OSS dla ${this.getMarketDisplayName(order.market)}`;
-      } else {
-        return 'Faktury OSS są obecnie wyłączone w systemie';
-      }
-    }
-
-    return 'Ten rynek nie jest obsługiwany przez system fakturowania';
   }
 
   isInvoiceRequired(order: Order): boolean {

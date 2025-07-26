@@ -254,7 +254,7 @@
           </div>
 
           <div class="form-group">
-            <label>Cena netto za kWh</label>
+            <label>Cena brutto za kWh</label>
             <mat-form-field appearance="outline" class="small-field">
               <input matInput
                      type="number"
@@ -270,7 +270,7 @@
           </div>
 
           <div class="electricity-cost">
-            <div class="cost-label">Miesięczny koszt netto:</div>
+            <div class="cost-label">Miesięczny koszt brutto:</div>
             <div class="cost-amount">{{ formatCurrency(electricityData.monthlyCost || 0) }}</div>
             <div class="cost-calculation" *ngIf="electricityData.kwhPerHour > 0">
               <small>{{ electricityData.kwhPerHour }} kWh/h × 730h × {{ electricityData.pricePerKwh }} PLN/kWh</small>

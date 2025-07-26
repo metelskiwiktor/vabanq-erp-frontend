@@ -19,9 +19,9 @@ export class ListMaterialsComponent implements OnInit, AfterViewInit {
   filamentsDataSource = new MatTableDataSource<FilamentAccessoryResponse>();
   packagesDataSource = new MatTableDataSource<PackagingAccessoryResponse>();
 
-  displayedColumnsFasteners: string[] = ['name', 'netPricePerQuantity', 'description', 'actions'];
+  displayedColumnsFasteners: string[] = ['name', 'pricePerQuantity', 'description', 'actions'];
   displayedColumnsFilaments: string[] = ['name', 'producer', 'filamentType', 'printTemperature', 'deskTemperature', 'pricePerKg', 'color', 'description', 'actions'];
-  displayedColumnsPackages: string[] = ['name', 'packagingSize', 'dimensions', 'netPricePerQuantity', 'description', 'actions'];
+  displayedColumnsPackages: string[] = ['name', 'packagingSize', 'dimensions', 'pricePerQuantity', 'description', 'actions'];
 
   filterValue: string = '';
 

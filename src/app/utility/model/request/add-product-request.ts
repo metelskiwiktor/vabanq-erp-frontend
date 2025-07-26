@@ -38,7 +38,7 @@ export interface GroupedAccessoriesResponse {
 export interface FastenersAccessoryResponse {
   id: string;
   name: string;
-  netPricePerQuantity: string;
+  pricePerQuantity: string;
   quantity: number;
   description: string;
   wms: Wms;
@@ -63,7 +63,7 @@ export interface PackagingAccessoryResponse {
   name: string;
   packagingSize: string;
   dimensions: string;
-  netPricePerQuantity: string;
+  pricePerQuantity: string;
   quantity: number;
   description: string;
   wms: Wms;

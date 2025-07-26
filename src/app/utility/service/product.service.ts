@@ -6,6 +6,7 @@ import {KeycloakService} from "keycloak-angular";
 import {GroupedAccessoriesResponse} from "../model/request/add-product-request";
 import {ProductResponse} from "../model/response/product-response.model";
 import {Order} from "../../menu/orders/model/orders-model";
+import {InfaktService} from "./infakt.service";
 
 // Dodane interfejsy dla Allegro Invoice
 export interface AttachInvoiceRequest {
@@ -43,13 +44,15 @@ export class ProductService {
   private readonly apiWmsUrl: string;
   private readonly apiAllegroUrl: string;
   private readonly apiAllegroInvoiceUrl: string; // Nowy URL dla faktur Allegro
+  private infaktService: InfaktService;
 
-  constructor(private http: HttpClient, private readonly keycloak: KeycloakService) {
+  constructor(private http: HttpClient, private infService: InfaktService) {
     this.apiProductUrl = environment.backendUrl + '/api/products';
     this.apiMaterialUrl = environment.backendUrl + '/api/accessories';
     this.apiWmsUrl = environment.backendUrl + '/api/inventory';
     this.apiAllegroUrl = environment.backendUrl + '/api/allegro';
-    this.apiAllegroInvoiceUrl = environment.backendUrl + '/api/allegro/invoices'; // Nowy endpoint
+    this.apiAllegroInvoiceUrl = environment.backendUrl + '/api/allegro/invoices';
+    this.infaktService = infService
     console.log(this.apiProductUrl);
   }
 
@@ -265,6 +268,7 @@ export class ProductService {
    */
   attachInvoiceToOrder(orderId: string, invoiceId: string, token: string): Observable<AttachInvoiceResponse> {
     const headers = new HttpHeaders().set('allegro-api', token);
+    headers.set('infakt-api-key', this.infaktService.getInfaktApiKey()!)
     const request: AttachInvoiceRequest = { orderId, invoiceId };
 
     return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/attach`, request, { headers }).pipe(
