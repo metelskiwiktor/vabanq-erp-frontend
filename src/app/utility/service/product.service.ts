@@ -216,7 +216,7 @@ export class ProductService {
     const headers = new HttpHeaders().set('allegro-api', token);
     return this.http.get<{ created: number; updated: number }>(
       `${this.apiAllegroUrl}/synchronize-offers`,
-      { headers }
+      {headers}
     );
   }
 
@@ -224,7 +224,7 @@ export class ProductService {
     const headers = new HttpHeaders().set('allegro-api', token);
     return this.http.get<{ created: number; updated: number }>(
       `${this.apiAllegroUrl}/synchronize-orders`,
-      { headers }
+      {headers}
     );
   }
 
@@ -261,19 +261,26 @@ export class ProductService {
       }
     );
   }
+
   // ====== METODY DLA ALLEGRO INVOICE ======
 
   /**
    * Dołącza istniejącą fakturę do zamówienia w Allegro
    */
   attachInvoiceToOrder(orderId: string, invoiceId: string, token: string): Observable<AttachInvoiceResponse> {
+    const infaktToken = this.infaktService.getInfaktApiKey()!;
+
     let headers = new HttpHeaders()
       .set('allegro-api', token)
-      .set('infakt-api-key', this.infaktService.getInfaktApiKey()!);
+      .set('infakt-api-key', infaktToken);
 
-    const request: AttachInvoiceRequest = { orderId, invoiceId };
+    console.log('Attaching invoice to order:', orderId, 'with invoice:', invoiceId);
+    console.log('Tokens used - allegro:', token.slice(0, 10), 'infakt:', infaktToken.slice(0, 10));
+    console.log('Headers - allegro:', headers.get('allegro-api')?.slice(0, 10), 'infakt:', headers.get('infakt-api-key')?.slice(0, 10));
 
-    return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/attach`, request, { headers }).pipe(
+    const request: AttachInvoiceRequest = {orderId, invoiceId};
+
+    return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/attach`, request, {headers}).pipe(
       tap(response => console.log('Invoice attached to Allegro order:', response))
     );
   }
