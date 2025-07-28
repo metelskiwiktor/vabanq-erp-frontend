@@ -267,12 +267,14 @@ export class ProductService {
    * Dołącza istniejącą fakturę do zamówienia w Allegro
    */
   attachInvoiceToOrder(orderId: string, invoiceId: string, token: string): Observable<AttachInvoiceResponse> {
-    const headers = new HttpHeaders().set('allegro-api', token);
-    headers.set('infakt-api-key', this.infaktService.getInfaktApiKey()!)
+    let headers = new HttpHeaders()
+      .set('allegro-api', token)
+      .set('infakt-api-key', this.infaktService.getInfaktApiKey()!);
+
     const request: AttachInvoiceRequest = { orderId, invoiceId };
 
     return this.http.post<AttachInvoiceResponse>(`${this.apiAllegroInvoiceUrl}/attach`, request, { headers }).pipe(
-      tap((response) => console.log('Invoice attached to Allegro order:', response))
+      tap(response => console.log('Invoice attached to Allegro order:', response))
     );
   }
 
