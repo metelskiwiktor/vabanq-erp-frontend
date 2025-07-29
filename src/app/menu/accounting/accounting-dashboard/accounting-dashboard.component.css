@@ -989,3 +989,222 @@
     width: 100%;
   }
 }
+
+/* Allegro Costs Section */
+.allegro-costs-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.allegro-costs-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.allegro-chart {
+  min-height: 300px;
+}
+
+.allegro-summary {
+  min-height: 300px;
+}
+
+.chart-subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Cost Type Badges */
+.cost-type-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.badge-monthly {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-per-order {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.cost-type-monthly {
+  border-left: 3px solid #3b82f6;
+  padding-left: 0.5rem;
+}
+
+.cost-type-per-order {
+  border-left: 3px solid #10b981;
+  padding-left: 0.5rem;
+}
+
+/* Allegro Summary */
+.allegro-summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.summary-item:hover {
+  background: #f1f5f9;
+}
+
+.summary-item.total {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border: 2px solid #cbd5e1;
+}
+
+.summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.summary-icon.monthly {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.summary-icon.per-order {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.summary-icon.total {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.summary-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'Monaco', 'Menlo', monospace;
+  margin-bottom: 0.25rem;
+}
+
+.summary-value.total-value {
+  font-size: 1.375rem;
+  color: #7c3aed;
+}
+
+.summary-description {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Allegro Costs in Detail Section */
+.allegro-costs-detail {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 4px solid #8b5cf6;
+}
+
+.allegro-costs-detail h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.allegro-costs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.allegro-cost-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.allegro-cost-name {
+  font-size: 0.875rem;
+  color: #374151;
+  flex: 1;
+}
+
+.allegro-cost-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #8b5cf6;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Cost Breakdown Item - Allegro costs styling */
+.cost-breakdown-item.allegro-costs {
+  border-left: 4px solid #8b5cf6;
+  background: #faf5ff;
+}
+
+.cost-breakdown-item.allegro-costs .cost-category {
+  color: #7c3aed;
+}
+
+.cost-breakdown-item.allegro-costs .total-cost {
+  color: #7c3aed;
+}
+
+/* Products Detail - No products state */
+.no-products {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 4px;
+  border: 1px dashed #d1d5db;
+}

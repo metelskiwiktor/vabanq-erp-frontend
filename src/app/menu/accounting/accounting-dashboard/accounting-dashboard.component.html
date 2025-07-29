@@ -129,16 +129,16 @@
       <div class="metric-card">
         <div class="metric-header">
           <div class="metric-info">
-            <p class="metric-label">Wydatki ({{ getPriceModeLabel() }})</p>
-            <h3 class="metric-value">{{ formatCurrency(getPrice(reportData.expenses)) }}</h3>
+            <p class="metric-label">Koszty Allegro ({{ getPriceModeLabel() }})</p>
+            <h3 class="metric-value">{{ formatCurrency(totalAllegroCosts) }}</h3>
           </div>
           <span class="metric-badge warning">
-            <mat-icon>receipt_long</mat-icon>
+            <mat-icon>storefront</mat-icon>
           </span>
         </div>
         <div class="metric-footer">
           <p class="metric-comparison">
-            % przychodów: {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (getPrice(reportData.expenses) / getPrice(reportData.revenue)) * 100 : 0) }}
+            % przychodów: {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (totalAllegroCosts / getPrice(reportData.revenue)) * 100 : 0) }}
           </p>
         </div>
       </div>
@@ -204,7 +204,7 @@
               <mat-icon>trending_down</mat-icon>
               <div class="profit-info">
                 <div class="profit-name">Koszty całkowite</div>
-                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.productionCost) + getPrice(reportData.expenses)) }}</div>
+                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.productionCost) + getPrice(reportData.expenses) + totalAllegroCosts) }}</div>
               </div>
             </div>
 
@@ -213,6 +213,90 @@
               <div class="profit-info">
                 <div class="profit-name">Zysk</div>
                 <div class="profit-amount">{{ formatCurrency(getPrice(reportData.profit)) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Allegro Costs Section -->
+    <div class="allegro-costs-section" *ngIf="allegroCostBreakdown.length > 0">
+      <div class="section-header">
+        <h2 class="section-title">Koszty Allegro ({{ getPriceModeLabel() }})</h2>
+        <div class="total-cost">
+          Razem: {{ formatCurrency(totalAllegroCosts) }}
+        </div>
+      </div>
+
+      <div class="allegro-costs-content">
+        <!-- Allegro Costs Chart -->
+        <div class="chart-card allegro-chart">
+          <h3 class="chart-subtitle">Podział kosztów Allegro</h3>
+
+          <div class="cost-chart">
+            <div class="cost-item" *ngFor="let cost of allegroCostBreakdown">
+              <div class="cost-label" [class]="'cost-type-' + cost.type">
+                {{ cost.name }}
+                <span class="cost-type-badge" [class]="'badge-' + cost.type">
+                  {{ cost.type === 'monthly' ? 'miesięczne' : 'za oferty' }}
+                </span>
+              </div>
+              <div class="cost-bar-container">
+                <div
+                  class="cost-bar-fill"
+                  [style.background-color]="cost.color"
+                  [style.width.%]="getAllegroCostPercentage(cost.value)">
+                </div>
+              </div>
+              <div class="cost-value">{{ formatCurrency(cost.value) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Allegro Costs Summary -->
+        <div class="chart-card allegro-summary">
+          <h3 class="chart-subtitle">Podsumowanie</h3>
+
+          <div class="allegro-summary-content">
+            <div class="summary-item">
+              <div class="summary-icon monthly">
+                <mat-icon>calendar_month</mat-icon>
+              </div>
+              <div class="summary-details">
+                <div class="summary-label">Koszty miesięczne</div>
+                <div class="summary-value">
+                  {{ formatCurrency(getMonthlyCostsTotal()) }}
+                </div>
+                <div class="summary-description">Stałe opłaty za miesiąc</div>
+              </div>
+            </div>
+
+            <div class="summary-item">
+              <div class="summary-icon per-order">
+                <mat-icon>shopping_cart</mat-icon>
+              </div>
+              <div class="summary-details">
+                <div class="summary-label">Koszty za oferty</div>
+                <div class="summary-value">
+                  {{ formatCurrency(getPerOrderCostsTotal()) }}
+                </div>
+                <div class="summary-description">Prowizje i opłaty za sprzedaż</div>
+              </div>
+            </div>
+
+            <div class="summary-item total">
+              <div class="summary-icon total">
+                <mat-icon>account_balance</mat-icon>
+              </div>
+              <div class="summary-details">
+                <div class="summary-label">Całkowite koszty Allegro</div>
+                <div class="summary-value total-value">
+                  {{ formatCurrency(totalAllegroCosts) }}
+                </div>
+                <div class="summary-description">
+                  {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (totalAllegroCosts / getPrice(reportData.revenue)) * 100 : 0) }} przychodów
+                </div>
               </div>
             </div>
           </div>
@@ -381,6 +465,9 @@
                       <span *ngFor="let product of element.productNames" class="product-tag">
                         {{ product }}
                       </span>
+                      <span *ngIf="element.productNames.length === 0" class="no-products">
+                        Brak przypisanych produktów
+                      </span>
                     </div>
                   </div>
 
@@ -388,6 +475,12 @@
                   <div class="detail-section">
                     <h4><mat-icon>calculate</mat-icon>Analiza jednostkowa</h4>
                     <div class="unit-metrics">
+                      <div class="metric-item">
+                        <span class="metric-label">Cena/szt:</span>
+                        <span class="metric-value">
+                          {{ formatCurrency(getPrice(element.pricePerQuantity)) }}
+                        </span>
+                      </div>
                       <div class="metric-item">
                         <span class="metric-label">Koszt produkcji/szt:</span>
                         <span class="metric-value">{{ formatCurrency(getUnitProductionCost(element)) }}</span>
@@ -452,6 +545,36 @@
                         <div class="cost-values">
                           <span class="total-cost">{{ formatCurrency(getPrice(element.packagingCost)) }}</span>
                           <span class="unit-cost">({{ formatCurrency(getPrice(element.packagingCost) / element.quantitySold) }}/szt)</span>
+                        </div>
+                      </div>
+
+                      <!-- Allegro Costs for this offer -->
+                      <div *ngIf="element.allegroCosts && Object.keys(element.allegroCosts).length > 0"
+                           class="cost-breakdown-item allegro-costs">
+                        <div class="cost-category">
+                          <mat-icon>shopping_cart</mat-icon>
+                          <span>Koszty Allegro</span>
+                        </div>
+                        <div class="cost-values">
+                          <span class="total-cost">
+                            {{ formatCurrency(getAllegroCostTotal(element.allegroCosts)) }}
+                          </span>
+                          <span class="unit-cost">
+                            ({{ formatCurrency(getAllegroCostTotal(element.allegroCosts) / element.quantitySold) }}/szt)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Detailed Allegro costs breakdown for this offer -->
+                    <div *ngIf="element.allegroCosts && Object.keys(element.allegroCosts).length > 0"
+                         class="allegro-costs-detail">
+                      <h5><mat-icon>storefront</mat-icon>Szczegółowe koszty Allegro</h5>
+                      <div class="allegro-costs-list">
+                        <div *ngFor="let costEntry of getAllegroCostEntries(element.allegroCosts)"
+                             class="allegro-cost-item">
+                          <span class="allegro-cost-name">{{ costEntry.name }}</span>
+                          <span class="allegro-cost-value">{{ formatCurrency(getPrice(costEntry.pricePair)) }}</span>
                         </div>
                       </div>
                     </div>

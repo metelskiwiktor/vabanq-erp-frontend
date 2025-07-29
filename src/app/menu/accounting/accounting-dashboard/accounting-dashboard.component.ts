@@ -12,6 +12,13 @@ interface CostItem {
   color: string;
 }
 
+interface AllegroCostItem {
+  name: string;
+  value: number;
+  color: string;
+  type: 'monthly' | 'per-order';
+}
+
 @Component({
   selector: 'app-accounting-dashboard',
   templateUrl: './accounting-dashboard.component.html',
@@ -38,7 +45,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
 
   // State management
   isLoading = false;
-  reportGenerated = false; // Nowy flag do sprawdzania czy raport został wygenerowany
+  reportGenerated = false;
 
   // Selected month for report
   selectedMonth: Date = new Date();
@@ -47,11 +54,13 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   reportData: FinancialReportResponse | null = null;
 
   // Price display mode
-  showNetPrices = true; // Default to net prices
+  showNetPrices = true;
 
   // Computed values
   profitMargin = 0;
   costBreakdown: CostItem[] = [];
+  allegroCostBreakdown: AllegroCostItem[] = [];
+  totalAllegroCosts = 0;
 
   // Pagination for offers table
   offersPageSize = 100;
@@ -68,7 +77,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   sortField = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  // Table columns - simplified
+  // Table columns
   displayedColumns: string[] = [
     'expand',
     'offerId',
@@ -103,16 +112,9 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     return item.hasOwnProperty('detailRow');
   };
 
-  // Nowa metoda do generowania raportu
+  // Generate report
   generateReport(): void {
     this.loadFinancialReport();
-  }
-
-  // Odświeżenie raportu
-  refreshReport(): void {
-    if (this.reportGenerated) {
-      this.loadFinancialReport();
-    }
   }
 
   // Toggle between net and gross prices
@@ -120,6 +122,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.showNetPrices = !this.showNetPrices;
     this.calculateMetrics();
     this.prepareCostBreakdown();
+    this.prepareAllegroCostBreakdown();
   }
 
   // Get price value based on current mode
@@ -146,6 +149,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
           this.reportGenerated = true;
           this.calculateMetrics();
           this.prepareCostBreakdown();
+          this.prepareAllegroCostBreakdown();
           this.prepareOffersData();
           this.isLoading = false;
         },
@@ -232,7 +236,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     }
 
     this.totalOffers = this.filteredOffers.length;
-    this.offersPageIndex = 0; // Reset to first page when filtering
+    this.offersPageIndex = 0;
     this.updatePaginatedOffers();
   }
 
@@ -339,23 +343,107 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
         value: this.getPrice(this.reportData.packagingCost),
         color: '#ef4444'
       }
-    ].filter(item => item.value > 0); // Only show non-zero costs
+    ].filter(item => item.value > 0);
+  }
+
+  // Prepare Allegro cost breakdown
+  private prepareAllegroCostBreakdown(): void {
+    if (!this.reportData || !this.reportData.allegroCosts) return;
+
+    const colors = [
+      '#8b5cf6', '#06b6d4', '#84cc16', '#f97316', '#ec4899',
+      '#6366f1', '#14b8a6', '#facc15', '#f43f5e', '#8b5cf6'
+    ];
+
+    this.allegroCostBreakdown = [];
+    let colorIndex = 0;
+
+    // Add monthly Allegro costs
+    Object.entries(this.reportData.allegroCosts).forEach(([name, pricePair]) => {
+      const value = this.getPrice(pricePair);
+      if (value > 0) {
+        this.allegroCostBreakdown.push({
+          name: this.formatAllegroCostName(name),
+          value,
+          color: colors[colorIndex % colors.length],
+          type: 'monthly'
+        });
+        colorIndex++;
+      }
+    });
+
+    // Calculate total costs from individual offers
+    const offerAllegroCosts = new Map<string, number>();
+
+    if (this.reportData.offers) {
+      this.reportData.offers.forEach(offer => {
+        if (offer.allegroCosts) {
+          Object.entries(offer.allegroCosts).forEach(([name, pricePair]) => {
+            const value = this.getPrice(pricePair);
+            const current = offerAllegroCosts.get(name) || 0;
+            offerAllegroCosts.set(name, current + value);
+          });
+        }
+      });
+    }
+
+    // Add aggregated per-order costs
+    offerAllegroCosts.forEach((value, name) => {
+      if (value > 0) {
+        this.allegroCostBreakdown.push({
+          name: this.formatAllegroCostName(name) + ' (oferty)',
+          value,
+          color: colors[colorIndex % colors.length],
+          type: 'per-order'
+        });
+        colorIndex++;
+      }
+    });
+
+    // Calculate total
+    this.totalAllegroCosts = this.allegroCostBreakdown.reduce((sum, item) => sum + item.value, 0);
+
+    // Sort by value descending
+    this.allegroCostBreakdown.sort((a, b) => b.value - a.value);
+  }
+
+  // Format Allegro cost names for better display
+  private formatAllegroCostName(name: string): string {
+    const translations: { [key: string]: string } = {
+      'Opłata za kampanię Ads': 'Reklamy Ads',
+      'Opłata za wyróżnienie': 'Wyróżnienie',
+      'DPD Operator - opłaty podstawowe': 'DPD',
+      'DHL Operator - opłaty podstawowe': 'DHL',
+      'Prowizja od sprzedaży oferty wyróżnionej': 'Prowizja wyróżnienie',
+      'Abonament profesjonalny': 'Abonament',
+      'UPS Operator - opłaty podstawowe': 'UPS',
+      'Allegro Paczkomaty InPost': 'InPost',
+      'Przesyłka DPD': 'Przesyłka DPD',
+      'Opłata za promowanie na stronie działu': 'Promowanie',
+      'InPost - opłaty dodatkowe': 'InPost dodatkowe',
+      'Orlen Operator - opłaty podstawowe': 'Orlen',
+      'Opłata za Pakiet Promo': 'Pakiet Promo',
+      'DPD - Kurier opłaty dodatkowe': 'DPD dodatkowe',
+      'Prowizja od sprzedaży': 'Prowizja'
+    };
+
+    return translations[name] || name;
   }
 
   // Month navigation
   previousMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() - 1, 1);
-    this.reportGenerated = false; // Reset report state
+    this.reportGenerated = false;
   }
 
   nextMonth(): void {
     this.selectedMonth = new Date(this.selectedMonth.getFullYear(), this.selectedMonth.getMonth() + 1, 1);
-    this.reportGenerated = false; // Reset report state
+    this.reportGenerated = false;
   }
 
   currentMonth(): void {
     this.selectedMonth = new Date();
-    this.reportGenerated = false; // Reset report state
+    this.reportGenerated = false;
   }
 
   // Get display name for selected month
@@ -366,12 +454,17 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     }).format(this.selectedMonth);
   }
 
-  // Get total cost for offer
+  // Get total cost for offer (including Allegro costs)
   getTotalCost(offer: OfferProfitabilityResponse): number {
-    return this.getPrice(offer.materialCost) +
+    const productionCost = this.getPrice(offer.materialCost) +
       this.getPrice(offer.laborCost) +
       this.getPrice(offer.powerCost) +
       this.getPrice(offer.packagingCost);
+
+    const allegroCosts = offer.allegroCosts ?
+      Object.values(offer.allegroCosts).reduce((sum, pricePair) => sum + this.getPrice(pricePair), 0) : 0;
+
+    return productionCost + allegroCosts;
   }
 
   // Toggle expanded state for offer
@@ -381,7 +474,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     } else {
       this.expandedOffers.add(offerId);
     }
-    // Rebuild paginated data to include/exclude detail rows
     this.updatePaginatedOffers();
   }
 
@@ -440,10 +532,43 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     return Math.max(...this.costBreakdown.map(item => item.value));
   }
 
+  // Get max value for Allegro cost chart scaling
+  getMaxAllegroCostValue(): number {
+    if (this.allegroCostBreakdown.length === 0) return 100;
+    return Math.max(...this.allegroCostBreakdown.map(item => item.value));
+  }
+
   // Calculate cost percentage for chart bars
   getCostPercentage(value: number): number {
     const max = this.getMaxCostValue();
     return max > 0 ? (value / max) * 100 : 0;
+  }
+
+  // Calculate Allegro cost percentage for chart bars
+  getAllegroCostPercentage(value: number): number {
+    const max = this.getMaxAllegroCostValue();
+    return max > 0 ? (value / max) * 100 : 0;
+  }
+
+  // Helper methods for Allegro costs in templates
+  getAllegroCostEntries(allegroCosts: { [key: string]: PricePair }): { name: string, pricePair: PricePair }[] {
+    return Object.entries(allegroCosts).map(([name, pricePair]) => ({ name, pricePair }));
+  }
+
+  getAllegroCostTotal(allegroCosts: { [key: string]: PricePair }): number {
+    return Object.values(allegroCosts).reduce((sum, pricePair) => sum + this.getPrice(pricePair), 0);
+  }
+
+  getMonthlyCostsTotal(): number {
+    return this.allegroCostBreakdown
+      ? this.allegroCostBreakdown.filter(c => c.type === 'monthly').reduce((sum, c) => sum + c.value, 0)
+      : 0;
+  }
+
+  getPerOrderCostsTotal(): number {
+    return this.allegroCostBreakdown
+      ? this.allegroCostBreakdown.filter(c => c.type === 'per-order').reduce((sum, c) => sum + c.value, 0)
+      : 0;
   }
 
   // TrackBy function for offers table performance
@@ -453,12 +578,12 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
 
   // Navigation methods
   navigateToInvoices(): void {
-    // This would typically use Router to navigate
     console.log('Navigate to invoices');
   }
 
   navigateToExpenses(): void {
-    // This would typically use Router to navigate
     console.log('Navigate to expenses');
   }
+
+  protected readonly Object = Object;
 }

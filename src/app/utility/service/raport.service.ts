@@ -1,3 +1,4 @@
+// src/app/utility/service/raport.service.ts - Updated interface
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -15,6 +16,7 @@ export interface FinancialReportResponse {
   packagingCost: PricePair;
   laborCost: PricePair;
   productionCost: PricePair;
+  allegroCosts: { [key: string]: PricePair }; // New field for monthly Allegro costs
   expenses: PricePair;
   profit: PricePair;
   offers: OfferProfitabilityResponse[];
@@ -32,6 +34,7 @@ export interface OfferProfitabilityResponse {
   packagingCost: PricePair;
   laborCost: PricePair;
   productionCost: PricePair;
+  allegroCosts?: { [key: string]: PricePair }; // New field for per-offer Allegro costs
   profit: PricePair;
 }
 
