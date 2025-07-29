@@ -330,29 +330,12 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     this.toggleExpenseExpansion(expense);
   }
 
-  addExpenseItem(expense: ExpenseItem): void {
-    // Will be handled in separate dialog - for now just show info
-    this.snackBar.open('Aby dodać pozycje do wydatku, użyj przycisku "Edytuj"', 'Zamknij', {
-      duration: 3000
-    });
-  }
-
-  // Helper method to get manual items count for an expense
-  getManualItemsCount(): number {
-    // This would be implemented in the dialog, but here for reference
-    return 1; // Default for create mode
-  }
-
   // Utility methods
   formatCurrency(amount: number, currency: string = 'PLN'): string {
     return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: currency
     }).format(amount);
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('pl-PL');
   }
 
   getMonthDisplayName(): string {
@@ -381,7 +364,6 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   }
 
   currentDate = new Date();
-  currentMonth = this.currentDate.getMonth();
   currentYear = this.currentDate.getFullYear();
   getCurrentYearMonth(): string {
     const month = (this.selectedMonth.getMonth()).toString().padStart(2, '0');
@@ -398,18 +380,18 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
 
   private loadElectricityData(): void {
     this.isElectricityLoading = true;
-    const currentYearMonth = this.getCurrentYearMonth();
+    const monthString = this.formatMonthForBackend(this.selectedMonth);
 
-    this.electricityService.getUsage(currentYearMonth)
+    this.electricityService.getUsage(monthString)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: ElectricityUsageResponse) => {
           this.electricityData = {
             kwhPerHour: response.kwhPerHour,
-            pricePerKwh: response.pricePerKwh,
+            pricePerKwh: response.grossPricePerKwh,
             monthlyCost: this.electricityService.calculateMonthlyCost(
               response.kwhPerHour,
-              response.pricePerKwh
+              response.grossPricePerKwh
             )
           };
           this.isElectricityLoading = false;
@@ -448,7 +430,7 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
 
     const request = {
       kwhPerHour: this.electricityData.kwhPerHour,
-      pricePerKwh: this.electricityData.pricePerKwh
+      grossPricePerKwh: this.electricityData.pricePerKwh
     };
 
     this.electricityService.updateUsage(currentYearMonth, request)

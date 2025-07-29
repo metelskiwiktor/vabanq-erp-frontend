@@ -7,12 +7,12 @@ import { environment } from '../../../environments/environment';
 export interface ElectricityUsageResponse {
   month: string; // Format: YYYY-MM (YearMonth)
   kwhPerHour: number;
-  pricePerKwh: number;
+  grossPricePerKwh: number;
 }
 
 export interface ElectricityUsageRequest {
   kwhPerHour: number;
-  pricePerKwh: number;
+  grossPricePerKwh: number;
 }
 
 @Injectable({
