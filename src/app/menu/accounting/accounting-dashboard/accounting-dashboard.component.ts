@@ -19,6 +19,12 @@ interface AllegroCostItem {
   type: 'monthly' | 'per-order';
 }
 
+interface ExpenseItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
 @Component({
   selector: 'app-accounting-dashboard',
   templateUrl: './accounting-dashboard.component.html',
@@ -60,7 +66,9 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   profitMargin = 0;
   costBreakdown: CostItem[] = [];
   allegroCostBreakdown: AllegroCostItem[] = [];
+  expenseBreakdown: ExpenseItem[] = [];
   totalAllegroCosts = 0;
+  totalExpenses = 0;
 
   // Pagination for offers table
   offersPageSize = 100;
@@ -123,6 +131,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.calculateMetrics();
     this.prepareCostBreakdown();
     this.prepareAllegroCostBreakdown();
+    this.prepareExpenseBreakdown();
   }
 
   // Get price value based on current mode
@@ -150,6 +159,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
           this.calculateMetrics();
           this.prepareCostBreakdown();
           this.prepareAllegroCostBreakdown();
+          this.prepareExpenseBreakdown();
           this.prepareOffersData();
           this.isLoading = false;
         },
@@ -163,6 +173,53 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
           this.reportGenerated = false;
         }
       });
+  }
+
+  // Prepare expense breakdown for pie chart
+  private prepareExpenseBreakdown(): void {
+    if (!this.reportData || !this.reportData.expensesByCategory) return;
+
+    const colors = [
+      '#8b5cf6', '#06b6d4', '#84cc16', '#f97316', '#ec4899',
+      '#6366f1', '#14b8a6', '#facc15', '#f43f5e', '#10b981'
+    ];
+
+    this.expenseBreakdown = [];
+    let colorIndex = 0;
+
+    Object.entries(this.reportData.expensesByCategory).forEach(([category, pricePair]) => {
+      const value = this.getPrice(pricePair);
+      if (value > 0) {
+        this.expenseBreakdown.push({
+          name: this.formatExpenseCategoryName(category),
+          value,
+          color: colors[colorIndex % colors.length]
+        });
+        colorIndex++;
+      }
+    });
+
+    // Calculate total expenses
+    this.totalExpenses = this.expenseBreakdown.reduce((sum, item) => sum + item.value, 0);
+
+    // Sort by value descending
+    this.expenseBreakdown.sort((a, b) => b.value - a.value);
+  }
+
+  // Format expense category names for better display
+  private formatExpenseCategoryName(category: string): string {
+    const translations: { [key: string]: string } = {
+      'SERVICES': 'Usługi',
+      'ELECTRICITY': 'Prąd',
+      'MATERIALS': 'Materiały',
+      'EQUIPMENT': 'Sprzęt',
+      'PACKAGING': 'Opakowania',
+      'SOFTWARE': 'Oprogramowanie',
+      'ALLEGRO': 'Allegro',
+      'OTHER': 'Inne'
+    };
+
+    return translations[category] || category;
   }
 
   // Prepare offers data with filtering and pagination
@@ -318,30 +375,32 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
   }
 
-  // Prepare cost breakdown for charts
+  // Prepare cost breakdown for pie chart
   private prepareCostBreakdown(): void {
     if (!this.reportData) return;
+
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
     this.costBreakdown = [
       {
         name: 'Materiały',
         value: this.getPrice(this.reportData.materialCost),
-        color: '#3b82f6'
+        color: colors[0]
       },
       {
         name: 'Praca',
         value: this.getPrice(this.reportData.laborCost),
-        color: '#10b981'
+        color: colors[1]
       },
       {
         name: 'Energia',
         value: this.getPrice(this.reportData.powerCost),
-        color: '#f59e0b'
+        color: colors[2]
       },
       {
         name: 'Opakowania',
         value: this.getPrice(this.reportData.packagingCost),
-        color: '#ef4444'
+        color: colors[3]
       }
     ].filter(item => item.value > 0);
   }
@@ -580,9 +639,62 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     return this.allegroCostBreakdown.filter(cost => cost.type === 'monthly');
   }
 
-// Get per-order Allegro costs
+  // Get per-order Allegro costs
   getPerOrderCosts(): AllegroCostItem[] {
     return this.allegroCostBreakdown.filter(cost => cost.type === 'per-order');
   }
+
+  // Get percentage for pie chart slices
+  getCostSlicePercentage(value: number, total: number): number {
+    return total > 0 ? (value / total) * 100 : 0;
+  }
+
+  getExpenseSlicePercentage(value: number): number {
+    return this.totalExpenses > 0 ? (value / this.totalExpenses) * 100 : 0;
+  }
+
+  // Calculate total production costs for pie chart
+  getTotalProductionCosts(): number {
+    return this.costBreakdown.reduce((sum, item) => sum + item.value, 0);
+  }
+
+  // Generate SVG path for pie chart slice
+  generatePieSlice(value: number, total: number, index: number, totalSlices: number): string {
+    if (total === 0 || value === 0) return '';
+
+    const percentage = (value / total) * 100;
+    const angle = (percentage / 100) * 360;
+
+    // Calculate starting angle (sum of all previous slices)
+    let startAngle = 0;
+    const items = this.costBreakdown.length > 0 ? this.costBreakdown : this.expenseBreakdown;
+    for (let i = 0; i < index; i++) {
+      if (items[i]) {
+        const prevPercentage = (items[i].value / total) * 100;
+        startAngle += (prevPercentage / 100) * 360;
+      }
+    }
+
+    const endAngle = startAngle + angle;
+
+    // Convert to radians
+    const startAngleRad = (startAngle - 90) * (Math.PI / 180);
+    const endAngleRad = (endAngle - 90) * (Math.PI / 180);
+
+    const radius = 80;
+
+    // Calculate start and end points
+    const x1 = radius * Math.cos(startAngleRad);
+    const y1 = radius * Math.sin(startAngleRad);
+    const x2 = radius * Math.cos(endAngleRad);
+    const y2 = radius * Math.sin(endAngleRad);
+
+    // Determine if arc should be large (greater than 180 degrees)
+    const largeArc = angle > 180 ? 1 : 0;
+
+    // Create SVG path
+    return `M 0 0 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+  }
+
   protected readonly Object = Object;
 }

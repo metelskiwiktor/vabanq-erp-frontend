@@ -75,7 +75,7 @@
 
   <!-- Report Content -->
   <div *ngIf="!isLoading && reportGenerated && reportData" class="report-content">
-    <!-- Main Metrics -->
+    <!-- Main Metrics - Updated with 5 cards -->
     <div class="metrics-grid">
       <div class="metric-card">
         <div class="metric-header">
@@ -129,6 +129,23 @@
       <div class="metric-card">
         <div class="metric-header">
           <div class="metric-info">
+            <p class="metric-label">Wydatki ({{ getPriceModeLabel() }})</p>
+            <h3 class="metric-value">{{ formatCurrency(getPrice(reportData.expenses)) }}</h3>
+          </div>
+          <span class="metric-badge warning">
+            <mat-icon>receipt_long</mat-icon>
+          </span>
+        </div>
+        <div class="metric-footer">
+          <p class="metric-comparison">
+            % przychodów: {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (getPrice(reportData.expenses) / getPrice(reportData.revenue)) * 100 : 0) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-info">
             <p class="metric-label">Koszty Allegro ({{ getPriceModeLabel() }})</p>
             <h3 class="metric-value">{{ formatCurrency(totalAllegroCosts) }}</h3>
           </div>
@@ -144,25 +161,43 @@
       </div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="charts-section">
-      <!-- Cost Breakdown Chart -->
+    <!-- Charts Section - Three Pie Charts Horizontally -->
+    <div class="charts-section-horizontal">
+      <!-- Production Costs Pie Chart -->
       <div class="chart-card">
         <div class="section-header">
           <h2 class="section-title">Struktura kosztów produkcji ({{ getPriceModeLabel() }})</h2>
+          <div class="total-cost">
+            Razem: {{ formatCurrency(getTotalProductionCosts()) }}
+          </div>
         </div>
 
-        <div class="cost-chart" *ngIf="costBreakdown.length > 0; else noCostData">
-          <div class="cost-item" *ngFor="let cost of costBreakdown">
-            <div class="cost-label">{{ cost.name }}</div>
-            <div class="cost-bar-container">
-              <div
-                class="cost-bar-fill"
-                [style.background-color]="cost.color"
-                [style.width.%]="getCostPercentage(cost.value)">
+        <div class="pie-chart-container" *ngIf="costBreakdown.length > 0; else noCostData">
+          <div class="pie-chart">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <g transform="translate(100,100)">
+                <ng-container *ngFor="let cost of costBreakdown; let i = index">
+                  <path
+                    [attr.d]="generatePieSlice(cost.value, getTotalProductionCosts(), i, costBreakdown.length)"
+                    [attr.fill]="cost.color"
+                    [attr.stroke]="'white'"
+                    [attr.stroke-width]="2"
+                    class="pie-slice">
+                  </path>
+                </ng-container>
+              </g>
+            </svg>
+          </div>
+
+          <div class="pie-legend">
+            <div class="legend-item" *ngFor="let cost of costBreakdown">
+              <div class="legend-color" [style.background-color]="cost.color"></div>
+              <div class="legend-info">
+                <div class="legend-label">{{ cost.name }}</div>
+                <div class="legend-value">{{ formatCurrency(cost.value) }}</div>
+                <div class="legend-percentage">{{ formatPercentage(getCostSlicePercentage(cost.value, getTotalProductionCosts())) }}</div>
               </div>
             </div>
-            <div class="cost-value">{{ formatCurrency(cost.value) }}</div>
           </div>
         </div>
 
@@ -170,6 +205,52 @@
           <div class="no-data-message">
             <mat-icon>info</mat-icon>
             <p>Brak danych o kosztach produkcji</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Expenses Pie Chart -->
+      <div class="chart-card">
+        <div class="section-header">
+          <h2 class="section-title">Struktura wydatków ({{ getPriceModeLabel() }})</h2>
+          <div class="total-cost">
+            Razem: {{ formatCurrency(totalExpenses) }}
+          </div>
+        </div>
+
+        <div class="pie-chart-container" *ngIf="expenseBreakdown.length > 0; else noExpenseData">
+          <div class="pie-chart">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <g transform="translate(100,100)">
+                <ng-container *ngFor="let expense of expenseBreakdown; let i = index">
+                  <path
+                    [attr.d]="generatePieSlice(expense.value, totalExpenses, i, expenseBreakdown.length)"
+                    [attr.fill]="expense.color"
+                    [attr.stroke]="'white'"
+                    [attr.stroke-width]="2"
+                    class="pie-slice">
+                  </path>
+                </ng-container>
+              </g>
+            </svg>
+          </div>
+
+          <div class="pie-legend">
+            <div class="legend-item" *ngFor="let expense of expenseBreakdown">
+              <div class="legend-color" [style.background-color]="expense.color"></div>
+              <div class="legend-info">
+                <div class="legend-label">{{ expense.name }}</div>
+                <div class="legend-value">{{ formatCurrency(expense.value) }}</div>
+                <div class="legend-percentage">{{ formatPercentage(getExpenseSlicePercentage(expense.value)) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noExpenseData>
+          <div class="no-data-message">
+            <mat-icon>info</mat-icon>
+            <p>Brak danych o wydatkach</p>
           </div>
         </ng-template>
       </div>
@@ -320,13 +401,13 @@
             </div>
           </div>
 
-          <div class="stat-item per-order">
+          <div class="stat-item total">
             <div class="stat-icon">
               <mat-icon>account_balance</mat-icon>
             </div>
             <div class="stat-info">
               <div class="stat-label">Razem</div>
-              <div class="stat-value">{{ formatCurrency(totalAllegroCosts) }}</div>
+              <div class="stat-value total-value">{{ formatCurrency(totalAllegroCosts) }}</div>
             </div>
             <div class="stat-percentage">
               {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (totalAllegroCosts / getPrice(reportData.revenue)) * 100 : 0) }} przychodów

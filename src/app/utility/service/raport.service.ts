@@ -17,6 +17,7 @@ export interface FinancialReportResponse {
   laborCost: PricePair;
   productionCost: PricePair;
   allegroCosts: { [key: string]: PricePair }; // New field for monthly Allegro costs
+  expensesByCategory: { [key: string]: PricePair }; // New field for expenses by category
   expenses: PricePair;
   profit: PricePair;
   offers: OfferProfitabilityResponse[];
