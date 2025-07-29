@@ -33,6 +33,7 @@ export enum ExpenseCategory {
   EQUIPMENT = 'EQUIPMENT',
   PACKAGING = 'PACKAGING ',
   SOFTWARE = 'SOFTWARE',
+  ALLEGRO = 'ALLEGRO',
   OTHER = 'OTHER'
 }
 
@@ -286,6 +287,7 @@ export class ExpenseService {
       [ExpenseCategory.MATERIALS]: 'Materiały',
       [ExpenseCategory.EQUIPMENT]: 'Sprzęt',
       [ExpenseCategory.PACKAGING]: 'Opakowania',
+      [ExpenseCategory.ALLEGRO]: 'Allegro',
       [ExpenseCategory.SOFTWARE]: 'Oprogramowanie, licencje',
     };
     return categoryMap[category] || category;
@@ -310,6 +312,7 @@ export class ExpenseService {
       { key: ExpenseCategory.EQUIPMENT, displayName: 'Sprzęt' },
       { key: ExpenseCategory.PACKAGING, displayName: 'Opakowania' },
       { key: ExpenseCategory.SOFTWARE, displayName: 'Oprogramowanie, licencje' },
+      { key: ExpenseCategory.ALLEGRO, displayName: 'Allegro' },
     ];
   }
 

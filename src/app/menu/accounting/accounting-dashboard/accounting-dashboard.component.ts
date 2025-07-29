@@ -391,7 +391,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     offerAllegroCosts.forEach((value, name) => {
       if (value > 0) {
         this.allegroCostBreakdown.push({
-          name: this.formatAllegroCostName(name) + ' (oferty)',
+          name: this.formatAllegroCostName(name),
           value,
           color: colors[colorIndex % colors.length],
           type: 'per-order'
@@ -412,19 +412,19 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     const translations: { [key: string]: string } = {
       'Opłata za kampanię Ads': 'Reklamy Ads',
       'Opłata za wyróżnienie': 'Wyróżnienie',
-      'DPD Operator - opłaty podstawowe': 'DPD',
-      'DHL Operator - opłaty podstawowe': 'DHL',
-      'Prowizja od sprzedaży oferty wyróżnionej': 'Prowizja wyróżnienie',
-      'Abonament profesjonalny': 'Abonament',
-      'UPS Operator - opłaty podstawowe': 'UPS',
-      'Allegro Paczkomaty InPost': 'InPost',
+      'DPD Operator - opłaty podstawowe': 'DPD opłaty podstawowe',
+      'DHL Operator - opłaty podstawowe': 'DHL opłaty podstawowe',
+      'Prowizja od sprzedaży oferty wyróżnionej': 'Prowizja oferty wyróżnionej',
+      'Abonament profesjonalny': 'Abonament profesjonalny',
+      'UPS Operator - opłaty podstawowe': 'UPS opłaty podstawowe',
+      'Allegro Paczkomaty InPost': 'Allegro Paczkomaty InPost',
       'Przesyłka DPD': 'Przesyłka DPD',
-      'Opłata za promowanie na stronie działu': 'Promowanie',
-      'InPost - opłaty dodatkowe': 'InPost dodatkowe',
-      'Orlen Operator - opłaty podstawowe': 'Orlen',
+      'Opłata za promowanie na stronie działu': 'Promowanie na stronie działu',
+      'InPost - opłaty dodatkowe': 'InPost opłaty dodatkowe',
+      'Orlen Operator - opłaty podstawowe': 'Orlen opłaty podstawowe',
       'Opłata za Pakiet Promo': 'Pakiet Promo',
-      'DPD - Kurier opłaty dodatkowe': 'DPD dodatkowe',
-      'Prowizja od sprzedaży': 'Prowizja'
+      'DPD - Kurier opłaty dodatkowe': 'DPD opłaty dodatkowe',
+      'Prowizja od sprzedaży': 'Prowizja od sprzedaży'
     };
 
     return translations[name] || name;
@@ -576,14 +576,13 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     return offer.detailRow ? `${offer.offerId}_detail` : offer.offerId;
   }
 
-  // Navigation methods
-  navigateToInvoices(): void {
-    console.log('Navigate to invoices');
+  getMonthlyCosts(): AllegroCostItem[] {
+    return this.allegroCostBreakdown.filter(cost => cost.type === 'monthly');
   }
 
-  navigateToExpenses(): void {
-    console.log('Navigate to expenses');
+// Get per-order Allegro costs
+  getPerOrderCosts(): AllegroCostItem[] {
+    return this.allegroCostBreakdown.filter(cost => cost.type === 'per-order');
   }
-
   protected readonly Object = Object;
 }

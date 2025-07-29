@@ -150,9 +150,6 @@
       <div class="chart-card">
         <div class="section-header">
           <h2 class="section-title">Struktura kosztów produkcji ({{ getPriceModeLabel() }})</h2>
-          <div class="total-cost">
-            Razem: {{ formatCurrency(getPrice(reportData.productionCost)) }}
-          </div>
         </div>
 
         <div class="cost-chart" *ngIf="costBreakdown.length > 0; else noCostData">
@@ -229,75 +226,110 @@
         </div>
       </div>
 
-      <div class="allegro-costs-content">
-        <!-- Allegro Costs Chart -->
-        <div class="chart-card allegro-chart">
-          <h3 class="chart-subtitle">Podział kosztów Allegro</h3>
+      <!-- Two Tables Side by Side -->
+      <div class="allegro-tables-container">
+        <!-- Monthly Costs Table -->
+        <div class="allegro-table-card">
+          <div class="table-header">
+            <h3 class="table-title">
+              <mat-icon>calendar_month</mat-icon>
+              Koszty miesięczne
+            </h3>
+            <div class="table-total">{{ formatCurrency(getMonthlyCostsTotal()) }}</div>
+          </div>
 
-          <div class="cost-chart">
-            <div class="cost-item" *ngFor="let cost of allegroCostBreakdown">
-              <div class="cost-label" [class]="'cost-type-' + cost.type">
-                {{ cost.name }}
-                <span class="cost-type-badge" [class]="'badge-' + cost.type">
-                  {{ cost.type === 'monthly' ? 'miesięczne' : 'za oferty' }}
-                </span>
-              </div>
+          <div class="allegro-cost-table" *ngIf="getMonthlyCosts().length > 0; else noMonthlyCosts">
+            <div class="cost-table-item" *ngFor="let cost of getMonthlyCosts()">
+              <div class="cost-name">{{ cost.name }}</div>
               <div class="cost-bar-container">
                 <div
-                  class="cost-bar-fill"
-                  [style.background-color]="cost.color"
+                  class="cost-bar-fill monthly"
                   [style.width.%]="getAllegroCostPercentage(cost.value)">
                 </div>
               </div>
-              <div class="cost-value">{{ formatCurrency(cost.value) }}</div>
+              <div class="cost-amount">{{ formatCurrency(cost.value) }}</div>
             </div>
           </div>
+
+          <ng-template #noMonthlyCosts>
+            <div class="no-costs-message">
+              <mat-icon>info</mat-icon>
+              <span>Brak kosztów miesięcznych</span>
+            </div>
+          </ng-template>
         </div>
 
-        <!-- Allegro Costs Summary -->
-        <div class="chart-card allegro-summary">
-          <h3 class="chart-subtitle">Podsumowanie</h3>
+        <!-- Per-Order Costs Table -->
+        <div class="allegro-table-card">
+          <div class="table-header">
+            <h3 class="table-title">
+              <mat-icon>shopping_cart</mat-icon>
+              Koszty za oferty
+            </h3>
+            <div class="table-total">{{ formatCurrency(getPerOrderCostsTotal()) }}</div>
+          </div>
 
-          <div class="allegro-summary-content">
-            <div class="summary-item">
-              <div class="summary-icon monthly">
-                <mat-icon>calendar_month</mat-icon>
-              </div>
-              <div class="summary-details">
-                <div class="summary-label">Koszty miesięczne</div>
-                <div class="summary-value">
-                  {{ formatCurrency(getMonthlyCostsTotal()) }}
+          <div class="allegro-cost-table" *ngIf="getPerOrderCosts().length > 0; else noPerOrderCosts">
+            <div class="cost-table-item" *ngFor="let cost of getPerOrderCosts()">
+              <div class="cost-name">{{ cost.name }}</div>
+              <div class="cost-bar-container">
+                <div
+                  class="cost-bar-fill per-order"
+                  [style.width.%]="getAllegroCostPercentage(cost.value)">
                 </div>
-                <div class="summary-description">Stałe opłaty za miesiąc</div>
               </div>
+              <div class="cost-amount">{{ formatCurrency(cost.value) }}</div>
             </div>
+          </div>
 
-            <div class="summary-item">
-              <div class="summary-icon per-order">
-                <mat-icon>shopping_cart</mat-icon>
-              </div>
-              <div class="summary-details">
-                <div class="summary-label">Koszty za oferty</div>
-                <div class="summary-value">
-                  {{ formatCurrency(getPerOrderCostsTotal()) }}
-                </div>
-                <div class="summary-description">Prowizje i opłaty za sprzedaż</div>
-              </div>
+          <ng-template #noPerOrderCosts>
+            <div class="no-costs-message">
+              <mat-icon>info</mat-icon>
+              <span>Brak kosztów za oferty</span>
             </div>
+          </ng-template>
+        </div>
+      </div>
 
-            <div class="summary-item total">
-              <div class="summary-icon total">
-                <mat-icon>account_balance</mat-icon>
-              </div>
-              <div class="summary-details">
-                <div class="summary-label">Całkowite koszty Allegro</div>
-                <div class="summary-value total-value">
-                  {{ formatCurrency(totalAllegroCosts) }}
-                </div>
-                <div class="summary-description">
-                  {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (totalAllegroCosts / getPrice(reportData.revenue)) * 100 : 0) }} przychodów
-                </div>
-              </div>
+      <!-- Compact Summary -->
+      <div class="allegro-summary-compact">
+        <div class="summary-stats">
+          <div class="stat-item monthly">
+            <div class="stat-icon">
+              <mat-icon>calendar_month</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Miesięczne</div>
+              <div class="stat-value">{{ formatCurrency(getMonthlyCostsTotal()) }}</div>
+            </div>
+            <div class="stat-percentage">
+              {{ formatPercentage(totalAllegroCosts > 0 ? (getMonthlyCostsTotal() / totalAllegroCosts) * 100 : 0) }}
+            </div>
+          </div>
+
+          <div class="stat-item per-order">
+            <div class="stat-icon">
+              <mat-icon>shopping_cart</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Za oferty</div>
+              <div class="stat-value">{{ formatCurrency(getPerOrderCostsTotal()) }}</div>
+            </div>
+            <div class="stat-percentage">
+              {{ formatPercentage(totalAllegroCosts > 0 ? (getPerOrderCostsTotal() / totalAllegroCosts) * 100 : 0) }}
+            </div>
+          </div>
+
+          <div class="stat-item per-order">
+            <div class="stat-icon">
+              <mat-icon>account_balance</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Razem</div>
+              <div class="stat-value">{{ formatCurrency(totalAllegroCosts) }}</div>
+            </div>
+            <div class="stat-percentage">
+              {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (totalAllegroCosts / getPrice(reportData.revenue)) * 100 : 0) }} przychodów
             </div>
           </div>
         </div>
