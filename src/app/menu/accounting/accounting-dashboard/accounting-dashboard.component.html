@@ -63,13 +63,13 @@
 
   <!-- Report Content -->
   <div *ngIf="!isLoading && reportGenerated && reportData" class="report-content">
-    <!-- Main Metrics - Only 3 cards: Revenue, Expenses, Profit -->
-    <div class="metrics-grid-three">
+    <!-- Main Metrics - Updated to 4 cards -->
+    <div class="metrics-grid">
       <div class="metric-card">
         <div class="metric-header">
           <div class="metric-info">
-            <p class="metric-label">Przychód</p>
-            <h3 class="metric-value">{{ formatCurrency(getPrice(reportData.revenue)) }}</h3>
+            <p class="metric-label">Przychód (brutto)</p>
+            <h3 class="metric-value">{{ formatCurrency(reportData.revenue) }}</h3>
           </div>
           <span class="metric-badge positive">
             <mat-icon>trending_up</mat-icon>
@@ -84,7 +84,7 @@
         <div class="metric-header">
           <div class="metric-info">
             <p class="metric-label">Wydatki</p>
-            <h3 class="metric-value">{{ formatCurrency(getPrice(reportData.expenses)) }}</h3>
+            <h3 class="metric-value">{{ formatCurrency(reportData.expenses) }}</h3>
           </div>
           <span class="metric-badge warning">
             <mat-icon>receipt_long</mat-icon>
@@ -92,7 +92,24 @@
         </div>
         <div class="metric-footer">
           <p class="metric-comparison">
-            % przychodów: {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (getPrice(reportData.expenses) / getPrice(reportData.revenue)) * 100 : 0) }}
+            % przychodów: {{ formatPercentage(reportData.revenue > 0 ? (reportData.expenses / reportData.revenue) * 100 : 0) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-info">
+            <p class="metric-label">VAT</p>
+            <h3 class="metric-value">{{ formatCurrency(reportData.vatCost) }}</h3>
+          </div>
+          <span class="metric-badge warning">
+            <mat-icon>receipt</mat-icon>
+          </span>
+        </div>
+        <div class="metric-footer">
+          <p class="metric-comparison">
+            % przychodów: {{ formatPercentage(reportData.revenue > 0 ? (reportData.vatCost / reportData.revenue) * 100 : 0) }}
           </p>
         </div>
       </div>
@@ -101,16 +118,77 @@
         <div class="metric-header">
           <div class="metric-info">
             <p class="metric-label">Zysk</p>
-            <h3 class="metric-value" [ngClass]="getProfitStatusClass(getPrice(reportData.revenue) - getPrice(reportData.expenses))">
-              {{ formatCurrency(getPrice(reportData.revenue) - getPrice(reportData.expenses)) }}
+            <h3 class="metric-value" [ngClass]="getProfitStatusClass(reportData.profit)">
+              {{ formatCurrency(reportData.profit) }}
             </h3>
           </div>
-          <span class="metric-badge" [ngClass]="(getPrice(reportData.revenue) - getPrice(reportData.expenses)) >= 0 ? 'positive' : 'negative'">
-            <mat-icon>{{ (getPrice(reportData.revenue) - getPrice(reportData.expenses)) >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          <span class="metric-badge" [ngClass]="reportData.profit >= 0 ? 'positive' : 'negative'">
+            <mat-icon>{{ reportData.profit >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
           </span>
         </div>
         <div class="metric-footer">
           <p class="metric-comparison">Marża: {{ formatPercentage(profitMargin) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Allegro Costs Section -->
+    <div class="allegro-costs-section" *ngIf="allegroCostBreakdown.length > 0">
+      <div class="section-header">
+        <h2 class="section-title">Koszty Allegro</h2>
+        <div class="total-cost">
+          Razem: {{ formatCurrency(totalAllegroCosts) }}
+        </div>
+      </div>
+
+      <!-- Allegro Costs Chart -->
+      <div class="allegro-costs-content">
+        <div class="allegro-chart">
+          <div class="cost-chart">
+            <div class="cost-item" *ngFor="let cost of allegroCostBreakdown">
+              <div class="cost-label">{{ cost.name }}</div>
+              <div class="cost-bar-container">
+                <div
+                  class="cost-bar-fill"
+                  [style.width.%]="getAllegroCostPercentage(cost.value)"
+                  [style.background-color]="cost.color">
+                </div>
+              </div>
+              <div class="cost-value">{{ formatCurrency(cost.value) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="allegro-summary">
+          <div class="summary-stats-vertical">
+            <div class="stat-item-vertical">
+              <div class="stat-icon-large">
+                <mat-icon>storefront</mat-icon>
+              </div>
+              <div class="stat-info-large">
+                <div class="stat-label-large">Łączne koszty Allegro</div>
+                <div class="stat-value-large">{{ formatCurrency(totalAllegroCosts) }}</div>
+                <div class="stat-description">
+                  {{ formatPercentage(reportData.revenue > 0 ? (totalAllegroCosts / reportData.revenue) * 100 : 0) }} przychodów
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-breakdown">
+              <div class="breakdown-item" *ngFor="let cost of allegroCostBreakdown.slice(0, 3)">
+                <div class="breakdown-dot" [style.background-color]="cost.color"></div>
+                <div class="breakdown-name">{{ cost.name }}</div>
+                <div class="breakdown-value">{{ formatCurrency(cost.value) }}</div>
+              </div>
+              <div class="breakdown-item" *ngIf="allegroCostBreakdown.length > 3">
+                <div class="breakdown-dot" style="background-color: #9ca3af;"></div>
+                <div class="breakdown-name">Pozostałe ({{ allegroCostBreakdown.length - 3 }})</div>
+                <div class="breakdown-value">
+                  {{ formatCurrency(getAllegroCostBreakdownTotal()) }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -132,25 +210,36 @@
               <g transform="translate(100,100)">
                 <ng-container *ngFor="let cost of costBreakdown; let i = index">
                   <path
-                    [attr.d]="generateCostPieSlice(cost.value, i)"
+                    [attr.d]="generateCostPieSlice(cost.value, getTotalProductionCosts(), i)"
                     [attr.fill]="cost.color"
                     [attr.stroke]="'white'"
                     [attr.stroke-width]="2"
-                    class="pie-slice"
-                    [attr.data-label]="cost.name">
+                    class="pie-slice">
                   </path>
                 </ng-container>
               </g>
             </svg>
           </div>
 
-          <div class="pie-legend">
-            <div class="legend-item" *ngFor="let cost of costBreakdown">
-              <div class="legend-color" [style.background-color]="cost.color"></div>
-              <div class="legend-info">
-                <div class="legend-label">{{ cost.name }}</div>
-                <div class="legend-value">{{ formatCurrency(cost.value) }}</div>
-                <div class="legend-percentage">{{ formatPercentage(getCostSlicePercentage(cost.value, getTotalProductionCosts())) }}</div>
+          <div class="pie-legend-horizontal">
+            <div class="legend-column">
+              <div class="legend-item" *ngFor="let cost of costBreakdown.slice(0, Math.ceil(costBreakdown.length/2))">
+                <div class="legend-color" [style.background-color]="cost.color"></div>
+                <div class="legend-info">
+                  <div class="legend-label">{{ cost.name }}</div>
+                  <div class="legend-value">{{ formatCurrency(cost.value) }}</div>
+                  <div class="legend-percentage">{{ formatPercentage(getCostSlicePercentage(cost.value, getTotalProductionCosts())) }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="legend-column">
+              <div class="legend-item" *ngFor="let cost of costBreakdown.slice(Math.ceil(costBreakdown.length/2))">
+                <div class="legend-color" [style.background-color]="cost.color"></div>
+                <div class="legend-info">
+                  <div class="legend-label">{{ cost.name }}</div>
+                  <div class="legend-value">{{ formatCurrency(cost.value) }}</div>
+                  <div class="legend-percentage">{{ formatPercentage(getCostSlicePercentage(cost.value, getTotalProductionCosts())) }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -179,25 +268,36 @@
               <g transform="translate(100,100)">
                 <ng-container *ngFor="let expense of expenseBreakdown; let i = index">
                   <path
-                    [attr.d]="generateExpensePieSlice(expense.value, i)"
+                    [attr.d]="generateExpensePieSlice(expense.value, totalExpenses, i)"
                     [attr.fill]="expense.color"
                     [attr.stroke]="'white'"
                     [attr.stroke-width]="2"
-                    class="pie-slice"
-                    [attr.data-label]="expense.name">
+                    class="pie-slice">
                   </path>
                 </ng-container>
               </g>
             </svg>
           </div>
 
-          <div class="pie-legend">
-            <div class="legend-item" *ngFor="let expense of expenseBreakdown">
-              <div class="legend-color" [style.background-color]="expense.color"></div>
-              <div class="legend-info">
-                <div class="legend-label">{{ expense.name }}</div>
-                <div class="legend-value">{{ formatCurrency(expense.value) }}</div>
-                <div class="legend-percentage">{{ formatPercentage(getExpenseSlicePercentage(expense.value)) }}</div>
+          <div class="pie-legend-horizontal">
+            <div class="legend-column">
+              <div class="legend-item" *ngFor="let expense of expenseBreakdown.slice(0, Math.ceil(expenseBreakdown.length/2))">
+                <div class="legend-color" [style.background-color]="expense.color"></div>
+                <div class="legend-info">
+                  <div class="legend-label">{{ expense.name }}</div>
+                  <div class="legend-value">{{ formatCurrency(expense.value) }}</div>
+                  <div class="legend-percentage">{{ formatPercentage(getExpenseSlicePercentage(expense.value)) }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="legend-column">
+              <div class="legend-item" *ngFor="let expense of expenseBreakdown.slice(Math.ceil(expenseBreakdown.length/2))">
+                <div class="legend-color" [style.background-color]="expense.color"></div>
+                <div class="legend-info">
+                  <div class="legend-label">{{ expense.name }}</div>
+                  <div class="legend-value">{{ formatCurrency(expense.value) }}</div>
+                  <div class="legend-percentage">{{ formatPercentage(getExpenseSlicePercentage(expense.value)) }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -219,7 +319,7 @@
 
         <div class="profit-overview">
           <div class="profit-chart">
-            <div class="profit-circle" [ngClass]="(getPrice(reportData.revenue) - getPrice(reportData.expenses)) >= 0 ? 'profitable' : 'unprofitable'">
+            <div class="profit-circle" [ngClass]="reportData.profit >= 0 ? 'profitable' : 'unprofitable'">
               <div class="profit-percentage">{{ formatPercentage(profitMargin) }}</div>
               <div class="profit-label">Marża</div>
             </div>
@@ -230,23 +330,23 @@
               <mat-icon>trending_up</mat-icon>
               <div class="profit-info">
                 <div class="profit-name">Przychód</div>
-                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.revenue)) }}</div>
+                <div class="profit-amount">{{ formatCurrency(reportData.revenue) }}</div>
               </div>
             </div>
 
             <div class="profit-item profit-negative">
               <mat-icon>trending_down</mat-icon>
               <div class="profit-info">
-                <div class="profit-name">Wydatki</div>
-                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.expenses)) }}</div>
+                <div class="profit-name">Koszty całkowite</div>
+                <div class="profit-amount">{{ formatCurrency(getTotalAllCosts()) }}</div>
               </div>
             </div>
 
-            <div class="profit-item" [ngClass]="getProfitStatusClass(getPrice(reportData.revenue) - getPrice(reportData.expenses))">
+            <div class="profit-item" [ngClass]="getProfitStatusClass(reportData.profit)">
               <mat-icon>account_balance_wallet</mat-icon>
               <div class="profit-info">
                 <div class="profit-name">Zysk</div>
-                <div class="profit-amount">{{ formatCurrency(getPrice(reportData.revenue) - getPrice(reportData.expenses)) }}</div>
+                <div class="profit-amount">{{ formatCurrency(reportData.profit) }}</div>
               </div>
             </div>
           </div>
@@ -254,413 +354,200 @@
       </div>
     </div>
 
-    <!-- Allegro Costs Section -->
-    <div class="allegro-costs-section" *ngIf="allegroCostBreakdown.length > 0">
-      <div class="section-header">
-        <h2 class="section-title">Koszty Allegro</h2>
-        <div class="total-cost">
-          Razem: {{ formatCurrency(totalAllegroCosts) }}
-        </div>
-      </div>
-
-      <!-- Two Tables Side by Side -->
-      <div class="allegro-tables-container">
-        <!-- Monthly Costs Table -->
-        <div class="allegro-table-card">
-          <div class="table-header">
-            <h3 class="table-title">
-              <mat-icon>calendar_month</mat-icon>
-              Koszty miesięczne
-            </h3>
-            <div class="table-total">{{ formatCurrency(getMonthlyCostsTotal()) }}</div>
-          </div>
-
-          <div class="allegro-cost-table" *ngIf="getMonthlyCosts().length > 0; else noMonthlyCosts">
-            <div class="cost-table-item" *ngFor="let cost of getMonthlyCosts()">
-              <div class="cost-name">{{ cost.name }}</div>
-              <div class="cost-bar-container">
-                <div
-                  class="cost-bar-fill monthly"
-                  [style.width.%]="getAllegroCostPercentage(cost.value)">
-                </div>
-              </div>
-              <div class="cost-amount">{{ formatCurrency(cost.value) }}</div>
-            </div>
-          </div>
-
-          <ng-template #noMonthlyCosts>
-            <div class="no-costs-message">
-              <mat-icon>info</mat-icon>
-              <span>Brak kosztów miesięcznych</span>
-            </div>
-          </ng-template>
-        </div>
-
-        <!-- Per-Order Costs Table -->
-        <div class="allegro-table-card">
-          <div class="table-header">
-            <h3 class="table-title">
-              <mat-icon>shopping_cart</mat-icon>
-              Koszty za oferty
-            </h3>
-            <div class="table-total">{{ formatCurrency(getPerOrderCostsTotal()) }}</div>
-          </div>
-
-          <div class="allegro-cost-table" *ngIf="getPerOrderCosts().length > 0; else noPerOrderCosts">
-            <div class="cost-table-item" *ngFor="let cost of getPerOrderCosts()">
-              <div class="cost-name">{{ cost.name }}</div>
-              <div class="cost-bar-container">
-                <div
-                  class="cost-bar-fill per-order"
-                  [style.width.%]="getAllegroCostPercentage(cost.value)">
-                </div>
-              </div>
-              <div class="cost-amount">{{ formatCurrency(cost.value) }}</div>
-            </div>
-          </div>
-
-          <ng-template #noPerOrderCosts>
-            <div class="no-costs-message">
-              <mat-icon>info</mat-icon>
-              <span>Brak kosztów za oferty</span>
-            </div>
-          </ng-template>
-        </div>
-      </div>
-
-      <!-- Compact Summary - Removed golden card, using white/light background -->
-      <div class="allegro-summary-white">
-        <div class="summary-stats">
-          <div class="stat-item monthly">
-            <div class="stat-icon">
-              <mat-icon>calendar_month</mat-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">Miesięczne</div>
-              <div class="stat-value">{{ formatCurrency(getMonthlyCostsTotal()) }}</div>
-            </div>
-            <div class="stat-percentage">
-              {{ formatPercentage(totalAllegroCosts > 0 ? (getMonthlyCostsTotal() / totalAllegroCosts) * 100 : 0) }}
-            </div>
-          </div>
-
-          <div class="stat-item per-order">
-            <div class="stat-icon">
-              <mat-icon>shopping_cart</mat-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">Za oferty</div>
-              <div class="stat-value">{{ formatCurrency(getPerOrderCostsTotal()) }}</div>
-            </div>
-            <div class="stat-percentage">
-              {{ formatPercentage(totalAllegroCosts > 0 ? (getPerOrderCostsTotal() / totalAllegroCosts) * 100 : 0) }}
-            </div>
-          </div>
-
-          <div class="stat-item total">
-            <div class="stat-icon">
-              <mat-icon>account_balance</mat-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">Razem</div>
-              <div class="stat-value total-value">{{ formatCurrency(totalAllegroCosts) }}</div>
-            </div>
-            <div class="stat-percentage">
-              {{ formatPercentage(getPrice(reportData.revenue) > 0 ? (totalAllegroCosts / getPrice(reportData.revenue)) * 100 : 0) }} przychodów
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Offers Profitability Table -->
+    <!-- Offers Section with New Design -->
     <div class="offers-section">
-      <div class="section-header">
-        <h2 class="section-title">Rentowność ofert</h2>
+      <div class="table-header">
+        <h2>Szczegóły Ofert</h2>
         <div class="offers-summary">
           <span class="offers-count">{{ totalOffers }} ofert</span>
         </div>
-      </div>
-
-      <!-- Offers Search and Filters -->
-      <div class="offers-controls">
-        <div class="search-row">
-          <mat-form-field class="search-field" appearance="outline">
-            <mat-label>Szukaj ofert...</mat-label>
-            <input matInput
+        <div class="filters-container">
+          <div class="filter-group">
+            <label class="filter-label">Szukaj oferty</label>
+            <input type="text"
+                   class="filter-input"
                    [(ngModel)]="offerSearchQuery"
                    (ngModelChange)="onOfferSearch()"
-                   placeholder="ID oferty, nazwa lub produkt">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
+                   placeholder="Nazwa oferty...">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Min. ilość</label>
+            <input type="number"
+                   class="filter-input"
+                   [(ngModel)]="minQuantity"
+                   (ngModelChange)="onOfferSearch()"
+                   placeholder="0"
+                   min="0">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Max. ilość</label>
+            <input type="number"
+                   class="filter-input"
+                   [(ngModel)]="maxQuantity"
+                   (ngModelChange)="onOfferSearch()"
+                   placeholder="999"
+                   min="0">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Min. zysk</label>
+            <input type="number"
+                   class="filter-input"
+                   [(ngModel)]="minProfit"
+                   (ngModelChange)="onOfferSearch()"
+                   placeholder="0"
+                   step="0.01">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Produkty</label>
+            <select class="filter-select"
+                    [(ngModel)]="productFilter"
+                    (ngModelChange)="onOfferSearch()">
+              <option value="">Wszystkie</option>
+              <option value="hasProducts">Z produktami</option>
+              <option value="noProducts">Bez produktów</option>
+            </select>
+          </div>
+          <button class="clear-filters" (click)="clearFilters()">Wyczyść</button>
         </div>
       </div>
 
-      <!-- Offers Table with fixed alignment -->
-      <div class="table-container" *ngIf="filteredOffers.length > 0; else noOffersData">
-        <table mat-table
-               [dataSource]="paginatedOffers"
-               class="offers-table-fixed"
-               [trackBy]="trackByOfferId">
-
-          <!-- Expand Column -->
-          <ng-container matColumnDef="expand">
-            <th mat-header-cell *matHeaderCellDef class="expand-header"></th>
-            <td mat-cell *matCellDef="let element" class="expand-cell">
-              <button mat-icon-button
-                      *ngIf="!element.detailRow"
-                      (click)="toggleExpanded(element.offerId)"
-                      class="expand-button">
-                <mat-icon>{{ isExpanded(element.offerId) ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <!-- ID Column -->
-          <ng-container matColumnDef="offerId">
-            <th mat-header-cell *matHeaderCellDef class="id-header">
-              <button class="sort-header" (click)="onSort('offerId')">
-                ID Oferty
-                <mat-icon class="sort-icon">{{ getSortIcon('offerId') }}</mat-icon>
-              </button>
+      <div class="table-wrapper" *ngIf="filteredOffers.length > 0; else noOffersData">
+        <table>
+          <thead>
+          <tr>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'offerName' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'offerName' && sortDirection === 'desc'"
+                (click)="onSort('offerName')">
+              Oferta
             </th>
-            <td mat-cell *matCellDef="let element" class="id-cell">
-              <span *ngIf="!element.detailRow">{{ element.offerId }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Name Column -->
-          <ng-container matColumnDef="offerName">
-            <th mat-header-cell *matHeaderCellDef class="name-header">
-              <button class="sort-header" (click)="onSort('offerName')">
-                Nazwa oferty
-                <mat-icon class="sort-icon">{{ getSortIcon('offerName') }}</mat-icon>
-              </button>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'productCount' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'productCount' && sortDirection === 'desc'"
+                (click)="onSort('productCount')">
+              Produkty
             </th>
-            <td mat-cell *matCellDef="let element" class="name-cell">
-              <span *ngIf="!element.detailRow">{{ element.offerName }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Quantity Column -->
-          <ng-container matColumnDef="quantitySold">
-            <th mat-header-cell *matHeaderCellDef class="quantity-header">
-              <button class="sort-header" (click)="onSort('quantitySold')">
-                Sprzedano
-                <mat-icon class="sort-icon">{{ getSortIcon('quantitySold') }}</mat-icon>
-              </button>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'quantitySold' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'quantitySold' && sortDirection === 'desc'"
+                (click)="onSort('quantitySold')">
+              Ilość
             </th>
-            <td mat-cell *matCellDef="let element" class="quantity-cell">
-              <span *ngIf="!element.detailRow">{{ element.quantitySold }} szt.</span>
-            </td>
-          </ng-container>
-
-          <!-- Price Per Quantity Column -->
-          <ng-container matColumnDef="pricePerQuantity">
-            <th mat-header-cell *matHeaderCellDef class="price-header">
-              <button class="sort-header" (click)="onSort('pricePerQuantity')">
-                Cena/szt
-                <mat-icon class="sort-icon">{{ getSortIcon('pricePerQuantity') }}</mat-icon>
-              </button>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'pricePerQuantity' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'pricePerQuantity' && sortDirection === 'desc'"
+                (click)="onSort('pricePerQuantity')">
+              Cena/szt
             </th>
-            <td mat-cell *matCellDef="let element" class="price-cell">
-              <span *ngIf="!element.detailRow">{{ formatCurrency(getPrice(element.pricePerQuantity)) }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Revenue Column -->
-          <ng-container matColumnDef="revenue">
-            <th mat-header-cell *matHeaderCellDef class="revenue-header">
-              <button class="sort-header" (click)="onSort('revenue')">
-                Przychód
-                <mat-icon class="sort-icon">{{ getSortIcon('revenue') }}</mat-icon>
-              </button>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'revenue' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'revenue' && sortDirection === 'desc'"
+                (click)="onSort('revenue')">
+              Przychód
             </th>
-            <td mat-cell *matCellDef="let element" class="revenue-cell">
-              <span *ngIf="!element.detailRow">{{ formatCurrency(getPrice(element.revenue)) }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Total Cost Column -->
-          <ng-container matColumnDef="totalCost">
-            <th mat-header-cell *matHeaderCellDef class="cost-header">
-              <button class="sort-header" (click)="onSort('totalCost')">
-                Koszt
-                <mat-icon class="sort-icon">{{ getSortIcon('totalCost') }}</mat-icon>
-              </button>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'productionCost' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'productionCost' && sortDirection === 'desc'"
+                (click)="onSort('productionCost')">
+              Koszty Produkcji
             </th>
-            <td mat-cell *matCellDef="let element" class="cost-cell">
-              <span *ngIf="!element.detailRow">{{ formatCurrency(getTotalCost(element)) }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Profit Column -->
-          <ng-container matColumnDef="profit">
-            <th mat-header-cell *matHeaderCellDef class="profit-header">
-              <button class="sort-header" (click)="onSort('profit')">
-                Zysk
-                <mat-icon class="sort-icon">{{ getSortIcon('profit') }}</mat-icon>
-              </button>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'vatCost' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'vatCost' && sortDirection === 'desc'"
+                (click)="onSort('vatCost')">
+              VAT
             </th>
-            <td mat-cell *matCellDef="let element" class="profit-cell" [ngClass]="!element.detailRow ? getProfitStatusClass(getPrice(element.profit)) : ''">
-              <span *ngIf="!element.detailRow">{{ formatCurrency(getPrice(element.profit)) }}</span>
-            </td>
-          </ng-container>
-
-          <!-- Margin Column -->
-          <ng-container matColumnDef="margin">
-            <th mat-header-cell *matHeaderCellDef class="margin-header">
-              <button class="sort-header" (click)="onSort('margin')">
-                Marża
-                <mat-icon class="sort-icon">{{ getSortIcon('margin') }}</mat-icon>
-              </button>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'allegroCostTotal' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'allegroCostTotal' && sortDirection === 'desc'"
+                (click)="onSort('allegroCostTotal')">
+              Koszty Allegro
             </th>
-            <td mat-cell *matCellDef="let element" class="margin-cell" [ngClass]="!element.detailRow ? getProfitStatusClass(getPrice(element.profit)) : ''">
-              <span *ngIf="!element.detailRow">{{ formatPercentage(getOfferMargin(element)) }}</span>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'margin' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'margin' && sortDirection === 'desc'"
+                (click)="onSort('margin')">
+              Marża
+            </th>
+            <th class="sortable"
+                [class.sort-asc]="sortField === 'profit' && sortDirection === 'asc'"
+                [class.sort-desc]="sortField === 'profit' && sortDirection === 'desc'"
+                (click)="onSort('profit')">
+              Zysk
+            </th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let offer of paginatedOffers; trackBy: trackByOfferId">
+            <td>
+              <div class="offer-name">{{ offer.offerName }}</div>
+              <div class="offer-id">{{ offer.offerId }}</div>
             </td>
-          </ng-container>
-
-          <!-- Expanded Detail Column -->
-          <ng-container matColumnDef="expandedDetail">
-            <td mat-cell *matCellDef="let element" [attr.colspan]="displayedColumns.length" class="detail-cell">
-              <div class="offer-details"
-                   *ngIf="element.detailRow"
-                   [@slideInOut]="'in'">
-                <div class="details-grid">
-                  <!-- Products Section -->
-                  <div class="detail-section">
-                    <h4><mat-icon>inventory</mat-icon>Produkty</h4>
-                    <div class="products-detail">
-                      <span *ngFor="let product of element.productNames" class="product-tag">
-                        {{ product }}
-                      </span>
-                      <span *ngIf="element.productNames.length === 0" class="no-products">
-                        Brak przypisanych produktów
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Unit Costs Section -->
-                  <div class="detail-section">
-                    <h4><mat-icon>calculate</mat-icon>Analiza jednostkowa</h4>
-                    <div class="unit-metrics">
-                      <div class="metric-item">
-                        <span class="metric-label">Cena/szt:</span>
-                        <span class="metric-value">
-                          {{ formatCurrency(getPrice(element.pricePerQuantity)) }}
-                        </span>
-                      </div>
-                      <div class="metric-item">
-                        <span class="metric-label">Koszt produkcji/szt:</span>
-                        <span class="metric-value">{{ formatCurrency(getUnitProductionCost(element)) }}</span>
-                      </div>
-                      <div class="metric-item">
-                        <span class="metric-label">Zysk/szt:</span>
-                        <span class="metric-value" [ngClass]="getProfitStatusClass(getUnitProfit(element))">
-                          {{ formatCurrency(getUnitProfit(element)) }}
-                        </span>
-                      </div>
-                      <div class="metric-item">
-                        <span class="metric-label">Marża jednostkowa:</span>
-                        <span class="metric-value" [ngClass]="getProfitStatusClass(getUnitProfit(element))">
-                          {{ formatPercentage(getUnitMargin(element)) }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Cost Breakdown Section -->
-                  <div class="detail-section full-width">
-                    <h4><mat-icon>pie_chart</mat-icon>Szczegółowy podział kosztów</h4>
-                    <div class="costs-breakdown">
-                      <div class="cost-breakdown-item">
-                        <div class="cost-category">
-                          <mat-icon>build_circle</mat-icon>
-                          <span>Materiały</span>
-                        </div>
-                        <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(element.materialCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(element.materialCost) / element.quantitySold) }}/szt)</span>
-                        </div>
-                      </div>
-
-                      <div class="cost-breakdown-item">
-                        <div class="cost-category">
-                          <mat-icon>person</mat-icon>
-                          <span>Praca</span>
-                        </div>
-                        <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(element.laborCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(element.laborCost) / element.quantitySold) }}/szt)</span>
-                        </div>
-                      </div>
-
-                      <div class="cost-breakdown-item">
-                        <div class="cost-category">
-                          <mat-icon>flash_on</mat-icon>
-                          <span>Energia</span>
-                        </div>
-                        <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(element.powerCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(element.powerCost) / element.quantitySold) }}/szt)</span>
-                        </div>
-                      </div>
-
-                      <div class="cost-breakdown-item">
-                        <div class="cost-category">
-                          <mat-icon>inventory_2</mat-icon>
-                          <span>Opakowania</span>
-                        </div>
-                        <div class="cost-values">
-                          <span class="total-cost">{{ formatCurrency(getPrice(element.packagingCost)) }}</span>
-                          <span class="unit-cost">({{ formatCurrency(getPrice(element.packagingCost) / element.quantitySold) }}/szt)</span>
-                        </div>
-                      </div>
-
-                      <!-- Allegro Costs for this offer -->
-                      <div *ngIf="element.allegroCosts && Object.keys(element.allegroCosts).length > 0"
-                           class="cost-breakdown-item allegro-costs">
-                        <div class="cost-category">
-                          <mat-icon>shopping_cart</mat-icon>
-                          <span>Koszty Allegro</span>
-                        </div>
-                        <div class="cost-values">
-                          <span class="total-cost">
-                            {{ formatCurrency(getAllegroCostTotal(element.allegroCosts)) }}
-                          </span>
-                          <span class="unit-cost">
-                            ({{ formatCurrency(getAllegroCostTotal(element.allegroCosts) / element.quantitySold) }}/szt)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Detailed Allegro costs breakdown for this offer -->
-                    <div *ngIf="element.allegroCosts && Object.keys(element.allegroCosts).length > 0"
-                         class="allegro-costs-detail">
-                      <h5><mat-icon>storefront</mat-icon>Szczegółowe koszty Allegro</h5>
-                      <div class="allegro-costs-list">
-                        <div *ngFor="let costEntry of getAllegroCostEntries(element.allegroCosts)"
-                             class="allegro-cost-item">
-                          <span class="allegro-cost-name">{{ costEntry.name }}</span>
-                          <span class="allegro-cost-value">{{ formatCurrency(getPrice(costEntry.pricePair)) }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <td class="product-names">
+                <span *ngIf="offer.productNames.length > 0; else noProducts">
+                  {{ offer.productNames.join(', ') }}
+                </span>
+              <ng-template #noProducts>
+                <span class="empty-data">Brak produktów</span>
+              </ng-template>
+            </td>
+            <td class="quantity">{{ offer.quantitySold }}</td>
+            <td class="price">
+              {{ formatCurrency(offer.pricePerQuantity) }}
+            </td>
+            <td class="revenue">
+              {{ formatCurrency(offer.revenue) }}
+              <div class="per-unit">{{ formatCurrency(offer.revenue / offer.quantitySold) }}/szt</div>
+            </td>
+            <td class="costs">
+              <div class="cost-item" *ngIf="offer.materialCost > 0">
+                Materiały: {{ formatCurrency(offer.materialCost) }}
               </div>
+              <div class="cost-item" *ngIf="offer.powerCost > 0">
+                Energia: {{ formatCurrency(offer.powerCost) }}
+              </div>
+              <div class="cost-item" *ngIf="offer.packagingCost > 0">
+                Opakowania: {{ formatCurrency(offer.packagingCost) }}
+              </div>
+              <div class="cost-item" *ngIf="offer.laborCost > 0">
+                Robocizna: {{ formatCurrency(offer.laborCost) }}
+              </div>
+              <div class="cost-total">
+                Razem: {{ formatCurrency(offer.productionCost) }}
+              </div>
+              <div class="per-unit">{{ formatCurrency(offer.productionCost / offer.quantitySold) }}/szt</div>
             </td>
-          </ng-container>
-
-          <!-- Table Rows -->
-          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-              [class.hover-row]="!row.detailRow"
-              [class.expanded-row]="!row.detailRow && isExpanded(row.offerId)"
-              [style.display]="row.detailRow ? 'none' : ''"></tr>
-          <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; when: isExpandedRow"
-              class="detail-row"></tr>
+            <td class="vat">
+              {{ formatCurrency(offer.vatCost) }}
+              <div class="per-unit">{{ formatCurrency(offer.vatCost / offer.quantitySold) }}/szt</div>
+            </td>
+            <td class="allegro-costs">
+              <ng-container *ngIf="offer.allegroCosts && Object.keys(offer.allegroCosts).length > 0; else noAllegroCosts">
+                <div class="allegro-item" *ngFor="let cost of Object.entries(offer.allegroCosts)">
+                  {{ cost[0] }}: {{ formatCurrency(cost[1]) }}
+                </div>
+                <div class="allegro-total">
+                  Razem: {{ formatCurrency(getAllegroCostTotal(offer.allegroCosts)) }}
+                </div>
+                <div class="per-unit">{{ formatCurrency(getAllegroCostTotal(offer.allegroCosts) / offer.quantitySold) }}/szt</div>
+              </ng-container>
+              <ng-template #noAllegroCosts>
+                <span class="empty-data">Brak kosztów</span>
+              </ng-template>
+            </td>
+            <td class="margin"
+                [class.positive]="getOfferMargin(offer) > 0"
+                [class.negative]="getOfferMargin(offer) < 0">
+              {{ formatPercentage(getOfferMargin(offer)) }}
+            </td>
+            <td class="profit"
+                [class.positive]="offer.profit > 0"
+                [class.negative]="offer.profit < 0">
+              {{ formatCurrency(offer.profit) }}
+              <div class="per-unit">{{ formatCurrency(offer.profit / offer.quantitySold) }}/szt</div>
+            </td>
+          </tr>
+          </tbody>
         </table>
 
         <!-- Pagination -->
@@ -677,8 +564,8 @@
       <ng-template #noOffersData>
         <div class="no-data-message">
           <mat-icon>shopping_bag</mat-icon>
-          <p>{{ offerSearchQuery || minRevenue || maxRevenue || showProfitableOnly ? 'Brak ofert pasujących do filtrów' : 'Brak danych o sprzedaży ofert w wybranym miesiącu' }}</p>
-          <button *ngIf="offerSearchQuery || minRevenue || maxRevenue || showProfitableOnly"
+          <p>{{ offerSearchQuery || minQuantity || maxQuantity || minProfit || productFilter ? 'Brak ofert pasujących do filtrów' : 'Brak danych o sprzedaży ofert w wybranym miesiącu' }}</p>
+          <button *ngIf="offerSearchQuery || minQuantity || maxQuantity || minProfit || productFilter"
                   mat-button
                   color="primary"
                   (click)="clearFilters()">

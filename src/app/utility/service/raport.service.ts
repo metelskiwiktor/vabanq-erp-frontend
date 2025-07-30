@@ -1,25 +1,21 @@
-// src/app/utility/service/raport.service.ts - Updated interface
+// src/app/utility/service/raport.service.ts - Updated for new response structure
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from "../../../environments/environment";
 
-export interface PricePair {
-  net: number;
-  gross: number;
-}
-
 export interface FinancialReportResponse {
-  revenue: PricePair;
-  materialCost: PricePair;
-  powerCost: PricePair;
-  packagingCost: PricePair;
-  laborCost: PricePair;
-  productionCost: PricePair;
-  allegroCosts: { [key: string]: PricePair }; // New field for monthly Allegro costs
-  expensesByCategory: { [key: string]: PricePair }; // New field for expenses by category
-  expenses: PricePair;
-  profit: PricePair;
+  revenue: number;
+  materialCost: number;
+  powerCost: number;
+  packagingCost: number;
+  laborCost: number;
+  productionCost: number;
+  vatCost: number;
+  allegroCosts: { [key: string]: number };
+  expensesByCategory: { [key: string]: number };
+  expenses: number;
+  profit: number;
   offers: OfferProfitabilityResponse[];
 }
 
@@ -28,15 +24,16 @@ export interface OfferProfitabilityResponse {
   offerName: string;
   productNames: string[];
   quantitySold: number;
-  pricePerQuantity: PricePair;
-  revenue: PricePair;
-  materialCost: PricePair;
-  powerCost: PricePair;
-  packagingCost: PricePair;
-  laborCost: PricePair;
-  productionCost: PricePair;
-  allegroCosts?: { [key: string]: PricePair }; // New field for per-offer Allegro costs
-  profit: PricePair;
+  pricePerQuantity: number;
+  revenue: number;
+  materialCost: number;
+  powerCost: number;
+  packagingCost: number;
+  laborCost: number;
+  productionCost: number;
+  vatCost: number;
+  allegroCosts: { [key: string]: number };
+  profit: number;
 }
 
 @Injectable({
