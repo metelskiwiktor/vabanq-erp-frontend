@@ -113,43 +113,6 @@
   color: white;
 }
 
-/* Price Mode Toggle */
-.price-mode-toggle {
-  display: flex;
-  align-items: center;
-}
-
-.toggle-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
-  color: #475569;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.toggle-button:hover:not(:disabled) {
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-.toggle-button.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-}
-
-.toggle-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Loading State */
 .loading-state {
   display: flex;
@@ -218,10 +181,10 @@
   justify-content: center;
 }
 
-/* Metrics Grid */
-.metrics-grid {
+/* Metrics Grid - Updated for only 3 cards */
+.metrics-grid-three {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -297,10 +260,10 @@
   margin: 0;
 }
 
-/* Charts Section */
-.charts-section {
+/* Charts Section - Horizontal Layout for 3 Pie Charts */
+.charts-section-horizontal {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -332,47 +295,87 @@
   font-weight: 500;
 }
 
-/* Cost Chart */
-.cost-chart {
+/* Pie Chart Container */
+.pie-chart-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  min-height: 200px;
-}
-
-.cost-item {
-  display: grid;
-  grid-template-columns: 100px 1fr 100px;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  min-height: 300px;
 }
 
-.cost-label {
-  font-size: 0.875rem;
-  color: #475569;
-  text-align: right;
-  font-weight: 500;
+.pie-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.cost-bar-container {
+.pie-slice {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pie-slice:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+/* Pie Chart Legend */
+.pie-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem;
+  border-radius: 6px;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover {
   background: #f1f5f9;
-  border-radius: 4px;
-  height: 20px;
-  position: relative;
-  overflow: hidden;
 }
 
-.cost-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 1s ease-out;
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.cost-value {
-  font-size: 0.875rem;
+.legend-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.legend-label {
+  font-size: 0.8125rem;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 0.125rem;
+  line-height: 1.2;
+}
+
+.legend-value {
+  font-size: 0.8125rem;
   color: #0f172a;
   font-weight: 600;
-  text-align: left;
+  font-family: 'Monaco', 'Menlo', monospace;
+  line-height: 1.2;
+}
+
+.legend-percentage {
+  font-size: 0.6875rem;
+  color: #6b7280;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 /* Profit Overview */
@@ -381,7 +384,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-  min-height: 200px;
+  min-height: 300px;
 }
 
 .profit-chart {
@@ -463,752 +466,7 @@
   color: #0f172a;
 }
 
-/* Offers Section - Full Width */
-.offers-section {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  width: 100%;
-}
-
-.offers-summary {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.offers-count {
-  font-size: 0.875rem;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-}
-
-/* Offers Controls */
-.offers-controls {
-  margin: 1rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.search-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.search-field {
-  min-width: 300px;
-  flex: 1;
-  max-width: 500px;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-field {
-  min-width: 150px;
-  max-width: 200px;
-}
-
-.profit-filter {
-  margin-left: 1rem;
-}
-
-.clear-filters-btn {
-  margin-left: auto;
-}
-
-/* Sortable Headers */
-.sort-header {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  justify-content: flex-start;
-  transition: color 0.2s ease;
-}
-
-.sort-header:hover {
-  color: #3b82f6;
-}
-
-.sort-icon {
-  font-size: 1rem;
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
-  transition: color 0.2s ease;
-}
-
-.sort-header:hover .sort-icon {
-  color: #3b82f6;
-}
-
-/* Table Container - Full Width */
-.table-container {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.offers-table {
-  width: 100%;
-  min-width: 1000px;
-}
-
-.offers-table .mat-mdc-header-cell {
-  font-weight: 600;
-  color: #374151;
-  background: #f8fafc;
-  border-bottom: 2px solid #e2e8f0;
-  padding: 12px 8px;
-  font-size: 0.875rem;
-}
-
-.offers-table .mat-mdc-cell {
-  padding: 12px 8px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 0.875rem;
-}
-
-.offers-table .mat-mdc-row:hover {
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.offers-table .mat-mdc-row.hover-row {
-  transition: background-color 0.2s ease;
-}
-
-.offers-table .mat-mdc-row.expanded-row {
-  background: rgba(59, 130, 246, 0.02);
-}
-
-/* Expand Column */
-.expand-cell {
-  width: 48px;
-  text-align: center;
-}
-
-.expand-button {
-  width: 32px;
-  height: 32px;
-  line-height: 32px;
-}
-
-/* Table Cell Styles */
-.offer-id {
-  color: #3b82f6;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 120px;
-}
-
-.offer-name {
-  font-weight: 500;
-  max-width: 250px;
-  word-wrap: break-word;
-}
-
-.quantity, .price, .revenue, .cost {
-  text-align: right;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 100px;
-}
-
-.profit, .margin {
-  text-align: right;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 100px;
-}
-
-/* Detail Row Styles */
-.detail-row {
-  background: #f8fafc !important;
-  border-top: 2px solid #e2e8f0 !important;
-}
-
-.detail-cell {
-  border: none !important;
-  padding: 0 !important;
-  border-bottom: none !important;
-}
-
-.offer-details {
-  padding: 1.5rem;
-  background: #f8fafc;
-  border-top: 2px solid #e2e8f0;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-    padding: 0 1.5rem;
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-    padding: 1.5rem;
-  }
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.detail-section {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.detail-section.full-width {
-  grid-column: span 2;
-}
-
-.detail-section h4 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.detail-section h4 mat-icon {
-  font-size: 1.25rem;
-  color: #6b7280;
-}
-
-/* Products Detail */
-.products-detail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.product-tag {
-  background: #dbeafe;
-  color: #1e40af;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Unit Metrics */
-.unit-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.metric-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.metric-item:last-child {
-  border-bottom: none;
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.metric-value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-/* Cost Breakdown */
-.costs-breakdown {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.cost-breakdown-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border-radius: 6px;
-  border-left: 4px solid #3b82f6;
-}
-
-.cost-category {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.cost-category mat-icon {
-  font-size: 1.125rem;
-  color: #6b7280;
-}
-
-.cost-values {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.total-cost {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #111827;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-.unit-cost {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-/* Profit Status Classes */
-.profit-positive {
-  color: #059669 !important;
-}
-
-.profit-negative {
-  color: #dc2626 !important;
-}
-
-.profit-neutral {
-  color: #6b7280 !important;
-}
-
-/* Pagination */
-.mat-mdc-paginator {
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-}
-
-/* No Data States */
-.no-data-message, .no-data-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 2rem;
-  text-align: center;
-}
-
-.no-data-message mat-icon, .no-data-state mat-icon {
-  font-size: 3rem;
-  color: #9ca3af;
-  margin-bottom: 1rem;
-}
-
-.no-data-message p, .no-data-state p {
-  color: #64748b;
-  font-size: 1rem;
-  margin: 0 0 1rem 0;
-}
-
-.no-data-state {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.no-data-state h3 {
-  color: #374151;
-  font-size: 1.25rem;
-  margin: 0 0 0.5rem 0;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .charts-section {
-    grid-template-columns: 1fr;
-  }
-
-  .cost-item {
-    grid-template-columns: 80px 1fr 80px;
-    gap: 0.75rem;
-  }
-
-  .controls-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .month-selector {
-    justify-content: center;
-  }
-
-  .details-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-section.full-width {
-    grid-column: span 1;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 1rem;
-  }
-
-  .metrics-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .controls-bar {
-    padding: 1rem;
-  }
-
-  .cost-item {
-    grid-template-columns: 60px 1fr 60px;
-    gap: 0.5rem;
-  }
-
-  .cost-label {
-    font-size: 0.75rem;
-  }
-
-  .offers-table {
-    font-size: 0.75rem;
-    min-width: 1000px;
-  }
-
-  .offers-table .mat-mdc-header-cell,
-  .offers-table .mat-mdc-cell {
-    padding: 8px 6px;
-  }
-
-  .profit-breakdown {
-    gap: 0.5rem;
-  }
-
-  .profit-item {
-    padding: 0.5rem;
-  }
-
-  .search-field {
-    min-width: 250px;
-  }
-
-  .offer-details {
-    padding: 1rem;
-  }
-
-  .costs-breakdown {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-field {
-    min-width: auto;
-    max-width: none;
-  }
-
-  .clear-filters-btn {
-    margin-left: 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .page-title h1 {
-    font-size: 1.5rem;
-  }
-
-  .metric-value {
-    font-size: 1.5rem;
-  }
-
-  .current-month {
-    min-width: 150px;
-    font-size: 1rem;
-  }
-
-  .section-title {
-    font-size: 1.125rem;
-  }
-
-  .search-field {
-    min-width: 200px;
-  }
-
-  .offers-table {
-    min-width: 900px;
-  }
-
-  .offer-details {
-    padding: 0.75rem;
-  }
-
-  .report-actions {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .report-actions button {
-    width: 100%;
-  }
-}
-
 /* Allegro Costs Section */
-.allegro-costs-section {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  width: 100%;
-}
-
-.allegro-costs-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
-  margin-top: 1rem;
-}
-
-.allegro-chart {
-  min-height: 300px;
-}
-
-.allegro-summary {
-  min-height: 300px;
-}
-
-.chart-subtitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 1rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Cost Type Badges */
-.cost-type-badge {
-  display: inline-block;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-left: 0.5rem;
-}
-
-.badge-monthly {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.badge-per-order {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.cost-type-monthly {
-  border-left: 3px solid #3b82f6;
-  padding-left: 0.5rem;
-}
-
-.cost-type-per-order {
-  border-left: 3px solid #10b981;
-  padding-left: 0.5rem;
-}
-
-/* Allegro Summary */
-.allegro-summary-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 8px;
-  background: #f8fafc;
-  transition: all 0.2s ease;
-}
-
-.summary-item:hover {
-  background: #f1f5f9;
-}
-
-.summary-item.total {
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  border: 2px solid #cbd5e1;
-}
-
-.summary-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.summary-icon.monthly {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.summary-icon.per-order {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.summary-icon.total {
-  background: #f3e8ff;
-  color: #7c3aed;
-}
-
-.summary-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.summary-label {
-  font-size: 0.875rem;
-  color: #64748b;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.summary-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
-  font-family: 'Monaco', 'Menlo', monospace;
-  margin-bottom: 0.25rem;
-}
-
-.summary-value.total-value {
-  font-size: 1.375rem;
-  color: #7c3aed;
-}
-
-.summary-description {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-
-/* Allegro Costs in Detail Section */
-.allegro-costs-detail {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 6px;
-  border-left: 4px solid #8b5cf6;
-}
-
-.allegro-costs-detail h5 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 0.75rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.allegro-costs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.allegro-cost-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-}
-
-.allegro-cost-name {
-  font-size: 0.875rem;
-  color: #374151;
-  flex: 1;
-}
-
-.allegro-cost-value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #8b5cf6;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-/* Cost Breakdown Item - Allegro costs styling */
-.cost-breakdown-item.allegro-costs {
-  border-left: 4px solid #8b5cf6;
-  background: #faf5ff;
-}
-
-.cost-breakdown-item.allegro-costs .cost-category {
-  color: #7c3aed;
-}
-
-.cost-breakdown-item.allegro-costs .total-cost {
-  color: #7c3aed;
-}
-
-/* Products Detail - No products state */
-.no-products {
-  color: #9ca3af;
-  font-style: italic;
-  font-size: 0.875rem;
-  padding: 0.5rem;
-  background: #f9fafb;
-  border-radius: 4px;
-  border: 1px dashed #d1d5db;
-}
-/* Allegro Costs Section - Updated Styles */
 .allegro-costs-section {
   background: white;
   border-radius: 8px;
@@ -1343,12 +601,12 @@
   font-size: 1.5rem;
 }
 
-/* Compact Summary */
-.allegro-summary-compact {
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+/* Compact Summary - White instead of golden */
+.allegro-summary-white {
+  background: #f8fafc;
   border-radius: 8px;
   padding: 1rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #e2e8f0;
 }
 
 .summary-stats {
@@ -1365,6 +623,7 @@
   background: white;
   border-radius: 6px;
   transition: all 0.2s ease;
+  border: 1px solid #f1f5f9;
 }
 
 .stat-item:hover {
@@ -1373,8 +632,8 @@
 }
 
 .stat-item.total {
-  background: linear-gradient(135deg, #fef3c7, #fbbf24);
-  border: 1px solid #f59e0b;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
 }
 
 .stat-icon {
@@ -1398,8 +657,8 @@
 }
 
 .stat-item.total .stat-icon {
-  background: #fbbf24;
-  color: #92400e;
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .stat-info {
@@ -1425,7 +684,7 @@
 
 .stat-value.total-value {
   font-size: 1.125rem;
-  color: #92400e;
+  color: #374151;
 }
 
 .stat-percentage {
@@ -1436,145 +695,331 @@
   min-width: 60px;
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .allegro-tables-container {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .summary-stats {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .stat-item {
-    padding: 1rem;
-  }
-
-  .cost-table-item {
-    grid-template-columns: 1fr 1.5fr 70px;
-    gap: 0.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .allegro-costs-section {
-    padding: 1rem;
-  }
-
-  .allegro-table-card {
-    padding: 0.75rem;
-  }
-
-  .allegro-cost-table {
-    min-height: 150px;
-  }
-
-  .cost-table-item {
-    grid-template-columns: 1fr 1fr 60px;
-    gap: 0.5rem;
-    padding: 0.375rem;
-  }
-
-  .cost-name {
-    font-size: 0.75rem;
-  }
-
-  .cost-amount {
-    font-size: 0.75rem;
-  }
-
-  .table-title {
-    font-size: 0.875rem;
-  }
-
-  .table-total {
-    font-size: 0.75rem;
-  }
-
-  .stat-icon {
-    width: 32px;
-    height: 32px;
-  }
-
-  .stat-value {
-    font-size: 0.875rem;
-  }
-
-  .summary-stats {
-    gap: 0.5rem;
-  }
-
-  .stat-item {
-    padding: 0.75rem;
-    gap: 0.5rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .allegro-tables-container {
-    gap: 0.75rem;
-  }
-
-  .cost-table-item {
-    grid-template-columns: 1fr;
-    text-align: center;
-    gap: 0.25rem;
-  }
-
-  .cost-bar-container {
-    order: 2;
-  }
-
-  .cost-amount {
-    order: 3;
-    text-align: center;
-  }
-
-  .allegro-cost-table {
-    min-height: 120px;
-  }
-
-  .no-costs-message {
-    height: 120px;
-    padding: 1rem;
-  }
-}
-/* Updated CSS for fixed accounting dashboard with pie charts */
-
-/* Dashboard Container - Full Width */
-.dashboard-container {
+/* Offers Section - Full Width */
+.offers-section {
+  background: white;
+  border-radius: 8px;
   padding: 1.5rem;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-}
-
-/* Page Header */
-.page-header {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
+  width: 100%;
 }
 
-.page-title h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 0.5rem 0;
+.offers-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.page-subtitle {
+.offers-count {
+  font-size: 0.875rem;
   color: #64748b;
-  font-size: 1rem;
-  margin: 0;
+  background: #f1f5f9;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
 }
 
-/* Controls Bar */
-.controls-bar {
+/* Offers Controls */
+.offers-controls {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-field {
+  min-width: 300px;
+  flex: 1;
+  max-width: 500px;
+}
+
+/* Sortable Headers */
+.sort-header {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: flex-start;
+  transition: color 0.2s ease;
+}
+
+.sort-header:hover {
+  color: #3b82f6;
+}
+
+.sort-icon {
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+.sort-header:hover .sort-icon {
+  color: #3b82f6;
+}
+
+/* Table Container - Full Width with Fixed Alignment */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.offers-table-fixed {
+  width: 100%;
+  min-width: 1200px;
+  table-layout: fixed;
+}
+
+/* Fixed Column Widths */
+.expand-header,
+.expand-cell {
+  width: 48px;
+  text-align: center;
+  padding: 8px 4px !important;
+}
+
+.id-header,
+.id-cell {
+  width: 120px;
+  padding: 8px 12px !important;
+}
+
+.name-header,
+.name-cell {
+  width: 250px;
+  padding: 8px 12px !important;
+}
+
+.quantity-header,
+.quantity-cell {
+  width: 100px;
+  text-align: right;
+  padding: 8px 12px !important;
+}
+
+.price-header,
+.price-cell {
+  width: 110px;
+  text-align: right;
+  padding: 8px 12px !important;
+}
+
+.revenue-header,
+.revenue-cell {
+  width: 120px;
+  text-align: right;
+  padding: 8px 12px !important;
+}
+
+.cost-header,
+.cost-cell {
+  width: 110px;
+  text-align: right;
+  padding: 8px 12px !important;
+}
+
+.profit-header,
+.profit-cell {
+  width: 120px;
+  text-align: right;
+  padding: 8px 12px !important;
+}
+
+.margin-header,
+.margin-cell {
+  width: 100px;
+  text-align: right;
+  padding: 8px 12px !important;
+}
+
+.offers-table-fixed .mat-mdc-header-cell {
+  font-weight: 600;
+  color: #374151;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.offers-table-fixed .mat-mdc-cell {
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.offers-table-fixed .mat-mdc-row:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.offers-table-fixed .mat-mdc-row.hover-row {
+  transition: background-color 0.2s ease;
+}
+
+.offers-table-fixed .mat-mdc-row.expanded-row {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.expand-button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
+/* Table Cell Styles */
+.id-cell {
+  color: #3b82f6;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.name-cell {
+  font-weight: 500;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quantity-cell, .price-cell, .revenue-cell, .cost-cell {
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.profit-cell, .margin-cell {
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Detail Row Styles */
+.detail-row {
+  background: #f8fafc !important;
+  border-top: 2px solid #e2e8f0 !important;
+}
+
+.detail-cell {
+  border: none !important;
+  padding: 0 !important;
+  border-bottom: none !important;
+}
+
+.offer-details {
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding: 0 1.5rem;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    padding: 1.5rem;
+  }
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.detail-section {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.detail-section.full-width {
+  grid-column: span 2;
+}
+
+.detail-section h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-section h4 mat-icon {
+  font-size: 1.25rem;
+  color: #6b7280;
+}
+
+/* Products Detail */
+.products-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.product-tag {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Unit Metrics */
+.unit-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metric-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.metric-item:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Cost Breakdown */
+.costs-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
@@ -1759,12 +1204,21 @@
 }
 
 @media (max-width: 1024px) {
+  .metrics-grid-three {
+    grid-template-columns: 1fr;
+  }
+
   .charts-section-horizontal {
     grid-template-columns: 1fr;
   }
 
   .charts-section-horizontal .chart-card:last-child {
     grid-column: span 1;
+  }
+
+  .pie-legend {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 
   .allegro-tables-container {
@@ -1794,8 +1248,14 @@
     grid-column: span 1;
   }
 
-  .metrics-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  .controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .month-selector {
+    justify-content: center;
   }
 }
 
@@ -1804,19 +1264,8 @@
     padding: 1rem;
   }
 
-  .metrics-grid {
-    grid-template-columns: 1fr;
-  }
-
   .controls-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
     padding: 1rem;
-  }
-
-  .month-selector {
-    justify-content: center;
   }
 
   .pie-chart-container {
@@ -1829,12 +1278,13 @@
   }
 
   .pie-legend {
-    max-width: none;
+    grid-template-columns: 1fr;
+    gap: 0.375rem;
   }
 
   .legend-item {
-    padding: 0.375rem;
-    gap: 0.5rem;
+    padding: 0.25rem;
+    gap: 0.375rem;
   }
 
   .profit-circle {
@@ -1898,14 +1348,14 @@
     gap: 0.5rem;
   }
 
-  .offers-table {
+  .offers-table-fixed {
     font-size: 0.75rem;
     min-width: 1000px;
   }
 
-  .offers-table .mat-mdc-header-cell,
-  .offers-table .mat-mdc-cell {
-    padding: 8px 6px;
+  .offers-table-fixed .mat-mdc-header-cell,
+  .offers-table-fixed .mat-mdc-cell {
+    padding: 8px 6px !important;
   }
 
   .profit-breakdown {
@@ -1926,20 +1376,6 @@
 
   .costs-breakdown {
     grid-template-columns: 1fr;
-  }
-
-  .filter-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-field {
-    min-width: auto;
-    max-width: none;
-  }
-
-  .clear-filters-btn {
-    margin-left: 0;
   }
 }
 
@@ -1965,7 +1401,7 @@
     min-width: 200px;
   }
 
-  .offers-table {
+  .offers-table-fixed {
     min-width: 900px;
   }
 
@@ -2018,1007 +1454,4 @@
   .legend-percentage {
     font-size: 0.6875rem;
   }
-}
-
-/* Custom Scrollbar */
-.nav-list {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
-}
-
-/* Loading State */
-.sidebar.loading {
-  pointer-events: none;
-}
-
-.sidebar.loading::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(30, 30, 46, 0.8);
-  z-index: 1000;
-}
-
-.month-selector {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.report-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.generate-report-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-}
-
-.refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.month-nav-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.month-nav-btn:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-.month-nav-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.current-month {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #0f172a;
-  min-width: 200px;
-  text-align: center;
-}
-
-.current-month-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #3b82f6;
-  border-radius: 6px;
-  background: white;
-  color: #3b82f6;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.current-month-btn:hover:not(:disabled) {
-  background: #3b82f6;
-  color: white;
-}
-
-/* Price Mode Toggle */
-.price-mode-toggle {
-  display: flex;
-  align-items: center;
-}
-
-.toggle-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
-  color: #475569;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.toggle-button:hover:not(:disabled) {
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-.toggle-button.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-}
-
-.toggle-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Loading State */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.loading-icon {
-  font-size: 3rem;
-  color: #3b82f6;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-state p {
-  color: #64748b;
-  font-size: 1.125rem;
-  margin: 0;
-}
-
-/* Welcome State */
-.welcome-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.welcome-icon {
-  font-size: 4rem;
-  color: #3b82f6;
-  margin-bottom: 1.5rem;
-}
-
-.welcome-state h2 {
-  color: #0f172a;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0 0 1rem 0;
-}
-
-.welcome-state p {
-  color: #64748b;
-  font-size: 1rem;
-  margin: 0 0 2rem 0;
-  max-width: 600px;
-}
-
-.welcome-actions {
-  display: flex;
-  justify-content: center;
-}
-
-/* Metrics Grid - Updated for 5 cards */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.metric-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-2px);
-}
-
-.metric-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-}
-
-.metric-info {
-  flex: 1;
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0 0 0.25rem 0;
-}
-
-.metric-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.metric-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.metric-badge.positive {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.metric-badge.negative {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.metric-badge.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.metric-footer {
-  margin-top: 0.5rem;
-}
-
-.metric-comparison {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0;
-}
-
-/* Charts Section - Horizontal Layout for 3 Pie Charts */
-.charts-section-horizontal {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.chart-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
-}
-
-.total-cost {
-  font-size: 0.875rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-/* Pie Chart Container */
-.pie-chart-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  min-height: 300px;
-}
-
-.pie-chart {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.pie-slice {
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.pie-slice:hover {
-  opacity: 0.8;
-  transform: scale(1.05);
-}
-
-/* Pie Chart Legend */
-.pie-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 250px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  background: #f8fafc;
-  transition: all 0.2s ease;
-}
-
-.legend-item:hover {
-  background: #f1f5f9;
-}
-
-.legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.legend-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.legend-label {
-  font-size: 0.875rem;
-  color: #374151;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.legend-value {
-  font-size: 0.875rem;
-  color: #0f172a;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-.legend-percentage {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-/* Profit Overview */
-.profit-overview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  min-height: 300px;
-}
-
-.profit-chart {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.profit-circle {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  border: 8px solid #e2e8f0;
-}
-
-.profit-circle.profitable {
-  border-color: #10b981;
-  background: #ecfdf5;
-}
-
-.profit-circle.unprofitable {
-  border-color: #ef4444;
-  background: #fef2f2;
-}
-
-.profit-percentage {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.profit-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.profit-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-}
-
-.profit-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 6px;
-  background: #f8fafc;
-}
-
-.profit-item mat-icon {
-  font-size: 1.25rem;
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.profit-info {
-  flex: 1;
-}
-
-.profit-name {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-.profit-amount {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-/* Allegro Costs Section */
-.allegro-costs-section {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  width: 100%;
-}
-
-/* Two Tables Container */
-.allegro-tables-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.allegro-table-card {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid #e2e8f0;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.table-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.table-title mat-icon {
-  font-size: 1.25rem;
-  color: #6b7280;
-}
-
-.table-total {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #0f172a;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-/* Cost Table */
-.allegro-cost-table {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 200px;
-}
-
-.cost-table-item {
-  display: grid;
-  grid-template-columns: 1fr 2fr 80px;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  background: white;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.cost-table-item:hover {
-  background: #f1f5f9;
-  transform: translateX(2px);
-}
-
-.cost-name {
-  font-size: 0.875rem;
-  color: #374151;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cost-bar-container {
-  background: #e5e7eb;
-  border-radius: 4px;
-  height: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-.cost-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 1s ease-out;
-}
-
-.cost-bar-fill.monthly {
-  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-}
-
-.cost-bar-fill.per-order {
-  background: linear-gradient(90deg, #10b981, #059669);
-}
-
-.cost-amount {
-  font-size: 0.875rem;
-  color: #0f172a;
-  font-weight: 600;
-  text-align: right;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-/* No Costs Message */
-.no-costs-message {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  color: #9ca3af;
-  font-size: 0.875rem;
-  height: 200px;
-}
-
-.no-costs-message mat-icon {
-  font-size: 1.5rem;
-}
-
-/* Compact Summary */
-.allegro-summary-compact {
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid #cbd5e1;
-}
-
-.summary-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: white;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stat-item.total {
-  background: linear-gradient(135deg, #fef3c7, #fbbf24);
-  border: 1px solid #f59e0b;
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-item.monthly .stat-icon {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.stat-item.per-order .stat-icon {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.stat-item.total .stat-icon {
-  background: #fbbf24;
-  color: #92400e;
-}
-
-.stat-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: 500;
-  margin-bottom: 0.125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.stat-value {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #0f172a;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-
-.stat-value.total-value {
-  font-size: 1.125rem;
-  color: #92400e;
-}
-
-.stat-percentage {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 600;
-  text-align: right;
-  min-width: 60px;
-}
-
-/* Offers Section - Full Width */
-.offers-section {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  width: 100%;
-}
-
-.offers-summary {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.offers-count {
-  font-size: 0.875rem;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-}
-
-/* Offers Controls */
-.offers-controls {
-  margin: 1rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.search-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.search-field {
-  min-width: 300px;
-  flex: 1;
-  max-width: 500px;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.filter-field {
-  min-width: 150px;
-  max-width: 200px;
-}
-
-.profit-filter {
-  margin-left: 1rem;
-}
-
-.clear-filters-btn {
-  margin-left: auto;
-}
-
-/* Sortable Headers */
-.sort-header {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  justify-content: flex-start;
-  transition: color 0.2s ease;
-}
-
-.sort-header:hover {
-  color: #3b82f6;
-}
-
-.sort-icon {
-  font-size: 1rem;
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
-  transition: color 0.2s ease;
-}
-
-.sort-header:hover .sort-icon {
-  color: #3b82f6;
-}
-
-/* Table Container - Full Width */
-.table-container {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.offers-table {
-  width: 100%;
-  min-width: 1000px;
-}
-
-.offers-table .mat-mdc-header-cell {
-  font-weight: 600;
-  color: #374151;
-  background: #f8fafc;
-  border-bottom: 2px solid #e2e8f0;
-  padding: 12px 8px;
-  font-size: 0.875rem;
-}
-
-.offers-table .mat-mdc-cell {
-  padding: 12px 8px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 0.875rem;
-}
-
-.offers-table .mat-mdc-row:hover {
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.offers-table .mat-mdc-row.hover-row {
-  transition: background-color 0.2s ease;
-}
-
-.offers-table .mat-mdc-row.expanded-row {
-  background: rgba(59, 130, 246, 0.02);
-}
-
-/* Expand Column */
-.expand-cell {
-  width: 48px;
-  text-align: center;
-}
-
-.expand-button {
-  width: 32px;
-  height: 32px;
-  line-height: 32px;
-}
-
-/* Table Cell Styles */
-.offer-id {
-  color: #3b82f6;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 120px;
-}
-
-.offer-name {
-  font-weight: 500;
-  max-width: 250px;
-  word-wrap: break-word;
-}
-
-.quantity, .price, .revenue, .cost {
-  text-align: right;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 100px;
-}
-
-.profit, .margin {
-  text-align: right;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-  min-width: 100px;
-}
-
-/* Detail Row Styles */
-.detail-row {
-  background: #f8fafc !important;
-  border-top: 2px solid #e2e8f0 !important;
-}
-
-.detail-cell {
-  border: none !important;
-  padding: 0 !important;
-  border-bottom: none !important;
-}
-
-.offer-details {
-  padding: 1.5rem;
-  background: #f8fafc;
-  border-top: 2px solid #e2e8f0;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-    padding: 0 1.5rem;
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-    padding: 1.5rem;
-  }
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.detail-section {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.detail-section.full-width {
-  grid-column: span 2;
-}
-
-.detail-section h4 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.detail-section h4 mat-icon {
-  font-size: 1.25rem;
-  color: #6b7280;
-}
-
-/* Products Detail */
-.products-detail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.product-tag {
-  background: #dbeafe;
-  color: #1e40af;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Unit Metrics */
-.unit-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.metric-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.metric-item:last-child {
-  border-bottom: none;
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.metric-value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: 'Monaco', 'Menlo', monospace;
-}
-/* Cost Breakdown */
-.costs-breakdown {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
 }

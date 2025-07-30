@@ -59,9 +59,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   // Report data
   reportData: FinancialReportResponse | null = null;
 
-  // Price display mode
-  showNetPrices = true;
-
   // Computed values
   profitMargin = 0;
   costBreakdown: CostItem[] = [];
@@ -125,23 +122,9 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.loadFinancialReport();
   }
 
-  // Toggle between net and gross prices
-  togglePriceMode(): void {
-    this.showNetPrices = !this.showNetPrices;
-    this.calculateMetrics();
-    this.prepareCostBreakdown();
-    this.prepareAllegroCostBreakdown();
-    this.prepareExpenseBreakdown();
-  }
-
-  // Get price value based on current mode
+  // Get price value (always gross now)
   getPrice(pricePair: PricePair): number {
-    return this.showNetPrices ? pricePair.net : pricePair.gross;
-  }
-
-  // Get price mode label
-  getPriceModeLabel(): string {
-    return this.showNetPrices ? 'netto' : 'brutto';
+    return pricePair.gross;
   }
 
   // Load financial report from backend
@@ -370,7 +353,8 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     if (!this.reportData) return;
 
     const revenue = this.getPrice(this.reportData.revenue);
-    const profit = this.getPrice(this.reportData.profit);
+    const expenses = this.getPrice(this.reportData.expenses);
+    const profit = revenue - expenses;
 
     this.profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
   }
@@ -667,7 +651,15 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
 
     // Calculate starting angle (sum of all previous slices)
     let startAngle = 0;
-    const items = this.costBreakdown.length > 0 ? this.costBreakdown : this.expenseBreakdown;
+
+    // Determine which dataset we're working with
+    let items: any[] = [];
+    if (this.costBreakdown.length > 0 && index < this.costBreakdown.length) {
+      items = this.costBreakdown;
+    } else if (this.expenseBreakdown.length > 0 && index < this.expenseBreakdown.length) {
+      items = this.expenseBreakdown;
+    }
+
     for (let i = 0; i < index; i++) {
       if (items[i]) {
         const prevPercentage = (items[i].value / total) * 100;
@@ -682,18 +674,81 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     const endAngleRad = (endAngle - 90) * (Math.PI / 180);
 
     const radius = 80;
+    const centerX = 0;
+    const centerY = 0;
 
     // Calculate start and end points
-    const x1 = radius * Math.cos(startAngleRad);
-    const y1 = radius * Math.sin(startAngleRad);
-    const x2 = radius * Math.cos(endAngleRad);
-    const y2 = radius * Math.sin(endAngleRad);
+    const x1 = centerX + radius * Math.cos(startAngleRad);
+    const y1 = centerY + radius * Math.sin(startAngleRad);
+    const x2 = centerX + radius * Math.cos(endAngleRad);
+    const y2 = centerY + radius * Math.sin(endAngleRad);
 
     // Determine if arc should be large (greater than 180 degrees)
     const largeArc = angle > 180 ? 1 : 0;
 
     // Create SVG path
-    return `M 0 0 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    if (angle === 360) {
+      // Full circle
+      return `M ${centerX + radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX - radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}`;
+    } else {
+      // Pie slice
+      return `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    }
+  }
+
+  // Generate pie slice specifically for expenses
+  generateExpensePieSlice(value: number, index: number): string {
+    return this.generatePieSliceForDataset(value, this.totalExpenses, index, this.expenseBreakdown);
+  }
+
+  // Generate pie slice specifically for costs
+  generateCostPieSlice(value: number, index: number): string {
+    return this.generatePieSliceForDataset(value, this.getTotalProductionCosts(), index, this.costBreakdown);
+  }
+
+  // Generic pie slice generator for specific dataset
+  private generatePieSliceForDataset(value: number, total: number, index: number, dataset: any[]): string {
+    if (total === 0 || value === 0) return '';
+
+    const percentage = (value / total) * 100;
+    const angle = (percentage / 100) * 360;
+
+    // Calculate starting angle (sum of all previous slices)
+    let startAngle = 0;
+    for (let i = 0; i < index; i++) {
+      if (dataset[i]) {
+        const prevPercentage = (dataset[i].value / total) * 100;
+        startAngle += (prevPercentage / 100) * 360;
+      }
+    }
+
+    const endAngle = startAngle + angle;
+
+    // Convert to radians
+    const startAngleRad = (startAngle - 90) * (Math.PI / 180);
+    const endAngleRad = (endAngle - 90) * (Math.PI / 180);
+
+    const radius = 80;
+    const centerX = 0;
+    const centerY = 0;
+
+    // Calculate start and end points
+    const x1 = centerX + radius * Math.cos(startAngleRad);
+    const y1 = centerY + radius * Math.sin(startAngleRad);
+    const x2 = centerX + radius * Math.cos(endAngleRad);
+    const y2 = centerY + radius * Math.sin(endAngleRad);
+
+    // Determine if arc should be large (greater than 180 degrees)
+    const largeArc = angle > 180 ? 1 : 0;
+
+    // Create SVG path
+    if (angle >= 359.9) {
+      // Nearly full circle - treat as full circle to avoid rendering issues
+      return `M ${centerX + radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX - radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY}`;
+    } else {
+      // Pie slice
+      return `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    }
   }
 
   protected readonly Object = Object;
