@@ -381,7 +381,34 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     this.allegroCostBreakdown = [];
     let colorIndex = 0;
 
+    // Add monthly Allegro costs from main report
     Object.entries(this.reportData.allegroCosts).forEach(([name, value]) => {
+      if (value > 0) {
+        this.allegroCostBreakdown.push({
+          name: this.formatAllegroCostName(name),
+          value,
+          color: colors[colorIndex % colors.length]
+        });
+        colorIndex++;
+      }
+    });
+
+    // Calculate total costs from individual offers (per-order costs)
+    const offerAllegroCosts = new Map<string, number>();
+
+    if (this.reportData.offers) {
+      this.reportData.offers.forEach(offer => {
+        if (offer.allegroCosts) {
+          Object.entries(offer.allegroCosts).forEach(([name, value]) => {
+            const current = offerAllegroCosts.get(name) || 0;
+            offerAllegroCosts.set(name, current + value);
+          });
+        }
+      });
+    }
+
+    // Add aggregated per-order costs to breakdown
+    offerAllegroCosts.forEach((value, name) => {
       if (value > 0) {
         this.allegroCostBreakdown.push({
           name: this.formatAllegroCostName(name),
@@ -397,6 +424,78 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
 
     // Sort by value descending
     this.allegroCostBreakdown.sort((a, b) => b.value - a.value);
+  }
+
+  // Get monthly Allegro costs (from main report)
+  getMonthlyCosts(): AllegroCostItem[] {
+    if (!this.reportData || !this.reportData.allegroCosts) return [];
+
+    const colors = [
+      '#8b5cf6', '#06b6d4', '#84cc16', '#f97316', '#ec4899',
+      '#6366f1', '#14b8a6', '#facc15', '#f43f5e', '#8b5cf6'
+    ];
+
+    const monthlyCosts: AllegroCostItem[] = [];
+    let colorIndex = 0;
+
+    Object.entries(this.reportData.allegroCosts).forEach(([name, value]) => {
+      if (value > 0) {
+        monthlyCosts.push({
+          name: this.formatAllegroCostName(name),
+          value,
+          color: colors[colorIndex % colors.length]
+        });
+        colorIndex++;
+      }
+    });
+
+    return monthlyCosts.sort((a, b) => b.value - a.value);
+  }
+
+  // Get per-order Allegro costs (aggregated from offers)
+  getPerOrderCosts(): AllegroCostItem[] {
+    if (!this.reportData || !this.reportData.offers) return [];
+
+    const colors = [
+      '#8b5cf6', '#06b6d4', '#84cc16', '#f97316', '#ec4899',
+      '#6366f1', '#14b8a6', '#facc15', '#f43f5e', '#8b5cf6'
+    ];
+
+    // Aggregate costs from all offers
+    const offerAllegroCosts = new Map<string, number>();
+
+    this.reportData.offers.forEach(offer => {
+      if (offer.allegroCosts) {
+        Object.entries(offer.allegroCosts).forEach(([name, value]) => {
+          const current = offerAllegroCosts.get(name) || 0;
+          offerAllegroCosts.set(name, current + value);
+        });
+      }
+    });
+
+    const perOrderCosts: AllegroCostItem[] = [];
+    let colorIndex = 0;
+
+    offerAllegroCosts.forEach((value, name) => {
+      if (value > 0) {
+        perOrderCosts.push({
+          name: this.formatAllegroCostName(name),
+          value,
+          color: colors[colorIndex % colors.length]
+        });
+        colorIndex++;
+      }
+    });
+
+    return perOrderCosts.sort((a, b) => b.value - a.value);
+  }
+
+  getMonthlyCostsTotal(): number {
+    return this.getMonthlyCosts().reduce((sum, cost) => sum + cost.value, 0);
+  }
+
+  getPerOrderCostsTotal(): number {
+    return this.getPerOrderCosts().reduce((sum, cost) => sum + cost.value, 0);
   }
 
   // Format Allegro cost names for better display
@@ -578,11 +677,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     return this.reportData.productionCost + this.totalAllegroCosts + this.totalExpenses;
   }
 
-  protected readonly Object = Object;
   protected readonly Math = Math;
-
-  getAllegroCostBreakdownTotal(): number {
-    if (this.allegroCostBreakdown.length <= 3) return 0;
-    return this.allegroCostBreakdown.slice(3).reduce((sum, item) => sum + item.value, 0);
-  }
+  protected readonly Object = Object;
 }

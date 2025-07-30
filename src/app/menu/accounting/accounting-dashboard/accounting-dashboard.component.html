@@ -132,67 +132,6 @@
       </div>
     </div>
 
-    <!-- Allegro Costs Section -->
-    <div class="allegro-costs-section" *ngIf="allegroCostBreakdown.length > 0">
-      <div class="section-header">
-        <h2 class="section-title">Koszty Allegro</h2>
-        <div class="total-cost">
-          Razem: {{ formatCurrency(totalAllegroCosts) }}
-        </div>
-      </div>
-
-      <!-- Allegro Costs Chart -->
-      <div class="allegro-costs-content">
-        <div class="allegro-chart">
-          <div class="cost-chart">
-            <div class="cost-item" *ngFor="let cost of allegroCostBreakdown">
-              <div class="cost-label">{{ cost.name }}</div>
-              <div class="cost-bar-container">
-                <div
-                  class="cost-bar-fill"
-                  [style.width.%]="getAllegroCostPercentage(cost.value)"
-                  [style.background-color]="cost.color">
-                </div>
-              </div>
-              <div class="cost-value">{{ formatCurrency(cost.value) }}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="allegro-summary">
-          <div class="summary-stats-vertical">
-            <div class="stat-item-vertical">
-              <div class="stat-icon-large">
-                <mat-icon>storefront</mat-icon>
-              </div>
-              <div class="stat-info-large">
-                <div class="stat-label-large">Łączne koszty Allegro</div>
-                <div class="stat-value-large">{{ formatCurrency(totalAllegroCosts) }}</div>
-                <div class="stat-description">
-                  {{ formatPercentage(reportData.revenue > 0 ? (totalAllegroCosts / reportData.revenue) * 100 : 0) }} przychodów
-                </div>
-              </div>
-            </div>
-
-            <div class="stat-breakdown">
-              <div class="breakdown-item" *ngFor="let cost of allegroCostBreakdown.slice(0, 3)">
-                <div class="breakdown-dot" [style.background-color]="cost.color"></div>
-                <div class="breakdown-name">{{ cost.name }}</div>
-                <div class="breakdown-value">{{ formatCurrency(cost.value) }}</div>
-              </div>
-              <div class="breakdown-item" *ngIf="allegroCostBreakdown.length > 3">
-                <div class="breakdown-dot" style="background-color: #9ca3af;"></div>
-                <div class="breakdown-name">Pozostałe ({{ allegroCostBreakdown.length - 3 }})</div>
-                <div class="breakdown-value">
-                  {{ formatCurrency(getAllegroCostBreakdownTotal()) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Charts Section - Three Pie Charts Horizontally -->
     <div class="charts-section-horizontal">
       <!-- Production Costs Pie Chart -->
@@ -354,6 +293,125 @@
       </div>
     </div>
 
+    <!-- Allegro Costs Section -->
+    <div class="allegro-costs-section" *ngIf="getMonthlyCosts().length > 0 || getPerOrderCosts().length > 0">
+      <div class="section-header">
+        <h2 class="section-title">Koszty Allegro</h2>
+        <div class="total-cost">
+          Razem: {{ formatCurrency(getMonthlyCostsTotal() + getPerOrderCostsTotal()) }}
+        </div>
+      </div>
+
+      <!-- Two Tables Side by Side -->
+      <div class="allegro-tables-container">
+        <!-- Monthly Costs Table -->
+        <div class="allegro-table-card">
+          <div class="table-header">
+            <h3 class="table-title">
+              <mat-icon>calendar_month</mat-icon>
+              Koszty miesięczne
+            </h3>
+            <div class="table-total">{{ formatCurrency(getMonthlyCostsTotal()) }}</div>
+          </div>
+
+          <div class="allegro-cost-table" *ngIf="getMonthlyCosts().length > 0; else noMonthlyCosts">
+            <div class="cost-table-item" *ngFor="let cost of getMonthlyCosts()">
+              <div class="cost-name">{{ cost.name }}</div>
+              <div class="cost-bar-container">
+                <div
+                  class="cost-bar-fill monthly"
+                  [style.width.%]="getAllegroCostPercentage(cost.value)">
+                </div>
+              </div>
+              <div class="cost-amount">{{ formatCurrency(cost.value) }}</div>
+            </div>
+          </div>
+
+          <ng-template #noMonthlyCosts>
+            <div class="no-costs-message">
+              <mat-icon>info</mat-icon>
+              <span>Brak kosztów miesięcznych</span>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Per-Order Costs Table -->
+        <div class="allegro-table-card">
+          <div class="table-header">
+            <h3 class="table-title">
+              <mat-icon>shopping_cart</mat-icon>
+              Koszty za oferty
+            </h3>
+            <div class="table-total">{{ formatCurrency(getPerOrderCostsTotal()) }}</div>
+          </div>
+
+          <div class="allegro-cost-table" *ngIf="getPerOrderCosts().length > 0; else noPerOrderCosts">
+            <div class="cost-table-item" *ngFor="let cost of getPerOrderCosts()">
+              <div class="cost-name">{{ cost.name }}</div>
+              <div class="cost-bar-container">
+                <div
+                  class="cost-bar-fill per-order"
+                  [style.width.%]="getAllegroCostPercentage(cost.value)">
+                </div>
+              </div>
+              <div class="cost-amount">{{ formatCurrency(cost.value) }}</div>
+            </div>
+          </div>
+
+          <ng-template #noPerOrderCosts>
+            <div class="no-costs-message">
+              <mat-icon>info</mat-icon>
+              <span>Brak kosztów za oferty</span>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Compact Summary -->
+      <div class="allegro-summary-compact">
+        <div class="summary-stats">
+          <div class="stat-item monthly">
+            <div class="stat-icon">
+              <mat-icon>calendar_month</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Miesięczne</div>
+              <div class="stat-value">{{ formatCurrency(getMonthlyCostsTotal()) }}</div>
+            </div>
+            <div class="stat-percentage">
+              {{ formatPercentage((getMonthlyCostsTotal() + getPerOrderCostsTotal()) > 0 ? (getMonthlyCostsTotal() / (getMonthlyCostsTotal() + getPerOrderCostsTotal())) * 100 : 0) }}
+            </div>
+          </div>
+
+          <div class="stat-item per-order">
+            <div class="stat-icon">
+              <mat-icon>shopping_cart</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Za oferty</div>
+              <div class="stat-value">{{ formatCurrency(getPerOrderCostsTotal()) }}</div>
+            </div>
+            <div class="stat-percentage">
+              {{ formatPercentage((getMonthlyCostsTotal() + getPerOrderCostsTotal()) > 0 ? (getPerOrderCostsTotal() / (getMonthlyCostsTotal() + getPerOrderCostsTotal())) * 100 : 0) }}
+            </div>
+          </div>
+
+          <div class="stat-item total">
+            <div class="stat-icon">
+              <mat-icon>account_balance</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Razem</div>
+              <div class="stat-value total-value">{{ formatCurrency(getMonthlyCostsTotal() + getPerOrderCostsTotal()) }}</div>
+            </div>
+            <div class="stat-percentage">
+              {{ formatPercentage(reportData.revenue > 0 ? ((getMonthlyCostsTotal() + getPerOrderCostsTotal()) / reportData.revenue) * 100 : 0) }} przychodów
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Offers Section with New Design -->
     <div class="offers-section">
       <div class="table-header">
@@ -395,7 +453,7 @@
                    [(ngModel)]="minProfit"
                    (ngModelChange)="onOfferSearch()"
                    placeholder="0"
-                   step="0.01">
+                   step="1">
           </div>
           <div class="filter-group">
             <label class="filter-label">Produkty</label>
