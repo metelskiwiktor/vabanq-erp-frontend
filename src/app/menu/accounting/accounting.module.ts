@@ -44,6 +44,7 @@ import { CreateExpenseDialogModule } from './accounting-expenses/create-expense-
 // Services
 import { ExpenseService } from '../../utility/service/expense.service';
 import {RaportService} from "../../utility/service/raport.service";
+import {VegaChartComponent} from "./components/vega-chart/vega-chart.component";
 
 @NgModule({
   declarations: [
@@ -54,6 +55,7 @@ import {RaportService} from "../../utility/service/raport.service";
     AccountingExpensesComponent,
     AssignInvoiceToExpenseDialogComponent,
     CreateInvoiceExpenseDialogComponent,
+    VegaChartComponent
   ],
   imports: [
     AssignInvoiceDialogModule,

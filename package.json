@@ -44,6 +44,9 @@
     "popper.js": "^1.16.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "vega": "^6.1.2",
+    "vega-embed": "^7.0.2",
+    "vega-lite": "^6.2.0",
     "zone.js": "~0.14.3"
   },
   "devDependencies": {

@@ -412,6 +412,23 @@
       </div>
     </div>
 
+    <div class="chart-section" *ngIf="shouldShowChart()">
+      <div class="section-header">
+        <h2 class="section-title">{{ getChartTitle() }}</h2>
+<!--        <p class="chart-description">-->
+<!--          Wizualizacja pokazuje zależność między przychodem a zyskiem dla każdej oferty.-->
+<!--          Wielkość punktu reprezentuje ilość sprzedanych produktów, a kolor intensywność marży.-->
+<!--        </p>-->
+      </div>
+
+      <div class="chart-container">
+        <app-vega-chart
+          [spec]="chartSpec"
+          [data]="chartData">
+        </app-vega-chart>
+      </div>
+    </div>
+
     <!-- Offers Section with New Design -->
     <div class="offers-section">
       <div class="table-header">
