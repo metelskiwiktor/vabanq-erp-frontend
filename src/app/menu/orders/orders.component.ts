@@ -636,6 +636,14 @@ export class OrdersComponent implements OnInit {
     return 'Brak danych';
   }
 
+  getInvoiceDisplayName(order: Order): string {
+    if (order.invoice && order.invoice.address && order.invoice.address.addressFirstName && order.invoice.address.addressLastName) {
+      return `${order.invoice.address.addressFirstName} ${order.invoice.address.addressLastName}`;
+    } else {
+      return this.getBuyerDisplayName(order.buyer);
+    }
+  }
+
   // Metoda do wyświetlania waluty
   formatCurrency(amount: number, currency: string): string {
     return `${amount.toFixed(2)} ${currency}`;

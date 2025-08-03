@@ -514,7 +514,7 @@
                       <ng-container *ngIf="!order.invoice.hasNip">
                         <div class="details-field">
                           <div class="details-field-label">Imię i nazwisko:</div>
-                          <div class="details-field-value">{{ getBuyerDisplayName(order.buyer) }}</div>
+                          <div class="details-field-value">{{ getInvoiceDisplayName(order) }}</div>
                         </div>
                       </ng-container>
                     </div>
