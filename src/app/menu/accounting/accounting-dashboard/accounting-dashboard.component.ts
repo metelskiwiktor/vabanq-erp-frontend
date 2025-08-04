@@ -82,8 +82,12 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   productFilter = '';
   sortField = '';
   sortDirection: 'asc' | 'desc' = 'asc';
+
+  // Chart specifications and data
   // @ts-ignore
   chartSpec: VisualizationSpec = {};
+  // @ts-ignore
+  roiChartSpec: VisualizationSpec = {}; // New ROI chart spec
   chartData: any[] = [];
 
   constructor(
@@ -103,7 +107,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
   // Generate report
   generateReport(): void {
     this.loadFinancialReport();
-    this.initializeChartSpec();
+    this.initializeChartSpecs(); // Updated method name
   }
 
   // Load financial report from backend
@@ -135,6 +139,269 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
           this.reportGenerated = false;
         }
       });
+  }
+
+  // Get total of all costs (production + allegro + expenses)
+  getTotalAllCosts(): number {
+    if (!this.reportData) return 0;
+    return this.reportData.productionCost + this.totalAllegroCosts + this.totalExpenses;
+  }
+
+  // Initialize both chart specifications - Updated method
+  private initializeChartSpecs(): void {
+    // Original Revenue vs Profit chart with smaller width
+    this.chartSpec = {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      width: 400, // Reduced from 800
+      height: 400, // Reduced from 500
+      transform: [
+        {
+          calculate: 'datum.profit / datum.revenue',
+          as: 'margin'
+        },
+        {
+          calculate: 'datum.productionCost > 0 ? datum.profit / datum.productionCost : 0',
+          as: 'roi'
+        }
+      ],
+      mark: {
+        type: 'circle',
+        opacity: 0.8,
+        stroke: 'white',
+        strokeWidth: 2
+      },
+      encoding: {
+        x: {
+          field: 'revenue',
+          type: 'quantitative',
+          title: 'Przychód (PLN)',
+          axis: {
+            format: ',.0f',
+            grid: true,
+            tickCount: 6 // Reduced from 8
+          }
+        },
+        y: {
+          field: 'profit',
+          type: 'quantitative',
+          title: 'Zysk (PLN)',
+          axis: {
+            format: ',.0f',
+            grid: true,
+            tickCount: 5 // Reduced from 6
+          }
+        },
+        size: {
+          field: 'quantitySold',
+          type: 'quantitative',
+          title: 'Sprzedane ilości',
+          scale: {
+            range: [50, 500], // Reduced from [100, 1000]
+          },
+          legend: {
+            orient: 'right',
+            title: 'Ilość sprzedana',
+            values: [10, 50, 100, 200]
+          }
+        },
+        color: {
+          field: 'margin',
+          type: 'quantitative',
+          title: 'Marża (%)',
+          scale: {
+            scheme: 'blues',
+            domain: [0, 1]
+          },
+          legend: {
+            orient: 'right',
+            title: 'Marża',
+            format: '.1%',
+            tickCount: 4 // Reduced from 5
+          }
+        },
+        tooltip: [
+          {
+            field: 'offerName',
+            type: 'nominal',
+            title: 'Oferta'
+          },
+          {
+            field: 'revenue',
+            type: 'quantitative',
+            title: 'Przychód',
+            format: ',.0f'
+          },
+          {
+            field: 'profit',
+            type: 'quantitative',
+            title: 'Zysk',
+            format: ',.0f'
+          },
+          {
+            field: 'productionCost',
+            type: 'quantitative',
+            title: 'Koszt produkcji',
+            format: ',.0f'
+          },
+          {
+            field: 'quantitySold',
+            type: 'quantitative',
+            title: 'Sprzedane ilości'
+          },
+          {
+            field: 'margin',
+            type: 'quantitative',
+            title: 'Marża',
+            format: '.1%'
+          },
+          {
+            field: 'roi',
+            type: 'quantitative',
+            title: 'ROI',
+            format: '.2f'
+          }
+        ]
+      },
+      config: {
+        axis: {
+          labelFontSize: 10, // Reduced from 12
+          titleFontSize: 12, // Reduced from 14
+          titlePadding: 10 // Reduced from 15
+        },
+        legend: {
+          labelFontSize: 9, // Reduced from 11
+          titleFontSize: 10, // Reduced from 12
+          padding: 8 // Reduced from 10
+        },
+        title: {
+          fontSize: 14, // Reduced from 16
+          anchor: 'start',
+          fontWeight: 600
+        }
+      }
+    };
+
+    // New ROI vs Profit chart
+    this.roiChartSpec = {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      width: 400,
+      height: 400,
+      transform: [
+        {
+          // defensywnie: unikamy dzielenia przez zero
+          calculate: "datum.productionCost > 0 ? datum.profit / datum.productionCost : 0",
+          as: 'roi'
+        }
+      ],
+      mark: {
+        type: 'circle',
+        opacity: 0.8,
+        stroke: 'white',
+        strokeWidth: 2
+      },
+      encoding: {
+        x: {
+          field: 'roi',
+          type: 'quantitative',
+          title: 'Zysk / Koszt (ROI)',
+          axis: {
+            format: '.2f',
+            grid: true,
+            tickCount: 5 // Reduced from 6
+          }
+        },
+        y: {
+          field: 'profit',
+          type: 'quantitative',
+          title: 'Zysk (PLN)',
+          axis: {
+            format: ',.0f',
+            grid: true,
+            tickCount: 6 // Reduced from 8
+          }
+        },
+        size: {
+          field: 'quantitySold',
+          type: 'quantitative',
+          title: 'Ilość sprzedana',
+          scale: {
+            range: [50, 500] // Reduced from [50, 1000]
+          },
+          legend: {
+            orient: 'right',
+            title: 'Ilość sprzedana',
+            values: [10, 50, 100, 200]
+          }
+        },
+        color: {
+          field: 'roi',
+          type: 'quantitative',
+          title: 'ROI',
+          scale: {
+            scheme: 'greens' // Different color scheme to distinguish from first chart
+          },
+          legend: {
+            orient: 'right',
+            title: 'ROI',
+            format: '.2f',
+            tickCount: 4 // Reduced from 5
+          }
+        },
+        tooltip: [
+          {
+            field: 'offerName',
+            type: 'nominal',
+            title: 'Oferta'
+          },
+          {
+            field: 'profit',
+            type: 'quantitative',
+            title: 'Zysk',
+            format: ',.0f'
+          },
+          {
+            field: 'productionCost',
+            type: 'quantitative',
+            title: 'Koszt produkcji',
+            format: ',.0f'
+          },
+          {
+            field: 'quantitySold',
+            type: 'quantitative',
+            title: 'Sprzedane ilości'
+          },
+          {
+            field: 'roi',
+            type: 'quantitative',
+            title: 'Zysk / Koszt (ROI)',
+            format: '.2f'
+          },
+          {
+            field: 'margin',
+            type: 'quantitative',
+            title: 'Marża',
+            format: '.1%'
+          },
+        ]
+      },
+      config: {
+        axis: {
+          labelFontSize: 10,
+          titleFontSize: 12,
+          titlePadding: 10
+        },
+        legend: {
+          labelFontSize: 9,
+          titleFontSize: 10,
+          padding: 8
+        },
+        title: {
+          fontSize: 14,
+          anchor: 'start',
+          fontWeight: 600
+        }
+      }
+    };
   }
 
   // Prepare expense breakdown for pie chart
@@ -677,125 +944,7 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     return offer.offerId;
   }
 
-  // Get total of all costs (production + allegro + expenses)
-  getTotalAllCosts(): number {
-    if (!this.reportData) return 0;
-    return this.reportData.productionCost + this.totalAllegroCosts + this.totalExpenses;
-  }
-
-  private initializeChartSpec(): void {
-    this.chartSpec = {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      width: 800,
-      height: 500,
-      transform: [
-        {
-          // defensywnie: unikamy dzielenia przez zero
-          calculate: "datum.productionCost > 0 ? datum.profit / datum.productionCost : 0",
-          as: 'roi'
-        }
-      ],
-      mark: {
-        type: 'circle',
-        opacity: 0.8,
-        stroke: 'white',
-        strokeWidth: 2
-      },
-      encoding: {
-        x: {
-          field: 'roi',
-          type: 'quantitative',
-          title: 'Zysk / Koszt (ROI)',
-          axis: { format: '.2f', grid: true, tickCount: 6 }
-        },
-        y: {
-          field: 'profit',
-          type: 'quantitative',
-          title: 'Zysk (PLN)',
-          axis: {
-            format: ',.0f',
-            grid: true,
-            tickCount: 8
-          }
-        },
-        size: {
-          field: 'quantitySold',
-          type: 'quantitative',
-          title: 'Ilość sprzedana',
-          scale: {
-            range: [50, 1000]
-          },
-          legend: {
-            orient: 'right',
-            title: 'Ilość sprzedana',
-            values: [10, 50, 100, 200, 500]
-          }
-        },
-        color: {
-          field: 'roi',
-          type: 'quantitative',
-          title: 'ROI',
-          scale: {
-            scheme: 'blues'
-          },
-          legend: {
-            orient: 'right',
-            title: 'ROI',
-            format: '.2f',
-            tickCount: 5
-          }
-        },
-        tooltip: [
-          {
-            field: 'offerName',
-            type: 'nominal',
-            title: 'Oferta'
-          },
-          {
-            field: 'profit',
-            type: 'quantitative',
-            title: 'Zysk',
-            format: ',.0f'
-          },
-          {
-            field: 'productionCost',
-            type: 'quantitative',
-            title: 'Koszt produkcji',
-            format: ',.0f'
-          },
-          {
-            field: 'quantitySold',
-            type: 'quantitative',
-            title: 'Sprzedane ilości'
-          },
-          {
-            field: 'roi',
-            type: 'quantitative',
-            title: 'Zysk / Koszt (ROI)',
-            format: '.2f'
-          }
-        ]
-      },
-      config: {
-        axis: {
-          labelFontSize: 12,
-          titleFontSize: 14,
-          titlePadding: 15
-        },
-        legend: {
-          labelFontSize: 11,
-          titleFontSize: 12,
-          padding: 10
-        },
-        title: {
-          fontSize: 16,
-          anchor: 'start',
-          fontWeight: 600
-        }
-      }
-    };
-  }
-
+  // Prepare data for the Vega-Lite charts
   private prepareChartData(): void {
     if (!this.reportData || !this.reportData.offers) {
       this.chartData = [];
@@ -803,25 +952,38 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     }
 
     this.chartData = this.reportData.offers
+      .filter(offer => offer.quantitySold > 0 && offer.revenue > 0) // Filter out invalid data
       .map(offer => ({
         offerName: offer.offerName,
         offerId: offer.offerId,
         revenue: offer.revenue,
         profit: offer.profit,
         productionCost: offer.productionCost,
-        quantitySold: offer.quantitySold
+        quantitySold: offer.quantitySold,
+        margin: offer.revenue > 0 ? offer.profit / offer.revenue : 0,
+        roi: offer.productionCost > 0 ? 1 + (offer.profit / offer.productionCost) : 0,
+        // Additional fields for enhanced tooltips
+        vatCost: offer.vatCost,
+        allegroCosts: this.getAllegroCostTotal(offer.allegroCosts || {}),
+        materialCost: offer.materialCost,
+        powerCost: offer.powerCost,
+        packagingCost: offer.packagingCost,
+        laborCost: offer.laborCost
       }));
   }
 
   // Get chart title based on current data
   getChartTitle(): string {
-    const offersCount = this.chartData.length;
-    return `Analiza efektywności ofert (${offersCount} ofert)`;
+    return `Przychód vs Zysk`;
   }
 
-  // Check if chart should be displayed
+  // Get ROI chart title
+  getRoiChartTitle(): string {
+    return `ROI vs Zysk`;
+  }
+
+  // Check if charts should be displayed
   shouldShowChart(): boolean {
-    // return true;
     return this.chartData.length > 0 && this.reportGenerated && !this.isLoading;
   }
 

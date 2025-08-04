@@ -1,80 +1,68 @@
-// src/app/menu/accounting/components/vega-chart/vega-chart.component.ts
-import {
-  Component,
-  ElementRef,
-  Input,
-  OnChanges,
-  OnInit,
-  SimpleChanges,
-  ViewChild,
-  OnDestroy
-} from '@angular/core';
+// src/app/shared/components/vega-chart/vega-chart.component.ts
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { VisualizationSpec } from 'vega-embed';
 
-import embed from 'vega-embed';
-import {VisualizationSpec} from 'vega-embed';
-
-import { View } from 'vega';
+// Declare vega-embed as external module
+declare var vegaEmbed: any;
 
 @Component({
   selector: 'app-vega-chart',
-  template: `
-    <div class="vega-chart-container">
-      <div #vegaContainer class="vega-chart"></div>
-    </div>
-  `,
+  template: `<div #chartContainer class="vega-chart-container"></div>`,
   styleUrls: ['./vega-chart.component.css']
 })
-export class VegaChartComponent implements OnInit, OnChanges, OnDestroy {
-  @ViewChild('vegaContainer', { static: true }) vegaContainer!: ElementRef;
+export class VegaChartComponent implements OnChanges, AfterViewInit {
   // @ts-ignore
-  @Input() spec!: VisualizationSpec;
+  @Input() spec: VisualizationSpec = {};
   @Input() data: any[] = [];
 
-  private view: View | null = null;
+  @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
 
-  ngOnInit(): void {
+  private vegaView: any;
+
+  ngAfterViewInit() {
     this.renderChart();
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] || changes['spec']) {
+  ngOnChanges(changes: SimpleChanges) {
+    if ((changes['spec'] || changes['data']) && this.chartContainer) {
       this.renderChart();
     }
   }
 
-  ngOnDestroy(): void {
-    if (this.view) {
-      this.view.finalize();
+  private async renderChart() {
+    if (!this.spec || !this.chartContainer) {
+      return;
     }
-  }
-
-  private async renderChart(): Promise<void> {
-    if (!this.spec || !this.vegaContainer) return;
 
     try {
-      // Clean up previous chart
-      if (this.view) {
-        this.view.finalize();
+      // Clear previous chart
+      if (this.vegaView) {
+        this.vegaView.finalize();
       }
 
-      // Create spec with data
+      // Prepare spec with data
       const specWithData = {
         ...this.spec,
-        data: { values: this.data }
+        data: {
+          values: this.data
+        }
       };
 
-      // Render chart
-      const result = await embed(this.vegaContainer.nativeElement, specWithData, {
-        actions: false,
-        tooltip: true,
-        hover: true,
-        renderer: 'svg'
-      });
+      // Check if vegaEmbed is available (loaded from CDN)
+      if (typeof vegaEmbed !== 'undefined') {
+        const result = await vegaEmbed(this.chartContainer.nativeElement, specWithData, {
+          actions: false, // Hide toolbar
+          renderer: 'svg' // Use SVG renderer for better quality
+        });
 
-      this.view = result.view;
-
+        this.vegaView = result.view;
+      } else {
+        console.error('Vega-Embed not loaded. Please include the CDN script.');
+        this.chartContainer.nativeElement.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Chart loading failed. Vega-Embed library not available.</p>';
+      }
     } catch (error) {
-      console.error('Error rendering Vega-Lite chart:', error);
+      console.error('Error rendering Vega chart:', error);
+      this.chartContainer.nativeElement.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Error rendering chart.</p>';
     }
   }
 }

@@ -1,6 +1,7 @@
-/* src/app/menu/accounting/components/vega-chart/vega-chart.component.css */
+/* src/app/shared/components/vega-chart/vega-chart.component.css */
 .vega-chart-container {
   width: 100%;
+  height: auto;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -10,52 +11,20 @@
   padding: 1rem;
 }
 
-.vega-chart {
+.vega-chart-container > div {
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
-/* Override Vega-Lite default styles */
-:host ::ng-deep .vega-embed {
-  width: 100% !important;
+/* Ensure Vega charts are responsive */
+.vega-chart-container canvas,
+.vega-chart-container svg {
+  max-width: 100%;
+  height: auto;
 }
 
-:host ::ng-deep .vega-embed summary {
-  display: none !important;
-}
-
-:host ::ng-deep .vega-embed details {
-  width: 100% !important;
-}
-
-:host ::ng-deep .vega-embed details[open] summary {
-  display: none !important;
-}
-
-/* Tooltip styling */
-:host ::ng-deep #vg-tooltip-element {
-  background: rgba(0, 0, 0, 0.9) !important;
-  color: white !important;
-  border-radius: 6px !important;
-  padding: 8px 12px !important;
-  font-size: 0.875rem !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-:host ::ng-deep #vg-tooltip-element .key {
-  color: #e5e7eb !important;
-}
-
-:host ::ng-deep #vg-tooltip-element .value {
-  color: white !important;
-  font-weight: 600 !important;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .vega-chart-container {
-    min-height: 300px;
-    padding: 0.5rem;
-  }
+/* Loading state styling */
+.vega-chart-container p {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }

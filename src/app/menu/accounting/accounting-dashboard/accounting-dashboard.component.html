@@ -412,20 +412,34 @@
       </div>
     </div>
 
-    <div class="chart-section" *ngIf="shouldShowChart()">
+    <!-- Dual Charts Section - Updated to show two charts side by side -->
+    <div class="dual-charts-section" *ngIf="shouldShowChart()">
       <div class="section-header">
-        <h2 class="section-title">{{ getChartTitle() }}</h2>
-<!--        <p class="chart-description">-->
-<!--          Wizualizacja pokazuje zależność między przychodem a zyskiem dla każdej oferty.-->
-<!--          Wielkość punktu reprezentuje ilość sprzedanych produktów, a kolor intensywność marży.-->
-<!--        </p>-->
+        <h2 class="section-title">Analiza efektywności i ROI ofert</h2>
+        <p class="chart-description">
+          Wizualizacja pokazuje zależności między przychodem, zyskiem i ROI dla każdej oferty.
+          Wielkość punktu reprezentuje ilość sprzedanych produktów.
+        </p>
       </div>
 
-      <div class="chart-container">
-        <app-vega-chart
-          [spec]="chartSpec"
-          [data]="chartData">
-        </app-vega-chart>
+      <div class="dual-charts-container">
+        <!-- Left Chart: Revenue vs Profit -->
+        <div class="chart-half">
+          <div class="chart-title">{{ getChartTitle() }}</div>
+          <app-vega-chart
+            [spec]="chartSpec"
+            [data]="chartData">
+          </app-vega-chart>
+        </div>
+
+        <!-- Right Chart: ROI vs Profit -->
+        <div class="chart-half">
+          <div class="chart-title">{{ getRoiChartTitle() }}</div>
+          <app-vega-chart
+            [spec]="roiChartSpec"
+            [data]="chartData">
+          </app-vega-chart>
+        </div>
       </div>
     </div>
 
