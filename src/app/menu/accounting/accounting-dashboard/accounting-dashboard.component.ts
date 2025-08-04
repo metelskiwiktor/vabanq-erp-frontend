@@ -683,7 +683,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     return this.reportData.productionCost + this.totalAllegroCosts + this.totalExpenses;
   }
 
-  // Initialize Vega-Lite chart specification
   private initializeChartSpec(): void {
     this.chartSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
@@ -691,11 +690,8 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
       height: 500,
       transform: [
         {
-          calculate: 'datum.profit / datum.revenue',
-          as: 'margin'
-        },
-        {
-          calculate: 'datum.profit / datum.productionCost',
+          // defensywnie: unikamy dzielenia przez zero
+          calculate: "datum.productionCost > 0 ? datum.profit / datum.productionCost : 0",
           as: 'roi'
         }
       ],
@@ -707,14 +703,10 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
       },
       encoding: {
         x: {
-          field: 'revenue',
+          field: 'roi',
           type: 'quantitative',
-          title: 'Przychód (PLN)',
-          axis: {
-            format: ',.0f',
-            grid: true,
-            tickCount: 8
-          }
+          title: 'Zysk / Koszt (ROI)',
+          axis: { format: '.2f', grid: true, tickCount: 6 }
         },
         y: {
           field: 'profit',
@@ -723,16 +715,15 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
           axis: {
             format: ',.0f',
             grid: true,
-            tickCount: 6
+            tickCount: 8
           }
         },
         size: {
           field: 'quantitySold',
           type: 'quantitative',
-          title: 'Sprzedane ilości',
+          title: 'Ilość sprzedana',
           scale: {
-            range: [100, 1000],
-            type: 'sqrt'
+            range: [50, 1000]
           },
           legend: {
             orient: 'right',
@@ -741,17 +732,16 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
           }
         },
         color: {
-          field: 'margin',
+          field: 'roi',
           type: 'quantitative',
-          title: 'Marża (%)',
+          title: 'ROI',
           scale: {
-            scheme: 'blues',
-            domain: [0, 1]
+            scheme: 'blues'
           },
           legend: {
             orient: 'right',
-            title: 'Marża',
-            format: '.1%',
+            title: 'ROI',
+            format: '.2f',
             tickCount: 5
           }
         },
@@ -760,12 +750,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
             field: 'offerName',
             type: 'nominal',
             title: 'Oferta'
-          },
-          {
-            field: 'revenue',
-            type: 'quantitative',
-            title: 'Przychód',
-            format: ',.0f'
           },
           {
             field: 'profit',
@@ -785,15 +769,9 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
             title: 'Sprzedane ilości'
           },
           {
-            field: 'margin',
-            type: 'quantitative',
-            title: 'Marża',
-            format: '.1%'
-          },
-          {
             field: 'roi',
             type: 'quantitative',
-            title: 'ROI',
+            title: 'Zysk / Koszt (ROI)',
             format: '.2f'
           }
         ]
@@ -818,7 +796,6 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     };
   }
 
-  // Prepare data for the Vega-Lite chart
   private prepareChartData(): void {
     if (!this.reportData || !this.reportData.offers) {
       this.chartData = [];
@@ -826,23 +803,13 @@ export class AccountingDashboardComponent implements OnInit, OnDestroy {
     }
 
     this.chartData = this.reportData.offers
-      .filter(offer => offer.quantitySold > 0 && offer.revenue > 0) // Filter out invalid data
       .map(offer => ({
         offerName: offer.offerName,
         offerId: offer.offerId,
         revenue: offer.revenue,
         profit: offer.profit,
         productionCost: offer.productionCost,
-        quantitySold: offer.quantitySold,
-        margin: offer.revenue > 0 ? offer.profit / offer.revenue : 0,
-        roi: offer.productionCost > 0 ? offer.profit / offer.productionCost : 0,
-        // Additional fields for enhanced tooltips
-        vatCost: offer.vatCost,
-        allegroCosts: this.getAllegroCostTotal(offer.allegroCosts || {}),
-        materialCost: offer.materialCost,
-        powerCost: offer.powerCost,
-        packagingCost: offer.packagingCost,
-        laborCost: offer.laborCost
+        quantitySold: offer.quantitySold
       }));
   }
 
