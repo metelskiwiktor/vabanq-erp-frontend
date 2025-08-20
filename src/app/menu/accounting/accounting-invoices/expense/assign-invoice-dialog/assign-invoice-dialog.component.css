@@ -1,7 +1,7 @@
 /* assign-invoice-dialog.component.css - Updated with current assignment styling */
 
 .assign-dialog-container {
-  max-width: 800px;
+  max-width: 900px;
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
@@ -672,4 +672,107 @@
   font-size: 14px;
   color: #374151;
   line-height: 1.4;
+}
+
+/* Month Navigator Styles */
+.month-navigator {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.month-nav-header {
+  margin-bottom: 12px;
+}
+
+.nav-label {
+  font-weight: 500;
+  color: #475569;
+  font-size: 14px;
+}
+
+.month-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-arrow {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.nav-arrow:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #475569;
+}
+
+.month-year-selectors {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  max-width: 300px;
+}
+
+.month-selector, .year-selector {
+  flex: 1;
+}
+
+.month-selector ::ng-deep .mat-mdc-form-field-wrapper,
+.year-selector ::ng-deep .mat-mdc-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.current-month-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #1e40af;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+.current-month-info .info-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Create form month selector styles */
+.month-selector-create {
+  width: 100%;
+}
+
+.create-month-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.create-month-year-selectors {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.create-month-year-selectors .month-selector,
+.create-month-year-selectors .year-selector {
+  flex: 1;
 }

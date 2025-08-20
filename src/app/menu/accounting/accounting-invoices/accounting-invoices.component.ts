@@ -130,25 +130,29 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
   loadInvoiceAssignmentStatuses(): void {
     if (this.invoices.length === 0) return;
 
-    // Get the year and month based on current filter
-    const targetDate = this.useCustomDateRange && this.dateFrom ?
-      this.dateFrom :
-      this.selectedMonth;
+    // Get unique months from current invoices to check assignment status efficiently
+    const invoiceMonths = new Set<string>();
+    this.invoices.forEach(invoice => {
+      const invoiceDate = new Date(invoice.createdAt);
+      const monthKey = `${invoiceDate.getFullYear()}-${invoiceDate.getMonth() + 1}`;
+      invoiceMonths.add(monthKey);
+    });
 
-    const yearMonth = {
-      year: targetDate.getFullYear(),
-      month: targetDate.getMonth() + 1
-    };
+    // Reset assignment status
+    this.invoiceAssignmentStatus = {};
+    
+    // Load expenses only for months that have invoices
+    const expenseLoadPromises = Array.from(invoiceMonths).map(monthKey => {
+      const [year, month] = monthKey.split('-').map(Number);
+      return this.expenseService.listExpensesForMonth({ year, month }).toPromise();
+    });
 
-    this.expenseService.listExpensesForMonth(yearMonth).subscribe({
-      next: (expenses) => {
-        // Reset assignment status
-        this.invoiceAssignmentStatus = {};
+    Promise.all(expenseLoadPromises).then(expenseArrays => {
+      // Build a map of invoice ID to expense info from all loaded months
+      const invoiceToExpenseMap = new Map<string, { expenseId: string; expenseName: string }>();
 
-        // Build a map of invoice ID to expense info
-        const invoiceToExpenseMap = new Map<string, { expenseId: string; expenseName: string }>();
-
-        expenses.forEach(expense => {
+      expenseArrays.forEach(expenses => {
+        expenses?.forEach(expense => {
           expense.items?.forEach(item => {
             if (item.costInvoiceId) {
               invoiceToExpenseMap.set(item.costInvoiceId, {
@@ -158,26 +162,25 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
             }
           });
         });
+      });
 
-        // Update assignment status for current invoices
-        this.invoices.forEach(invoice => {
-          const assignmentInfo = invoiceToExpenseMap.get(invoice.id);
-          this.invoiceAssignmentStatus[invoice.id] = {
-            isAssigned: !!assignmentInfo,
-            expenseId: assignmentInfo?.expenseId,
-            expenseName: assignmentInfo?.expenseName
-          };
-        });
-      },
-      error: (error) => {
-        console.error('Error loading invoice assignment statuses:', error);
-        // Initialize empty status for all invoices
-        this.invoices.forEach(invoice => {
-          this.invoiceAssignmentStatus[invoice.id] = {
-            isAssigned: false
-          };
-        });
-      }
+      // Update assignment status for current invoices
+      this.invoices.forEach(invoice => {
+        const assignmentInfo = invoiceToExpenseMap.get(invoice.id);
+        this.invoiceAssignmentStatus[invoice.id] = {
+          isAssigned: !!assignmentInfo,
+          expenseId: assignmentInfo?.expenseId,
+          expenseName: assignmentInfo?.expenseName
+        };
+      });
+    }).catch(error => {
+      console.error('Error loading invoice assignment statuses:', error);
+      // Initialize empty status for all invoices
+      this.invoices.forEach(invoice => {
+        this.invoiceAssignmentStatus[invoice.id] = {
+          isAssigned: false
+        };
+      });
     });
   }
 
@@ -505,36 +508,52 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
 
   // Actions
   openExpenseDialog(invoice: CostInvoice): void {
-    const dialogData: AssignInvoiceDialogData = {
-      invoice: invoice,
-      currentExpenseId: this.getAssignedExpenseId(invoice)
-    };
+    console.log('openExpenseDialog called with invoice:', invoice);
+    
+    try {
+      const currentExpenseId = this.getAssignedExpenseId(invoice);
+      console.log('Current expense ID:', currentExpenseId);
+      
+      const dialogData: AssignInvoiceDialogData = {
+        invoice: invoice,
+        currentExpenseId: currentExpenseId
+      };
+      
+      console.log('Dialog data prepared:', dialogData);
 
-    const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
-      width: '800px',
-      maxWidth: '95vw',
-      maxHeight: '90vh',
-      data: dialogData,
-      panelClass: ['custom-dialog-panel', 'expense-dialog'],
-      disableClose: false,
-      autoFocus: false
-    });
+      console.log('Opening dialog...');
+      const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
+        width: '800px',
+        maxWidth: '95vw',
+        maxHeight: '90vh',
+        data: dialogData,
+        panelClass: ['custom-dialog-panel', 'expense-dialog'],
+        disableClose: false,
+        autoFocus: false
+      });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.success) {
-        console.log('Invoice assignment result:', result);
+      console.log('Dialog opened, setting up afterClosed subscription...');
+      dialogRef.afterClosed().subscribe(result => {
+        console.log('Dialog closed with result:', result);
+        if (result?.success) {
+          console.log('Invoice assignment result:', result);
 
-        this.snackBar.open(
-          result.action === 'created'
-            ? 'Wydatek został utworzony i faktura została przypisana'
-            : 'Faktura została przypisana do wydatku',
-          'Zamknij',
-          { duration: 3000, panelClass: ['success-snackbar'] }
-        );
+          this.snackBar.open(
+            result.action === 'created'
+              ? 'Wydatek został utworzony i faktura została przypisana'
+              : 'Faktura została przypisana do wydatku',
+            'Zamknij',
+            { duration: 3000, panelClass: ['success-snackbar'] }
+          );
 
-        this.loadInvoices();
-      }
-    });
+          this.loadInvoices();
+        }
+      });
+      
+      console.log('openExpenseDialog completed successfully');
+    } catch (error) {
+      console.error('Error in openExpenseDialog:', error);
+    }
   }
 
   // Utility methods

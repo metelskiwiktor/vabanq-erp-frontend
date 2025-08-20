@@ -11,7 +11,7 @@
         <p class="dialog-subtitle">
           Przypisz fakturę {{ data.invoice.number }} do istniejącego wydatku lub utwórz nowy
           <br>
-          <small>Widok filtrowany dla: {{ formatPeriod(data.invoice.createdAt) }}</small>
+          <small>Możesz przypisać do wydatku z dowolnego miesiąca</small>
         </p>
       </div>
     </div>
@@ -122,6 +122,47 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+
+        </div>
+        
+        <!-- Month Navigator -->
+        <div class="month-navigator">
+          <div class="month-nav-header">
+            <span class="nav-label">Miesiąc wydatków:</span>
+          </div>
+          
+          <div class="month-nav-controls">
+            <button mat-icon-button (click)="previousMonth()" title="Poprzedni miesiąc" class="nav-arrow">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            
+            <div class="month-year-selectors" *ngIf="selectedMonth">
+              <mat-form-field appearance="outline" class="month-selector">
+                <mat-select [value]="selectedMonth.month" (selectionChange)="onMonthChange($event.value)">
+                  <mat-option *ngFor="let month of availableMonths" [value]="month.value">
+                    {{ month.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="year-selector">
+                <mat-select [value]="selectedMonth.year" (selectionChange)="onYearChange($event.value)">
+                  <mat-option *ngFor="let year of availableYears" [value]="year">
+                    {{ year }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            
+            <button mat-icon-button (click)="nextMonth()" title="Następny miesiąc" class="nav-arrow">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+        </div>
+        
+        <div class="current-month-info" *ngIf="selectedMonth">
+          <mat-icon class="info-icon">calendar_today</mat-icon>
+          <span>Wyświetlane wydatki z: {{ getMonthName(selectedMonth.month) }} {{ selectedMonth.year }}</span>
         </div>
       </div>
 
@@ -130,7 +171,7 @@
         <!-- Loading State -->
         <div *ngIf="isLoading" class="loading-state">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Ładowanie wydatków dla {{ formatPeriod(data.invoice.createdAt) }}...</p>
+          <p>Ładowanie wydatków...</p>
         </div>
 
         <!-- Expense List -->
@@ -196,11 +237,12 @@
           <mat-icon class="empty-icon">business_center</mat-icon>
           <h3>Brak wydatków</h3>
           <p *ngIf="availableExpenses.length === 0">
-            Nie znaleziono żadnych wydatków dla {{ formatPeriod(data.invoice.createdAt) }}.
+            Nie znaleziono żadnych wydatków w systemie.
             Utwórz pierwszy wydatek klikając przycisk "Utwórz nowy wydatek" powyżej.
           </p>
           <p *ngIf="availableExpenses.length > 0">
-            Nie znaleziono wydatków spełniających kryteria wyszukiwania w okresie {{ formatPeriod(data.invoice.createdAt) }}.
+            Nie znaleziono wydatków spełniających kryteria wyszukiwania.
+            <span *ngIf="selectedMonth">Spróbuj wybrać inny miesiąc lub wyczyść filtr miesiąca.</span>
           </p>
         </div>
       </div>
@@ -281,7 +323,7 @@
             </mat-form-field>
           </div>
 
-          <div class="form-row">
+          <div class="form-row" *ngIf="!isVariableType">
             <mat-checkbox formControlName="cyclic" class="cyclic-checkbox">
               Wydatek cykliczny (powtarzający się co miesiąc)
             </mat-checkbox>
@@ -293,11 +335,43 @@
           <div class="info-card">
             <div class="info-header">
               <mat-icon class="info-icon">calendar_today</mat-icon>
-              <span class="info-title">Data utworzenia</span>
+              <span class="info-title">Miesiąc wydatku</span>
             </div>
-            <p class="info-text">
-              Wydatek zostanie utworzony z datą faktury: {{ formatPeriod(data.invoice.createdAt) }}
-            </p>
+            <div class="form-row">
+              <div class="month-selector-create">
+                <div class="create-month-nav-controls">
+                  <button type="button" mat-icon-button (click)="previousMonth()" title="Poprzedni miesiąc" class="nav-arrow">
+                    <mat-icon>chevron_left</mat-icon>
+                  </button>
+                  
+                  <div class="create-month-year-selectors" *ngIf="selectedMonth">
+                    <mat-form-field appearance="outline" class="month-selector">
+                      <mat-label>Miesiąc</mat-label>
+                      <mat-select [value]="selectedMonth.month" (selectionChange)="onMonthChange($event.value)">
+                        <mat-option *ngFor="let month of availableMonths" [value]="month.value">
+                          {{ month.name }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                    
+                    <mat-form-field appearance="outline" class="year-selector">
+                      <mat-label>Rok</mat-label>
+                      <mat-select [value]="selectedMonth.year" (selectionChange)="onYearChange($event.value)">
+                        <mat-option *ngFor="let year of availableYears" [value]="year">
+                          {{ year }}
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  
+                  <button type="button" mat-icon-button (click)="nextMonth()" title="Następny miesiąc" class="nav-arrow">
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                </div>
+                
+                <mat-hint>Wybierz miesiąc, do którego ma należeć nowy wydatek</mat-hint>
+              </div>
+            </div>
           </div>
         </div>
       </form>
