@@ -92,6 +92,13 @@ export class CostInvoiceService {
   }
 
   /**
+   * Get cost invoice by ID
+   */
+  getCostInvoiceById(id: string): Observable<CostInvoice> {
+    return this.http.get<CostInvoice>(`${this.apiUrl}/api/invoices/costs/${id}`);
+  }
+
+  /**
    * Synchronize cost invoices with Infakt for specific month
    * @param infaktApiKey - API key for Infakt
    * @param month - Target month in YYYY-MM format

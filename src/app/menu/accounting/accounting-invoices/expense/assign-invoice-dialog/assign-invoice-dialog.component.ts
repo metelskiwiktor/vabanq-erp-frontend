@@ -37,6 +37,7 @@ interface ExpenseOption {
 export interface AssignInvoiceDialogData {
   invoice: CostInvoice;
   currentExpenseId?: string; // Add current expense ID for pre-selection
+  targetMonth?: { year: number; month: number }; // Target month for showing expenses
 }
 
 type DialogView = 'assign' | 'create';
@@ -118,13 +119,16 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
       this.initializeAvailableOptions();
       console.log('Available years and months initialized');
       
-      // Set initial month to invoice month with fallback
-      console.log('Setting initial month. Invoice month:', this.invoiceMonth);
-      if (this.invoiceMonth && this.invoiceMonth.year && this.invoiceMonth.month) {
+      // Set initial month with priority: targetMonth > invoiceMonth > current month
+      console.log('Setting initial month. Target month:', this.data.targetMonth, 'Invoice month:', this.invoiceMonth);
+      if (this.data.targetMonth && this.data.targetMonth.year && this.data.targetMonth.month) {
+        this.selectedMonth = { ...this.data.targetMonth };
+        console.log('Selected month set from target month (current expense month):', this.selectedMonth);
+      } else if (this.invoiceMonth && this.invoiceMonth.year && this.invoiceMonth.month) {
         this.selectedMonth = { ...this.invoiceMonth };
         console.log('Selected month set from invoice month:', this.selectedMonth);
       } else {
-        // Fallback to current month if invoice month is invalid
+        // Fallback to current month if both target and invoice months are invalid
         const now = new Date();
         this.selectedMonth = {
           year: now.getFullYear(),
@@ -460,9 +464,13 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
   // View switching
   switchToCreateView(): void {
     this.currentView = 'create';
-    // Set default month to invoice month if not already selected
+    // Set default month with priority: targetMonth > current selectedMonth > invoiceMonth
     if (!this.selectedMonth) {
-      this.selectedMonth = this.invoiceMonth;
+      if (this.data.targetMonth && this.data.targetMonth.year && this.data.targetMonth.month) {
+        this.selectedMonth = this.data.targetMonth;
+      } else {
+        this.selectedMonth = this.invoiceMonth;
+      }
     }
     
     console.log('Selected month for new expense:', this.selectedMonth);

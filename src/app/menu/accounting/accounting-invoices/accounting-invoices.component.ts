@@ -504,46 +504,85 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
       const currentExpenseId = this.getAssignedExpenseId(invoice);
       console.log('Current expense ID:', currentExpenseId);
       
-      const dialogData: AssignInvoiceDialogData = {
-        invoice: invoice,
-        currentExpenseId: currentExpenseId
-      };
-      
-      console.log('Dialog data prepared:', dialogData);
-
-      console.log('Opening dialog...');
-      const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
-        width: '800px',
-        maxWidth: '95vw',
-        maxHeight: '90vh',
-        data: dialogData,
-        panelClass: ['custom-dialog-panel', 'expense-dialog'],
-        disableClose: false,
-        autoFocus: false
-      });
-
-      console.log('Dialog opened, setting up afterClosed subscription...');
-      dialogRef.afterClosed().subscribe(result => {
-        console.log('Dialog closed with result:', result);
-        if (result?.success) {
-          console.log('Invoice assignment result:', result);
-
-          this.snackBar.open(
-            result.action === 'created'
-              ? 'Wydatek został utworzony i faktura została przypisana'
-              : 'Faktura została przypisana do wydatku',
-            'Zamknij',
-            { duration: 3000, panelClass: ['success-snackbar'] }
-          );
-
-          this.loadInvoices();
-        }
-      });
+      // If there's a current expense, get its month to pre-select in dialog
+      if (currentExpenseId) {
+        this.expenseService.getExpense(currentExpenseId).subscribe({
+          next: (expense) => {
+            console.log('Loaded current expense:', expense);
+            
+            // Extract month from expense createdAt
+            const expenseDate = new Date(expense.createdAt);
+            const targetMonth = {
+              year: expenseDate.getFullYear(),
+              month: expenseDate.getMonth() + 1
+            };
+            
+            const dialogData: AssignInvoiceDialogData = {
+              invoice: invoice,
+              currentExpenseId: currentExpenseId,
+              targetMonth: targetMonth
+            };
+            
+            this.openDialog(dialogData);
+          },
+          error: (error) => {
+            console.error('Error loading current expense:', error);
+            // Fallback to dialog without target month
+            const dialogData: AssignInvoiceDialogData = {
+              invoice: invoice,
+              currentExpenseId: currentExpenseId
+            };
+            
+            this.openDialog(dialogData);
+          }
+        });
+      } else {
+        // No current expense, open dialog without target month
+        const dialogData: AssignInvoiceDialogData = {
+          invoice: invoice,
+          currentExpenseId: currentExpenseId
+        };
+        
+        this.openDialog(dialogData);
+      }
       
       console.log('openExpenseDialog completed successfully');
     } catch (error) {
       console.error('Error in openExpenseDialog:', error);
     }
+  }
+
+  private openDialog(dialogData: AssignInvoiceDialogData): void {
+    console.log('Dialog data prepared:', dialogData);
+
+    console.log('Opening dialog...');
+    const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: dialogData,
+      panelClass: ['custom-dialog-panel', 'expense-dialog'],
+      disableClose: false,
+      autoFocus: false
+    });
+
+    console.log('Dialog opened, setting up afterClosed subscription...');
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('Dialog closed with result:', result);
+      if (result?.success) {
+        console.log('Invoice assignment result:', result);
+
+        this.snackBar.open(
+          result.action === 'created'
+            ? 'Wydatek został utworzony i faktura została przypisana'
+            : 'Faktura została przypisana do wydatku',
+          'Zamknij',
+          { duration: 3000, panelClass: ['success-snackbar'] }
+        );
+
+        this.loadInvoices();
+      }
+    });
   }
 
   // Utility methods

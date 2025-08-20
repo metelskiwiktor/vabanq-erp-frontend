@@ -125,7 +125,10 @@
           </div>
 
           <div class="expense-items">
-            <div *ngFor="let item of expense.items" class="expense-item-row">
+            <div *ngFor="let item of expense.items" 
+                 class="expense-item-row" 
+                 [class.clickable]="isInvoiceItem(item)"
+                 (click)="isInvoiceItem(item) ? onInvoiceItemClick(item, expense.id) : null">
               <div class="item-info">
                 <div class="item-name">{{ item.name }}</div>
                 <div class="item-meta">
@@ -134,6 +137,9 @@
                   </span>
                   <span *ngIf="isInvoiceItem(item)" class="item-invoice-id">
                     ID: {{ item.costInvoiceId }}
+                  </span>
+                  <span *ngIf="isInvoiceItem(item)" class="item-click-hint">
+                    Kliknij aby zarządzać przypisaniem
                   </span>
                 </div>
               </div>

@@ -12,6 +12,11 @@ import {
 } from '../../../utility/service/expense.service';
 import { CreateExpenseDialogComponent, CreateExpenseDialogData } from './create-expense-dialog/create-expense-dialog.component';
 import {ElectricityUsageResponse, ElectricityUsageService} from "../../../utility/service/electricity-usage.service";
+import {
+  AssignInvoiceDialogComponent,
+  AssignInvoiceDialogData
+} from '../accounting-invoices/expense/assign-invoice-dialog/assign-invoice-dialog.component';
+import { CostInvoiceService, CostInvoice } from '../../../utility/service/cost-invoice.service';
 
 interface ExpenseItem {
   expanded: boolean;
@@ -92,7 +97,8 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private expenseService: ExpenseService,
     private dialog: MatDialog,
-    private electricityService: ElectricityUsageService
+    private electricityService: ElectricityUsageService,
+    private costInvoiceService: CostInvoiceService
   ) {}
 
   ngOnInit(): void {
@@ -453,6 +459,92 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
           this.isElectricitySaving = false;
         }
       });
+  }
+
+  // Click handler for invoice items
+  onInvoiceItemClick(item: ExpenseEntry, expenseId: string): void {
+    if (!item.costInvoiceId) {
+      console.warn('No cost invoice ID found for item:', item);
+      return;
+    }
+
+    console.log('Clicked on invoice item:', item);
+
+    // Load the cost invoice details
+    this.costInvoiceService.getCostInvoiceById(item.costInvoiceId).subscribe({
+      next: (invoice) => {
+        console.log('Loaded cost invoice:', invoice);
+
+        // Get current expense details for target month
+        this.expenseService.getExpense(expenseId).subscribe({
+          next: (expense) => {
+            console.log('Loaded current expense:', expense);
+
+            // Extract month from expense createdAt
+            const expenseDate = new Date(expense.createdAt);
+            const targetMonth = {
+              year: expenseDate.getFullYear(),
+              month: expenseDate.getMonth() + 1
+            };
+
+            const dialogData: AssignInvoiceDialogData = {
+              invoice: invoice,
+              currentExpenseId: expenseId,
+              targetMonth: targetMonth
+            };
+
+            this.openAssignInvoiceDialog(dialogData);
+          },
+          error: (error) => {
+            console.error('Error loading current expense:', error);
+            // Fallback without target month
+            const dialogData: AssignInvoiceDialogData = {
+              invoice: invoice,
+              currentExpenseId: expenseId
+            };
+
+            this.openAssignInvoiceDialog(dialogData);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error loading cost invoice:', error);
+        this.snackBar.open('Błąd podczas ładowania faktury kosztowej', 'Zamknij', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  private openAssignInvoiceDialog(dialogData: AssignInvoiceDialogData): void {
+    console.log('Opening assign invoice dialog with data:', dialogData);
+
+    const dialogRef = this.dialog.open(AssignInvoiceDialogComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: dialogData,
+      panelClass: ['custom-dialog-panel', 'expense-dialog'],
+      disableClose: false,
+      autoFocus: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('Assign invoice dialog closed with result:', result);
+      if (result?.success) {
+        this.snackBar.open(
+          result.action === 'created'
+            ? 'Wydatek został utworzony i faktura została przypisana'
+            : 'Faktura została przypisana do wydatku',
+          'Zamknij',
+          { duration: 3000, panelClass: ['success-snackbar'] }
+        );
+
+        // Reload expenses to reflect changes
+        this.loadExpenses();
+      }
+    });
   }
 
 }
