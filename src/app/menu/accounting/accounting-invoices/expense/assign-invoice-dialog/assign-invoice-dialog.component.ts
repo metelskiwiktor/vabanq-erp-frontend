@@ -555,15 +555,8 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
       }
       
       console.log('Creating expense for month:', selectedMonth);
-      const expenseDate = new Date(selectedMonth.year, selectedMonth.month - 1, 1);
-      
-      // Validate created date
-      if (isNaN(expenseDate.getTime())) {
-        console.error('Invalid expense date created:', expenseDate, 'from month:', selectedMonth);
-        throw new Error('Nie można utworzyć poprawnej daty dla wydatku');
-      }
 
-      // Create expense request with selected month date
+      // Create expense request with YearMonth
       const createRequest: CreateExpenseRequest = {
         name: formValue.name,
         description: formValue.description || undefined,
@@ -571,7 +564,7 @@ export class AssignInvoiceDialogComponent implements OnInit, OnDestroy {
         cyclic: formValue.cyclic || false,
         category: formValue.category,
         tags: tags,
-        createdAt: expenseDate.toISOString() // Use selected month date for expense
+        createdAt: `${selectedMonth.year}-${selectedMonth.month.toString().padStart(2, '0')}`
       };
 
       // Create the expense

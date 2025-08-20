@@ -44,7 +44,7 @@ export interface CreateExpenseRequest {
   cyclic: boolean;
   category: ExpenseCategory;
   tags: string[];
-  createdAt?: string;
+  createdAt?: string; // YearMonth format: YYYY-MM
 }
 
 export interface AttachInvoiceRequest {
@@ -63,7 +63,7 @@ export interface UpdateExpenseRequest {
   type?: 'FIXED' | 'VARIABLE';
   cyclic?: boolean;
   category?: ExpenseCategory;
-  createdAt?: string;
+  createdAt?: string; // YearMonth format: YYYY-MM
 }
 
 export interface UpdateExpenseItemRequest {

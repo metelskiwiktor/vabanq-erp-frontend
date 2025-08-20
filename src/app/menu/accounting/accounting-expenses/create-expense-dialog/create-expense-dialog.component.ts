@@ -355,7 +355,6 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
   private async createExpense(): Promise<void> {
     const formValue = this.expenseForm.value;
     const tags = this.parseTags(formValue.tags);
-    const createdAtString = `${this.selectedMonth.getFullYear()}-${String(this.selectedMonth.getMonth() + 1).padStart(2, '0')}-01T12:00:00`;
 
     const createRequest: CreateExpenseRequest = {
       name: formValue.name,
@@ -364,7 +363,7 @@ export class CreateExpenseDialogComponent implements OnInit, OnDestroy {
       cyclic: formValue.cyclic || false,
       category: formValue.category,
       tags: tags,
-      createdAt: createdAtString
+      createdAt: `${this.selectedMonth.getFullYear()}-${(this.selectedMonth.getMonth() + 1).toString().padStart(2, '0')}`
     };
 
     const createdExpense = await this.expenseService.createExpense(createRequest).toPromise();
