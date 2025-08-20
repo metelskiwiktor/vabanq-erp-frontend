@@ -547,4 +547,33 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Delete expense with confirmation
+  deleteExpense(expense: ExpenseItem): void {
+    const confirmMessage = `Czy na pewno chcesz usunąć wydatek "${expense.name}"?\n\nTa akcja jest nieodwracalna.`;
+    
+    if (confirm(confirmMessage)) {
+      console.log('Deleting expense:', expense);
+
+      this.expenseService.deleteExpense(expense.id).subscribe({
+        next: () => {
+          console.log('Expense deleted successfully');
+          this.snackBar.open('Wydatek został usunięty', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
+
+          // Reload expenses to reflect changes
+          this.loadExpenses();
+        },
+        error: (error) => {
+          console.error('Error deleting expense:', error);
+          this.snackBar.open('Błąd podczas usuwania wydatku', 'Zamknij', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      });
+    }
+  }
+
 }
