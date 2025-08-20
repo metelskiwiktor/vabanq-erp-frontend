@@ -126,61 +126,51 @@ export class AccountingInvoicesComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Load invoice assignment statuses
+  // Load invoice assignment statuses using new endpoint
   loadInvoiceAssignmentStatuses(): void {
     if (this.invoices.length === 0) return;
 
-    // Get unique months from current invoices to check assignment status efficiently
-    const invoiceMonths = new Set<string>();
-    this.invoices.forEach(invoice => {
-      const invoiceDate = new Date(invoice.createdAt);
-      const monthKey = `${invoiceDate.getFullYear()}-${invoiceDate.getMonth() + 1}`;
-      invoiceMonths.add(monthKey);
-    });
-
     // Reset assignment status
     this.invoiceAssignmentStatus = {};
-    
-    // Load expenses only for months that have invoices
-    const expenseLoadPromises = Array.from(invoiceMonths).map(monthKey => {
-      const [year, month] = monthKey.split('-').map(Number);
-      return this.expenseService.listExpensesForMonth({ year, month }).toPromise();
-    });
 
-    Promise.all(expenseLoadPromises).then(expenseArrays => {
-      // Build a map of invoice ID to expense info from all loaded months
-      const invoiceToExpenseMap = new Map<string, { expenseId: string; expenseName: string }>();
+    // Use current month filter as default
+    const targetDate = this.useCustomDateRange && this.dateFrom ? this.dateFrom : this.selectedMonth;
+    const yearMonth = this.costInvoiceService.formatToYearMonth(targetDate);
 
-      expenseArrays.forEach(expenses => {
-        expenses?.forEach(expense => {
-          expense.items?.forEach(item => {
-            if (item.costInvoiceId) {
-              invoiceToExpenseMap.set(item.costInvoiceId, {
-                expenseId: expense.id,
-                expenseName: expense.name
-              });
-            }
+    // Load all expenses with invoices from all months
+    this.expenseService.findExpensesWithInvoices(yearMonth).subscribe({
+      next: (expensesWithInvoices) => {
+        // Build a map of invoice ID to expense info
+        const invoiceToExpenseMap = new Map<string, { expenseId: string; expenseName: string }>();
+
+        expensesWithInvoices.forEach(expense => {
+          expense.invoices.forEach(invoice => {
+            invoiceToExpenseMap.set(invoice.id, {
+              expenseId: expense.id,
+              expenseName: expense.name
+            });
           });
         });
-      });
 
-      // Update assignment status for current invoices
-      this.invoices.forEach(invoice => {
-        const assignmentInfo = invoiceToExpenseMap.get(invoice.id);
-        this.invoiceAssignmentStatus[invoice.id] = {
-          isAssigned: !!assignmentInfo,
-          expenseId: assignmentInfo?.expenseId,
-          expenseName: assignmentInfo?.expenseName
-        };
-      });
-    }).catch(error => {
-      console.error('Error loading invoice assignment statuses:', error);
-      // Initialize empty status for all invoices
-      this.invoices.forEach(invoice => {
-        this.invoiceAssignmentStatus[invoice.id] = {
-          isAssigned: false
-        };
-      });
+        // Update assignment status for current invoices
+        this.invoices.forEach(invoice => {
+          const assignmentInfo = invoiceToExpenseMap.get(invoice.id);
+          this.invoiceAssignmentStatus[invoice.id] = {
+            isAssigned: !!assignmentInfo,
+            expenseId: assignmentInfo?.expenseId,
+            expenseName: assignmentInfo?.expenseName
+          };
+        });
+      },
+      error: (error) => {
+        console.error('Error loading invoice assignment statuses:', error);
+        // Initialize empty status for all invoices
+        this.invoices.forEach(invoice => {
+          this.invoiceAssignmentStatus[invoice.id] = {
+            isAssigned: false
+          };
+        });
+      }
     });
   }
 

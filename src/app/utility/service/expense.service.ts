@@ -86,6 +86,21 @@ export interface YearMonthParam {
   month: number; // 1-12
 }
 
+export interface CostInvoiceResponse {
+  id: string;
+  year: number;
+  month: number;
+  day: number;
+}
+
+export interface ExpenseInvoicesResponse {
+  id: string;
+  name: string;
+  month: number;
+  year: number;
+  invoices: CostInvoiceResponse[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -377,6 +392,14 @@ export class ExpenseService {
     // Jeśli nie przekazano parametru, backend użyje aktualnego miesiąca
 
     return this.http.get<ExpenseResponse[]>(this.apiUrl, { params });
+  }
+
+  /**
+   * Pobierz wszystkie wydatki z fakturami kosztowymi (z różnych miesięcy)
+   */
+  findExpensesWithInvoices(month: string): Observable<ExpenseInvoicesResponse[]> {
+    const params = new HttpParams().set('month', month);
+    return this.http.get<ExpenseInvoicesResponse[]>(`${this.apiUrl}/cost-invoices`, { params });
   }
 }
 
