@@ -1,166 +1,416 @@
-<div>
-  <mat-form-field>
-    <mat-label>Filtruj materiały</mat-label>
-    <input matInput [(ngModel)]="filterValue" (keyup)="applyFilter()" placeholder="Wpisz cokolwiek">
-  </mat-form-field>
+<!-- Header Section with Statistics -->
+<div class="materials-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h1 class="page-title">
+        <mat-icon class="page-icon">inventory</mat-icon>
+        Materiały
+      </h1>
+      <p class="subtitle">Zarządzaj elementami złącznymi, filamentami i kartonami</p>
+    </div>
+    
+    <div class="stats-cards">
+      <div class="stat-card fasteners">
+        <div class="stat-icon">
+          <mat-icon>construction</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{getFilteredCount('fasteners')}}/{{totalFasteners}}</div>
+          <div class="stat-label">El. złączne</div>
+        </div>
+      </div>
+      
+      <div class="stat-card filaments">
+        <div class="stat-icon">
+          <mat-icon>fiber_smart_record</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{getFilteredCount('filaments')}}/{{totalFilaments}}</div>
+          <div class="stat-label">Filamenty</div>
+        </div>
+      </div>
+      
+      <div class="stat-card packages">
+        <div class="stat-icon">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{getFilteredCount('packages')}}/{{totalPackages}}</div>
+          <div class="stat-label">Kartony</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<h2>El. złączne</h2>
-<table mat-table [dataSource]="fastenersDataSource" matSort #sortFasteners="matSort" matSortActive="name" matSortDirection="asc"  class="mat-elevation-z8">
-  <!-- Nazwa -->
-  <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Nazwa </th>
-    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-  </ng-container>
+<!-- Global Controls -->
+<div class="global-controls">
+  <div class="search-section">
+    <mat-form-field appearance="outline" class="global-search">
+      <mat-label>Szukaj we wszystkich materiałach</mat-label>
+      <input matInput [(ngModel)]="globalSearchTerm" (keyup)="applyGlobalFilter()" 
+             placeholder="Wpisz nazwę, opis, producenta...">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+  
+  <div class="view-controls">
+    <button mat-stroked-button (click)="toggleViewMode()" class="view-toggle">
+      <mat-icon>{{viewMode === 'cards' ? 'table_view' : 'view_module'}}</mat-icon>
+      {{viewMode === 'cards' ? 'Tabela' : 'Karty'}}
+    </button>
+    
+    <button mat-stroked-button (click)="clearFilters()" class="clear-filters">
+      <mat-icon>clear</mat-icon>
+      Wyczyść filtry
+    </button>
+  </div>
+</div>
 
-  <!-- Cena za ilość -->
-  <ng-container matColumnDef="pricePerQuantity">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cena brutto za ilość </th>
-    <td mat-cell *matCellDef="let element"> {{element.pricePerQuantity}} </td>
-  </ng-container>
+<!-- Fasteners Section -->
+<div class="material-section">
+  <div class="section-header">
+    <div class="section-title">
+      <mat-icon class="section-icon">construction</mat-icon>
+      <h2>Elementy złączne</h2>
+      <span class="count-badge">{{getFilteredCount('fasteners')}}</span>
+    </div>
+    <div class="section-controls">
+      <mat-form-field appearance="outline" class="category-search">
+        <mat-label>Filtruj elementy złączne</mat-label>
+        <input matInput [(ngModel)]="fastenersFilter" (keyup)="applyCategoryFilter('fasteners')" 
+               placeholder="Nazwa, opis...">
+        <mat-icon matSuffix>filter_list</mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
 
-  <!-- Opis -->
-  <ng-container matColumnDef="description">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Opis </th>
-    <td mat-cell *matCellDef="let element"> {{element.description}} </td>
-  </ng-container>
+  <!-- Cards View -->
+  <div *ngIf="viewMode === 'cards'" class="cards-container">
+    <div class="material-card" *ngFor="let element of fastenersDataSource.data">
+      <div class="card-header">
+        <h3 class="material-name">{{element.name}}</h3>
+        <div class="card-actions">
+          <button mat-icon-button (click)="editFastenerDialog(element)" class="edit-btn">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteElement(element)" class="delete-btn">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <div class="card-content">
+        <div class="property-row">
+          <span class="property-label">Cena brutto:</span>
+          <span class="property-value price">{{element.pricePerQuantity}} zł/szt.</span>
+        </div>
+        
+        <div class="property-row" *ngIf="element.description">
+          <span class="property-label">Opis:</span>
+          <span class="property-value">{{element.description}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Dodaj kolumnę akcji -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef> Akcje </th>
-    <td mat-cell *matCellDef="let element">
-      <button mat-icon-button (click)="editFastenerDialog(element)">
-        <mat-icon>edit</mat-icon>
+  <!-- Table View -->
+  <div *ngIf="viewMode === 'table'" class="table-container">
+    <table mat-table [dataSource]="fastenersDataSource" matSort #sortFasteners="matSort" matSortActive="name" matSortDirection="asc" class="mat-elevation-z2">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Nazwa</th>
+        <td mat-cell *matCellDef="let element">{{element.name}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="pricePerQuantity">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Cena brutto za ilość</th>
+        <td mat-cell *matCellDef="let element">{{element.pricePerQuantity}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Opis</th>
+        <td mat-cell *matCellDef="let element">{{element.description}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Akcje</th>
+        <td mat-cell *matCellDef="let element">
+          <button mat-icon-button (click)="editFastenerDialog(element)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteElement(element)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+      
+      <tr mat-header-row *matHeaderRowDef="displayedColumnsFasteners"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumnsFasteners;"></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Filaments Section -->
+<div class="material-section">
+  <div class="section-header">
+    <div class="section-title">
+      <mat-icon class="section-icon">fiber_smart_record</mat-icon>
+      <h2>Filamenty</h2>
+      <span class="count-badge">{{getFilteredCount('filaments')}}</span>
+    </div>
+    <div class="section-controls">
+      <button mat-stroked-button (click)="showFilamentsFilters = !showFilamentsFilters" 
+              class="filter-toggle" [class.active]="showFilamentsFilters">
+        <mat-icon>tune</mat-icon>
+        Zaawansowane filtry
       </button>
-      <button mat-icon-button (click)="deleteElement(element)">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </td>
-  </ng-container>
+    </div>
+  </div>
 
-  <tr mat-header-row *matHeaderRowDef="displayedColumnsFasteners"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumnsFasteners;"></tr>
-</table>
-<br><br>
+  <!-- Advanced Filters -->
+  <div class="advanced-filters" *ngIf="showFilamentsFilters" [@slideInOut]>
+    <div class="filter-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Szukaj</mat-label>
+        <input matInput [(ngModel)]="filamentsFilter" (keyup)="applyCategoryFilter('filaments')" 
+               placeholder="Nazwa, producent, typ...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline">
+        <mat-label>Producent</mat-label>
+        <mat-select [(ngModel)]="selectedProducer" (selectionChange)="applyCategoryFilter('filaments')">
+          <mat-option value="">Wszyscy</mat-option>
+          <mat-option *ngFor="let producer of uniqueProducers" [value]="producer">
+            {{producer}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline">
+        <mat-label>Typ filamentu</mat-label>
+        <mat-select [(ngModel)]="selectedFilamentType" (selectionChange)="applyCategoryFilter('filaments')">
+          <mat-option value="">Wszystkie</mat-option>
+          <mat-option *ngFor="let type of uniqueFilamentTypes" [value]="type">
+            {{type}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
 
-<h2>Filamenty</h2>
-<!-- Table for Filaments with sorting -->
-<table mat-table [dataSource]="filamentsDataSource" matSort #sortFilaments="matSort" matSortActive="name" matSortDirection="asc" class="mat-elevation-z8">
-  <!-- Nazwa (Name) -->
-  <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Nazwa </th>
-    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-  </ng-container>
+  <!-- Cards View -->
+  <div *ngIf="viewMode === 'cards'" class="cards-container">
+    <div class="material-card filament-card" *ngFor="let element of filamentsDataSource.data">
+      <div class="card-header">
+        <div class="filament-title">
+          <div class="color-indicator" [style.background-color]="element.color"></div>
+          <h3 class="material-name">{{element.name}}</h3>
+        </div>
+        <div class="card-actions">
+          <button mat-icon-button (click)="editFilamentDialog(element)" class="edit-btn">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteElement(element)" class="delete-btn">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <div class="card-content">
+        <div class="filament-badges">
+          <span class="producer-badge">{{element.producer}}</span>
+          <span class="type-badge">{{element.filamentType}}</span>
+        </div>
+        
+        <div class="temperature-info">
+          <div class="temp-item">
+            <mat-icon class="temp-icon">thermostat</mat-icon>
+            <span>Druk: {{element.printTemperature}}°C</span>
+          </div>
+          <div class="temp-item">
+            <mat-icon class="temp-icon">table_restaurant</mat-icon>
+            <span>Stół: {{element.deskTemperature}}°C</span>
+          </div>
+        </div>
+        
+        <div class="property-row">
+          <span class="property-label">Cena brutto:</span>
+          <span class="property-value price">{{element.pricePerKg}} zł/kg</span>
+        </div>
+        
+        <div class="property-row" *ngIf="element.description">
+          <span class="property-label">Opis:</span>
+          <span class="property-value">{{element.description}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Producent (Producer) -->
-  <ng-container matColumnDef="producer">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Producent </th>
-    <td mat-cell *matCellDef="let element"> {{element.producer}} </td>
-  </ng-container>
+  <!-- Table View -->
+  <div *ngIf="viewMode === 'table'" class="table-container">
+    <table mat-table [dataSource]="filamentsDataSource" matSort #sortFilaments="matSort" matSortActive="name" matSortDirection="asc" class="mat-elevation-z2">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Nazwa</th>
+        <td mat-cell *matCellDef="let element">{{element.name}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="producer">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Producent</th>
+        <td mat-cell *matCellDef="let element">{{element.producer}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="filamentType">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Typ filamentu</th>
+        <td mat-cell *matCellDef="let element">{{element.filamentType}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="printTemperature">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Temp. druku</th>
+        <td mat-cell *matCellDef="let element">{{element.printTemperature}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="deskTemperature">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Temp. stołu</th>
+        <td mat-cell *matCellDef="let element">{{element.deskTemperature}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="pricePerKg">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Cena brutto za kg</th>
+        <td mat-cell *matCellDef="let element">{{element.pricePerKg}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="color">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Kolor</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="color-box" [ngStyle]="{'background-color': element.color}"></div>
+          {{element.color}}
+        </td>
+      </ng-container>
+      
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Opis</th>
+        <td mat-cell *matCellDef="let element">{{element.description}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Akcje</th>
+        <td mat-cell *matCellDef="let element">
+          <button mat-icon-button (click)="editFilamentDialog(element)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteElement(element)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+      
+      <tr mat-header-row *matHeaderRowDef="displayedColumnsFilaments"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumnsFilaments;"></tr>
+    </table>
+  </div>
+</div>
 
-  <!-- Typ filamentu (Filament Type) -->
-  <ng-container matColumnDef="filamentType">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Typ filamentu </th>
-    <td mat-cell *matCellDef="let element"> {{element.filamentType}} </td>
-  </ng-container>
+<!-- Packages Section -->
+<div class="material-section">
+  <div class="section-header">
+    <div class="section-title">
+      <mat-icon class="section-icon">inventory_2</mat-icon>
+      <h2>Kartony</h2>
+      <span class="count-badge">{{getFilteredCount('packages')}}</span>
+    </div>
+    <div class="section-controls">
+      <mat-form-field appearance="outline" class="category-search">
+        <mat-label>Filtruj kartony</mat-label>
+        <input matInput [(ngModel)]="packagesFilter" (keyup)="applyCategoryFilter('packages')" 
+               placeholder="Nazwa, rozmiar, wymiary...">
+        <mat-icon matSuffix>filter_list</mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
 
-  <!-- Temperatura druku (Print Temperature) -->
-  <ng-container matColumnDef="printTemperature">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Temp. druku </th>
-    <td mat-cell *matCellDef="let element"> {{element.printTemperature}} </td>
-  </ng-container>
+  <!-- Cards View -->
+  <div *ngIf="viewMode === 'cards'" class="cards-container">
+    <div class="material-card package-card" *ngFor="let element of packagesDataSource.data">
+      <div class="card-header">
+        <h3 class="material-name">{{element.name}}</h3>
+        <div class="card-actions">
+          <button mat-icon-button (click)="editPackageDialog(element)" class="edit-btn">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteElement(element)" class="delete-btn">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <div class="card-content">
+        <div class="package-specs">
+          <div class="spec-item">
+            <mat-icon class="spec-icon">straighten</mat-icon>
+            <span>{{element.packagingSize}}</span>
+          </div>
+          <div class="spec-item" *ngIf="element.dimensions">
+            <mat-icon class="spec-icon">crop_3_2</mat-icon>
+            <span>{{element.dimensions}}</span>
+          </div>
+        </div>
+        
+        <div class="property-row">
+          <span class="property-label">Cena brutto:</span>
+          <span class="property-value price">{{element.pricePerQuantity}} zł/szt.</span>
+        </div>
+        
+        <div class="property-row" *ngIf="element.description">
+          <span class="property-label">Opis:</span>
+          <span class="property-value">{{element.description}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Temperatura stołu (Desk Temperature) -->
-  <ng-container matColumnDef="deskTemperature">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Temp. stołu </th>
-    <td mat-cell *matCellDef="let element"> {{element.deskTemperature}} </td>
-  </ng-container>
-
-  <!-- Cena za kg (Price per kg) -->
-  <ng-container matColumnDef="pricePerKg">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cena brutto za kg </th>
-    <td mat-cell *matCellDef="let element"> {{element.pricePerKg}} </td>
-  </ng-container>
-
-  <!-- Kolor (Color) -->
-  <ng-container matColumnDef="color">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Kolor </th>
-    <td mat-cell *matCellDef="let element">
-      <div class="color-box" [ngStyle]="{'background-color': element.color}"></div>
-      {{element.color}}
-    </td>
-  </ng-container>
-
-  <!-- Opis (Description) -->
-  <ng-container matColumnDef="description">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Opis </th>
-    <td mat-cell *matCellDef="let element"> {{element.description}} </td>
-  </ng-container>
-
-  <!-- Akcje (Actions) -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef> Akcje </th>
-    <td mat-cell *matCellDef="let element">
-      <button mat-icon-button (click)="editFilamentDialog(element)">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button (click)="deleteElement(element)">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumnsFilaments"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumnsFilaments;"></tr>
-</table>
-
-<br>
-<h2>Kartony</h2>
-<table mat-table [dataSource]="packagesDataSource" matSort #sortPackages="matSort" matSortActive="name" matSortDirection="asc" class="mat-elevation-z8">
-  <!-- Nazwa -->
-  <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Nazwa </th>
-    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-  </ng-container>
-
-  <!-- Rozmiar opakowania -->
-  <ng-container matColumnDef="packagingSize">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Rozmiar opakowania </th>
-    <td mat-cell *matCellDef="let element"> {{element.packagingSize}} </td>
-  </ng-container>
-
-  <!-- Wymiary -->
-  <ng-container matColumnDef="dimensions">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Wymiary </th>
-    <td mat-cell *matCellDef="let element"> {{element.dimensions}} </td>
-  </ng-container>
-
-  <!-- Cena za ilość -->
-  <ng-container matColumnDef="pricePerQuantity">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cena brutto za ilość </th>
-    <td mat-cell *matCellDef="let element"> {{element.pricePerQuantity}} </td>
-  </ng-container>
-
-  <!-- Opis -->
-  <ng-container matColumnDef="description">
-    <th mat-header-cell *matHeaderCellDef mat-sort-header> Opis </th>
-    <td mat-cell *matCellDef="let element"> {{element.description}} </td>
-  </ng-container>
-
-  <!-- Dodaj kolumnę akcji -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef> Akcje </th>
-    <td mat-cell *matCellDef="let element">
-      <button mat-icon-button (click)="editPackageDialog(element)">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button (click)="deleteElement(element)">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumnsPackages"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumnsPackages;"></tr>
-</table>
-<br>
+  <!-- Table View -->
+  <div *ngIf="viewMode === 'table'" class="table-container">
+    <table mat-table [dataSource]="packagesDataSource" matSort #sortPackages="matSort" matSortActive="name" matSortDirection="asc" class="mat-elevation-z2">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Nazwa</th>
+        <td mat-cell *matCellDef="let element">{{element.name}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="packagingSize">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Rozmiar opakowania</th>
+        <td mat-cell *matCellDef="let element">{{element.packagingSize}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="dimensions">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Wymiary</th>
+        <td mat-cell *matCellDef="let element">{{element.dimensions}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="pricePerQuantity">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Cena brutto za ilość</th>
+        <td mat-cell *matCellDef="let element">{{element.pricePerQuantity}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Opis</th>
+        <td mat-cell *matCellDef="let element">{{element.description}}</td>
+      </ng-container>
+      
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Akcje</th>
+        <td mat-cell *matCellDef="let element">
+          <button mat-icon-button (click)="editPackageDialog(element)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteElement(element)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+      
+      <tr mat-header-row *matHeaderRowDef="displayedColumnsPackages"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumnsPackages;"></tr>
+    </table>
+  </div>
+</div>

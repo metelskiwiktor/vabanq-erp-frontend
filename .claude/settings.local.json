@@ -4,7 +4,12 @@
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(npm run build:*)",
       "Bash(npm run lint)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(ng serve)",
+      "Bash(taskkill:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(ng build)",
+      "Bash(ng build:*)"
     ],
     "deny": [],
     "ask": []

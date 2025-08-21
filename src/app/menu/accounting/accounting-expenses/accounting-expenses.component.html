@@ -32,32 +32,105 @@
   <div class="expenses-section">
     <div class="section-header">
       <h2 class="section-title">Lista wydatków</h2>
-      <div class="filters">
-        <mat-form-field appearance="outline" class="search-field">
-          <input matInput
-                 placeholder="Szukaj wydatków..."
-                 [(ngModel)]="searchText"
-                 (input)="onSearchChange()">
-          <mat-icon matPrefix>search</mat-icon>
-        </mat-form-field>
+      <div class="filters-container">
+        <!-- Primary filters row -->
+        <div class="filters">
+          <mat-form-field appearance="outline" class="search-field">
+            <input matInput
+                   placeholder="Szukaj wydatków..."
+                   [(ngModel)]="searchText"
+                   (input)="onSearchChange()">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Typ</mat-label>
-          <mat-select [(value)]="typeFilter" (selectionChange)="onTypeFilterChange()">
-            <mat-option *ngFor="let option of typeOptions" [value]="option.value">
-              {{ option.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Typ</mat-label>
+            <mat-select [(value)]="typeFilter" (selectionChange)="onTypeFilterChange()">
+              <mat-option *ngFor="let option of typeOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Kategoria</mat-label>
-          <mat-select [(value)]="categoryFilter" (selectionChange)="onCategoryFilterChange()">
-            <mat-option *ngFor="let option of categoryOptions" [value]="option.value">
-              {{ option.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Kategoria</mat-label>
+            <mat-select [(value)]="categoryFilter" (selectionChange)="onCategoryFilterChange()">
+              <mat-option *ngFor="let option of categoryOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Cykliczność</mat-label>
+            <mat-select [(value)]="cyclicFilter" (selectionChange)="onCyclicFilterChange()">
+              <mat-option *ngFor="let option of cyclicOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Secondary filters row -->
+        <div class="secondary-filters">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Status faktur</mat-label>
+            <mat-select [(value)]="invoiceStatusFilter" (selectionChange)="onInvoiceStatusFilterChange()">
+              <mat-option *ngFor="let option of invoiceStatusOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Okres miesiąca</mat-label>
+            <mat-select [(value)]="dateRangeFilter" (selectionChange)="onDateRangeFilterChange()">
+              <mat-option *ngFor="let option of dateRangeOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="amount-range-filter">
+            <span class="filter-label">Zakres kwot (brutto):</span>
+            <mat-form-field appearance="outline" class="amount-field">
+              <mat-label>Od</mat-label>
+              <input matInput type="number" [(ngModel)]="amountRangeFilter.min" 
+                     (ngModelChange)="onAmountRangeFilterChange()" placeholder="0">
+              <span matSuffix>zł</span>
+            </mat-form-field>
+            <span class="range-separator">-</span>
+            <mat-form-field appearance="outline" class="amount-field">
+              <mat-label>Do</mat-label>
+              <input matInput type="number" [(ngModel)]="amountRangeFilter.max" 
+                     (ngModelChange)="onAmountRangeFilterChange()" placeholder="0">
+              <span matSuffix>zł</span>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-actions">
+            <button mat-button class="clear-filters-btn" (click)="clearAllFilters()" 
+                    [disabled]="getActiveFiltersCount() === 0">
+              <mat-icon>clear_all</mat-icon>
+              Wyczyść filtry
+            </button>
+            <div class="active-filters-count" *ngIf="getActiveFiltersCount() > 0">
+              {{ getActiveFiltersCount() }} aktywnych filtrów
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags filter -->
+        <div class="tags-filter" *ngIf="availableTags.length > 0">
+          <span class="filter-label">Tagi:</span>
+          <mat-chip-set>
+            <mat-chip *ngFor="let tag of availableTags" 
+                     [class.selected]="tagsFilter.includes(tag)"
+                     (click)="toggleTagFilter(tag)">
+              {{ tag }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
       </div>
     </div>
 

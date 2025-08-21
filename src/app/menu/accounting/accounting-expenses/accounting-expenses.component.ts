@@ -83,6 +83,11 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   searchText = '';
   typeFilter = '';
   categoryFilter = '';
+  cyclicFilter = '';
+  dateRangeFilter = '';
+  amountRangeFilter = { min: 0, max: 0 };
+  tagsFilter: string[] = [];
+  invoiceStatusFilter = '';
 
   // Filter options
   typeOptions = [
@@ -92,6 +97,29 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
   ];
 
   categoryOptions: { value: string; label: string }[] = [];
+
+  cyclicOptions = [
+    { value: '', label: 'Wszystkie' },
+    { value: 'true', label: 'Cykliczne' },
+    { value: 'false', label: 'Jednorazowe' }
+  ];
+
+  invoiceStatusOptions = [
+    { value: '', label: 'Wszystkie' },
+    { value: 'with_invoices', label: 'Z fakturami' },
+    { value: 'without_invoices', label: 'Bez faktur' },
+    { value: 'partial_invoices', label: 'Częściowo z fakturami' }
+  ];
+
+  dateRangeOptions = [
+    { value: '', label: 'Cały miesiąc' },
+    { value: 'week1', label: 'Pierwszy tydzień' },
+    { value: 'week2', label: 'Drugi tydzień' },
+    { value: 'week3', label: 'Trzeci tydzień' },
+    { value: 'week4', label: 'Czwarty tydzień' }
+  ];
+
+  availableTags: string[] = [];
 
   constructor(
     private snackBar: MatSnackBar,
@@ -105,6 +133,8 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     this.initializeCategoryOptions();
     this.loadExpenses();
     this.loadElectricityData();
+    this.initializeAmountRange();
+    this.extractAvailableTags();
   }
 
   ngOnDestroy(): void {
@@ -134,6 +164,8 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
         next: (expenses: ExpenseResponse[]) => {
           console.log('Loaded expenses:', expenses);
           this.expenses = expenses.map(expense => this.mapExpenseResponseToItem(expense));
+          this.initializeAmountRange();
+          this.extractAvailableTags();
           this.applyFilters();
           this.calculateSummary();
           this.isLoading = false;
@@ -234,17 +266,87 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  onCyclicFilterChange(): void {
+    this.applyFilters();
+  }
+
+  onDateRangeFilterChange(): void {
+    this.applyFilters();
+  }
+
+  onAmountRangeFilterChange(): void {
+    this.applyFilters();
+  }
+
+  onInvoiceStatusFilterChange(): void {
+    this.applyFilters();
+  }
+
+  onTagsFilterChange(): void {
+    this.applyFilters();
+  }
+
+  toggleTagFilter(tag: string): void {
+    const index = this.tagsFilter.indexOf(tag);
+    if (index === -1) {
+      this.tagsFilter.push(tag);
+    } else {
+      this.tagsFilter.splice(index, 1);
+    }
+    this.applyFilters();
+  }
+
+  clearAllFilters(): void {
+    this.searchText = '';
+    this.typeFilter = '';
+    this.categoryFilter = '';
+    this.cyclicFilter = '';
+    this.dateRangeFilter = '';
+    this.amountRangeFilter = { min: 0, max: 0 };
+    this.tagsFilter = [];
+    this.invoiceStatusFilter = '';
+    this.initializeAmountRange();
+    this.applyFilters();
+  }
+
   applyFilters(): void {
     this.filteredExpenses = this.expenses.filter(expense => {
+      // Search filter
       const matchesSearch = !this.searchText ||
         expense.name.toLowerCase().includes(this.searchText.toLowerCase()) ||
         expense.description.toLowerCase().includes(this.searchText.toLowerCase()) ||
         expense.tags.some(tag => tag.toLowerCase().includes(this.searchText.toLowerCase()));
 
+      // Type filter
       const matchesType = !this.typeFilter || expense.type === this.typeFilter;
+      
+      // Category filter
       const matchesCategory = !this.categoryFilter || expense.category === this.categoryFilter;
+      
+      // Cyclic filter
+      const matchesCyclic = !this.cyclicFilter || 
+        (this.cyclicFilter === 'true' && expense.cyclic) ||
+        (this.cyclicFilter === 'false' && !expense.cyclic);
 
-      return matchesSearch && matchesType && matchesCategory;
+      // Amount range filter
+      const matchesAmountRange = (this.amountRangeFilter.max === 0) ||
+        (expense.grossAmount >= this.amountRangeFilter.min && 
+         expense.grossAmount <= this.amountRangeFilter.max);
+
+      // Tags filter
+      const matchesTags = this.tagsFilter.length === 0 ||
+        this.tagsFilter.every(filterTag => 
+          expense.tags.some(expenseTag => expenseTag.toLowerCase().includes(filterTag.toLowerCase()))
+        );
+
+      // Invoice status filter
+      const matchesInvoiceStatus = this.matchesInvoiceStatusFilter(expense);
+
+      // Date range filter (by day of month)
+      const matchesDateRange = this.matchesDateRangeFilter(expense);
+
+      return matchesSearch && matchesType && matchesCategory && matchesCyclic && 
+             matchesAmountRange && matchesTags && matchesInvoiceStatus && matchesDateRange;
     });
 
     this.calculateSummary();
@@ -545,6 +647,77 @@ export class AccountingExpensesComponent implements OnInit, OnDestroy {
         this.loadExpenses();
       }
     });
+  }
+
+  // Helper methods for advanced filtering
+  private matchesInvoiceStatusFilter(expense: ExpenseItem): boolean {
+    if (!this.invoiceStatusFilter) return true;
+
+    switch (this.invoiceStatusFilter) {
+      case 'with_invoices':
+        return expense.invoicesCount > 0 && expense.invoicesCount === expense.itemsCount;
+      case 'without_invoices':
+        return expense.invoicesCount === 0;
+      case 'partial_invoices':
+        return expense.invoicesCount > 0 && expense.invoicesCount < expense.itemsCount;
+      default:
+        return true;
+    }
+  }
+
+  private matchesDateRangeFilter(expense: ExpenseItem): boolean {
+    if (!this.dateRangeFilter) return true;
+
+    const expenseDate = new Date(expense.date);
+    const dayOfMonth = expenseDate.getDate();
+
+    switch (this.dateRangeFilter) {
+      case 'week1':
+        return dayOfMonth >= 1 && dayOfMonth <= 7;
+      case 'week2':
+        return dayOfMonth >= 8 && dayOfMonth <= 14;
+      case 'week3':
+        return dayOfMonth >= 15 && dayOfMonth <= 21;
+      case 'week4':
+        return dayOfMonth >= 22 && dayOfMonth <= 31;
+      default:
+        return true;
+    }
+  }
+
+  private initializeAmountRange(): void {
+    if (this.expenses.length === 0) {
+      this.amountRangeFilter = { min: 0, max: 0 };
+      return;
+    }
+
+    const amounts = this.expenses.map(e => e.grossAmount);
+    this.amountRangeFilter = {
+      min: 0,
+      max: Math.max(...amounts)
+    };
+  }
+
+  private extractAvailableTags(): void {
+    const tagSet = new Set<string>();
+    this.expenses.forEach(expense => {
+      expense.tags.forEach(tag => tagSet.add(tag));
+    });
+    this.availableTags = Array.from(tagSet).sort();
+  }
+
+  // Get active filters count
+  getActiveFiltersCount(): number {
+    let count = 0;
+    if (this.searchText) count++;
+    if (this.typeFilter) count++;
+    if (this.categoryFilter) count++;
+    if (this.cyclicFilter) count++;
+    if (this.dateRangeFilter) count++;
+    if (this.amountRangeFilter.max > 0 && this.amountRangeFilter.min > 0) count++;
+    if (this.tagsFilter.length > 0) count++;
+    if (this.invoiceStatusFilter) count++;
+    return count;
   }
 
   // Delete expense with confirmation

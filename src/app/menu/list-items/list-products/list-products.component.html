@@ -1,51 +1,206 @@
-<div class="container">
-<!--  <mat-toolbar color="primary">-->
-<!--    <span>Produkty</span>-->
-<!--    <span class="spacer"></span>-->
-<!--    <button mat-raised-button color="accent" (click)="createNewProduct()">Create a project</button>-->
-<!--  </mat-toolbar>-->
-
-  <!-- Filter by product name -->
-  <mat-form-field class="filter-input">
-    <mat-label>Filtruj nazwy</mat-label>
-    <input matInput [(ngModel)]="filter" placeholder="Search products">
-  </mat-form-field>
-
-  <!-- Filter by tags using ng-select -->
-  <div class="form-group">
-    <ng-select
-      [items]="availableTags"
-      bindLabel="name"
-      [multiple]="true"
-      [closeOnSelect]="false"
-      placeholder="Filtruj tagi"
-      [(ngModel)]="selectedTags">
-    </ng-select>
+<div class="products-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="page-title">
+        <h1>Produkty</h1>
+        <p class="page-subtitle">Zarządzanie katalogiem produktów i ich parametrami</p>
+      </div>
+      <div class="header-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ products.length }}</span>
+          <span class="stat-label">Produktów</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getActiveProductsCount() }}</span>
+          <span class="stat-label">Aktywnych</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ getLowStockCount() }}</span>
+          <span class="stat-label">Niski stan</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <br>
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-container">
+      <!-- Primary Filters Row -->
+      <div class="primary-filters">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Szukaj produktów</mat-label>
+          <input matInput [(ngModel)]="filter" placeholder="Nazwa produktu, EAN, opis...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
 
-  <div class="card-grid">
-    <mat-card class="card" *ngFor="let product of filteredProducts()">
-      <mat-card-header>
-        <div mat-card-avatar class="product-image"></div>
-        <mat-card-title>{{ product.name }}</mat-card-title>
-        <mat-card-subtitle>{{ product.ean }}</mat-card-subtitle>
-      </mat-card-header>
-      <img mat-card-image [src]="product.imageUrl" alt="{{ product.name }}">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Stan magazynowy</mat-label>
+          <mat-select [(value)]="stockFilter" (selectionChange)="onFiltersChange()">
+            <mat-option value="">Wszystkie</mat-option>
+            <mat-option value="in_stock">Na stanie</mat-option>
+            <mat-option value="low_stock">Niski stan</mat-option>
+            <mat-option value="out_of_stock">Brak w magazynie</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-      <mat-card-content>
-        <p>{{ product.description }}</p>
-        <!-- Display product tags -->
-        <p *ngIf="product.tags.length > 0">
-          {{ formatTags(product) }}
-        </p>
-      </mat-card-content>
-      <mat-card-actions style="display: flex; justify-content: space-between; padding: 8px;">
-        <button mat-button style="background-color: #ffffff; margin-right: 8px;" (click)="previewProduct(product.id)">Podgląd</button>
-        <button mat-button style="background-color: #ffffff; margin-left: 8px;" (click)="editProduct(product.id)">Edytuj</button>
-      </mat-card-actions>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Sortuj według</mat-label>
+          <mat-select [(value)]="sortBy" (selectionChange)="onFiltersChange()">
+            <mat-option value="name_asc">Nazwa A-Z</mat-option>
+            <mat-option value="name_desc">Nazwa Z-A</mat-option>
+            <mat-option value="price_asc">Cena rosnąco</mat-option>
+            <mat-option value="price_desc">Cena malejąco</mat-option>
+            <mat-option value="stock_asc">Stan magazynowy rosnąco</mat-option>
+            <mat-option value="stock_desc">Stan magazynowy malejąco</mat-option>
+            <mat-option value="created_desc">Najnowsze</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
 
-    </mat-card>
+      <!-- Secondary Filters Row -->
+      <div class="secondary-filters">
+        <div class="tags-filter">
+          <span class="filter-label">Tagi:</span>
+          <ng-select
+            [items]="availableTags"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            placeholder="Wybierz tagi"
+            [(ngModel)]="selectedTags"
+            (change)="onFiltersChange()">
+          </ng-select>
+        </div>
+
+        <div class="price-range-filter">
+          <span class="filter-label">Zakres cen:</span>
+          <mat-form-field appearance="outline" class="price-field">
+            <mat-label>Od</mat-label>
+            <input matInput type="number" [(ngModel)]="priceRange.min" 
+                   (ngModelChange)="onFiltersChange()" placeholder="0">
+            <span matSuffix>zł</span>
+          </mat-form-field>
+          <span class="range-separator">-</span>
+          <mat-form-field appearance="outline" class="price-field">
+            <mat-label>Do</mat-label>
+            <input matInput type="number" [(ngModel)]="priceRange.max" 
+                   (ngModelChange)="onFiltersChange()" placeholder="∞">
+            <span matSuffix>zł</span>
+          </mat-form-field>
+        </div>
+
+        <div class="view-controls">
+          <mat-button-toggle-group [(value)]="viewMode" (change)="onViewModeChange()">
+            <mat-button-toggle value="grid">
+              <mat-icon>grid_view</mat-icon>
+            </mat-button-toggle>
+            <mat-button-toggle value="list">
+              <mat-icon>view_list</mat-icon>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-button class="clear-filters-btn" (click)="clearFilters()" 
+                  [disabled]="!hasActiveFilters()">
+            <mat-icon>clear_all</mat-icon>
+            Wyczyść filtry
+          </button>
+          <span class="results-count">{{ filteredProducts().length }} produktów</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="products-section" [class.list-view]="viewMode === 'list'">
+    <div *ngIf="filteredProducts().length === 0" class="empty-state">
+      <mat-icon class="empty-icon">inventory_2</mat-icon>
+      <h3>Brak produktów</h3>
+      <p *ngIf="products.length === 0">
+        Nie znaleziono żadnych produktów w systemie.
+      </p>
+      <p *ngIf="products.length > 0">
+        Nie znaleziono produktów spełniających wybrane kryteria filtrowania.
+      </p>
+      <button *ngIf="hasActiveFilters()" mat-button (click)="clearFilters()">
+        <mat-icon>clear_all</mat-icon>
+        Wyczyść filtry
+      </button>
+    </div>
+
+    <div class="products-grid" [class.list-layout]="viewMode === 'list'">
+      <div class="product-card" *ngFor="let product of filteredProducts(); trackBy: trackByProductId">
+        <!-- Product Image -->
+        <div class="product-image-container">
+          <img [src]="product.imageUrl" [alt]="product.name" class="product-image">
+          <div class="stock-badge" [class]="getStockBadgeClass(product)">
+            <mat-icon>{{ getStockIcon(product) }}</mat-icon>
+            <span>{{ getStockLabel(product) }}</span>
+          </div>
+          <div class="product-overlay">
+            <button mat-mini-fab color="primary" (click)="previewProduct(product.id)" matTooltip="Podgląd">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-mini-fab color="accent" (click)="editProduct(product.id)" matTooltip="Edytuj">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="product-info">
+          <div class="product-header">
+            <h3 class="product-title">{{ product.name }}</h3>
+            <div class="product-price">{{ formatCurrency(product.price) }}</div>
+          </div>
+
+          <div class="product-meta">
+            <div class="meta-row">
+              <span class="meta-label">EAN:</span>
+              <span class="meta-value">{{ product.ean || 'Brak' }}</span>
+            </div>
+            <div class="meta-row" *ngIf="product.wms.enabled">
+              <span class="meta-label">Stan:</span>
+              <span class="meta-value" [class.critical]="product.wms.quantity <= product.wms.criticalStock">
+                {{ product.wms.quantity }} szt.
+              </span>
+            </div>
+            <div class="meta-row" *ngIf="getPrintTimeTotal(product) > 0">
+              <span class="meta-label">Czas druku:</span>
+              <span class="meta-value">{{ formatPrintTime(product.printTime) }}</span>
+            </div>
+          </div>
+
+          <p class="product-description" *ngIf="product.description">
+            {{ product.description | slice:0:120 }}
+            <span *ngIf="product.description.length > 120">...</span>
+          </p>
+
+          <div class="product-tags" *ngIf="product.tags.length > 0">
+            <span class="tag" *ngFor="let tag of product.tags">{{ tag }}</span>
+          </div>
+
+          <div class="product-footer">
+            <div class="material-info">
+              <span class="material-count" *ngIf="getTotalMaterials(product) > 0">
+                <mat-icon>category</mat-icon>
+                {{ getTotalMaterials(product) }} materiałów
+              </span>
+            </div>
+            <div class="product-actions">
+              <button mat-stroked-button (click)="previewProduct(product.id)">
+                <mat-icon>visibility</mat-icon>
+                Podgląd
+              </button>
+              <button mat-flat-button color="primary" (click)="editProduct(product.id)">
+                <mat-icon>edit</mat-icon>
+                Edytuj
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
