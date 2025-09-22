@@ -298,11 +298,22 @@ export class OrdersComponent implements OnInit {
         console.error('Failed to generate invoice:', error);
         order.isInvoiceGenerating = false;
 
+        // Handle new error format with errorCode and message
+        let errorMessage = 'Nie udało się wygenerować faktury. Spróbuj ponownie.';
+        
+        if (error.error) {
+          if (error.error.message) {
+            errorMessage = error.error.message;
+          } else if (typeof error.error === 'string') {
+            errorMessage = error.error;
+          }
+        }
+
         this.toastService.show({
           template: template,
           classname: 'bg-danger text-light',
-          delay: 2000,
-          text: 'Nie udało się wygenerować faktury. Spróbuj ponownie.',
+          delay: 4000,
+          text: errorMessage,
         });
       }
     });
