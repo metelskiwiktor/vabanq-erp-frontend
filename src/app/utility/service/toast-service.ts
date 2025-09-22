@@ -2,7 +2,7 @@ import { Injectable, TemplateRef } from '@angular/core';
 
 export interface Toast {
   text: string;
-  template: TemplateRef<any>;
+  template?: TemplateRef<any>;
   classname?: string;
   delay: number;
 }

@@ -1,5 +1,5 @@
 // orders.component.ts - Updated with new structure
-import {Component, inject, OnInit, TemplateRef} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {AttachInvoiceResponse, ProductService} from "../../utility/service/product.service";
 import {ToastService} from "../../utility/service/toast-service";
@@ -36,7 +36,6 @@ export interface OrdersPageResponse {
 export class OrdersComponent implements OnInit {
   orders: Order[] = [];
   filteredOrders: Order[] = [];
-  toastSuccessMessage: string = '';
   toastService = inject(ToastService);
   infaktService = inject(InfaktService);
 
@@ -219,42 +218,39 @@ export class OrdersComponent implements OnInit {
     return pageNumbers;
   }
 
-  synchronizeOrders(template: TemplateRef<any>): void {
+  synchronizeOrders(): void {
     const token = localStorage.getItem('allegro-token') || '';
     this.productService.synchronizeOrders(token).subscribe({
       next: (response: { created: number; updated: number }) => {
+        let successMessage: string;
         if (response.created === 0 && response.updated === 0) {
-          this.toastSuccessMessage = `Synchronizacja zakończona pomyślnie. Brak aktualizacji.`;
+          successMessage = `Synchronizacja zakończona pomyślnie. Brak aktualizacji.`;
         } else {
-          this.toastSuccessMessage = `Synchronizacja zakończona pomyślnie.\n${response.created} nowych zamówień\n${response.updated} zaktualizowanych zamówień.`;
+          successMessage = `Synchronizacja zakończona pomyślnie. ${response.created} nowych zamówień, ${response.updated} zaktualizowanych zamówień.`;
         }
         // Reset to first page after sync
         this.currentPage = 0;
         this.fetchOrders();
-        this.showSuccess(template);
+        
+        this.toastService.show({
+          text: successMessage,
+          classname: 'bg-success text-light',
+          delay: 3000,
+        });
       },
       error: (error) => {
         console.error('Synchronization failed:', error);
         this.toastService.show({
-          template: template,
-          classname: 'bg-danger text-light',
-          delay: 2000,
           text: 'Synchronizacja nie powiodła się. Spróbuj ponownie.',
+          classname: 'bg-danger text-light',
+          delay: 3000,
         });
       }
     });
   }
 
-  showSuccess(template: TemplateRef<any>): void {
-    this.toastService.show({
-      template,
-      classname: 'bg-success text-light',
-      delay: 2000,
-      text: this.toastSuccessMessage
-    });
-  }
 
-  generateInvoice(order: Order, template: TemplateRef<any>): void {
+  generateInvoice(order: Order): void {
     const dialogRef = this.dialog.open(InvoiceGenerationDialogComponent, {
       width: '650px',
       data: { order }
@@ -262,12 +258,12 @@ export class OrdersComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {
-        this.performInvoiceGeneration(order, template);
+        this.performInvoiceGeneration(order);
       }
     });
   }
 
-  private performInvoiceGeneration(order: Order, template: TemplateRef<any>): void {
+  private performInvoiceGeneration(order: Order): void {
     order.isInvoiceGenerating = true;
 
     this.infaktService.generateInvoice(order).subscribe({
@@ -291,8 +287,12 @@ export class OrdersComponent implements OnInit {
         order.invoices.push(invoiceInfo);
         order.isInvoiceGenerating = false;
 
-        this.toastSuccessMessage = `Faktura została wygenerowana. Status: ${this.getInvoiceStatusTranslation(response.status.toLowerCase())}`;
-        this.showSuccess(template);
+        const successMessage = `Faktura została wygenerowana. Status: ${this.getInvoiceStatusTranslation(response.status.toLowerCase())}`;
+        this.toastService.show({
+          text: successMessage,
+          classname: 'bg-success text-light',
+          delay: 3000,
+        });
       },
       error: (error) => {
         console.error('Failed to generate invoice:', error);
@@ -310,22 +310,20 @@ export class OrdersComponent implements OnInit {
         }
 
         this.toastService.show({
-          template: template,
+          text: errorMessage,
           classname: 'bg-danger text-light',
           delay: 4000,
-          text: errorMessage,
         });
       }
     });
   }
 
-  attachInvoiceToAllegro(order: Order, invoice: InvoiceInfo, template: TemplateRef<any>): void {
+  attachInvoiceToAllegro(order: Order, invoice: InvoiceInfo): void {
     if (invoice.invoiceStatus !== 'issued' && invoice.invoiceStatus !== 'sent' && invoice.invoiceStatus !== 'paid') {
       this.toastService.show({
-        template: template,
+        text: 'Faktura musi być w statusie "Wystawiona", "Wysłana" lub "Opłacona" aby można było ją dołączyć do Allegro.',
         classname: 'bg-warning text-dark',
         delay: 3000,
-        text: 'Faktura musi być w statusie "Wystawiona", "Wysłana" lub "Opłacona" aby można było ją dołączyć do Allegro.',
       });
       return;
     }
@@ -333,10 +331,9 @@ export class OrdersComponent implements OnInit {
     const token = localStorage.getItem('allegro-token') || '';
     if (!token) {
       this.toastService.show({
-        template: template,
+        text: 'Brak tokenu Allegro. Sprawdź połączenie z Allegro.',
         classname: 'bg-danger text-light',
         delay: 3000,
-        text: 'Brak tokenu Allegro. Sprawdź połączenie z Allegro.',
       });
       return;
     }
@@ -348,12 +345,12 @@ export class OrdersComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {
-        this.performAllegroAttachment(order, invoice, template, token);
+        this.performAllegroAttachment(order, invoice, token);
       }
     });
   }
 
-  private performAllegroAttachment(order: Order, invoice: InvoiceInfo, template: TemplateRef<any>, token: string): void {
+  private performAllegroAttachment(order: Order, invoice: InvoiceInfo, token: string): void {
     invoice.isAttachingToAllegro = true;
     invoice.allegroAttachmentError = undefined;
 
@@ -363,8 +360,12 @@ export class OrdersComponent implements OnInit {
         invoice.isAttachedToAllegro = true;
         invoice.allegroInvoiceId = response.allegroInvoiceId;
 
-        this.toastSuccessMessage = `Faktura ${invoice.invoiceNumber} została pomyślnie dołączona do zamówienia w Allegro jako dowód zakupu.`;
-        this.showSuccess(template);
+        const successMessage = `Faktura ${invoice.invoiceNumber} została pomyślnie dołączona do zamówienia w Allegro jako dowód zakupu.`;
+        this.toastService.show({
+          text: successMessage,
+          classname: 'bg-success text-light',
+          delay: 3000,
+        });
       },
       error: (error) => {
         console.error('Failed to attach invoice to Allegro:', error);
@@ -372,10 +373,9 @@ export class OrdersComponent implements OnInit {
         invoice.allegroAttachmentError = error.error?.message || 'Nieznany błąd';
 
         this.toastService.show({
-          template: template,
+          text: `Nie udało się dołączyć faktury do Allegro: ${invoice.allegroAttachmentError}`,
           classname: 'bg-danger text-light',
           delay: 4000,
-          text: `Nie udało się dołączyć faktury do Allegro: ${invoice.allegroAttachmentError}`,
         });
       }
     });

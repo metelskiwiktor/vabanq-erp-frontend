@@ -1,12 +1,12 @@
 import { ToastService } from './toast-service';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet, NgIf } from '@angular/common';
 import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
 import {Component, inject} from "@angular/core";
 
 @Component({
   selector: 'app-toasts',
   standalone: true,
-  imports: [NgbToastModule, NgTemplateOutlet],
+  imports: [NgbToastModule, NgTemplateOutlet, NgIf],
   template: `
 		@for (toast of toastService.toasts; track toast) {
 			<ngb-toast
@@ -15,7 +15,8 @@ import {Component, inject} from "@angular/core";
 				[delay]="toast.delay || 5000"
 				(hidden)="toastService.remove(toast)"
 			>
-				<ng-template [ngTemplateOutlet]="toast.template"></ng-template>
+				<ng-template *ngIf="toast.template" [ngTemplateOutlet]="toast.template"></ng-template>
+				<div *ngIf="!toast.template">{{ toast.text }}</div>
 			</ngb-toast>
 		}
 	`,
